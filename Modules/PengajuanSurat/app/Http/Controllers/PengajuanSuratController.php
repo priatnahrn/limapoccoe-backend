@@ -73,7 +73,6 @@ class PengajuanSuratController extends Controller
         ], 200);
     }
 
-
     public function getPengajuanSurat($slug)
     {
         $user = JWTAuth::parseToken()->authenticate();
@@ -86,16 +85,26 @@ class PengajuanSuratController extends Controller
                 ->whereHas('surat', function ($query) use ($slug) {
                     $query->where('slug', $slug);
                 })
-                ->with(['surat', 'user.profileMasyarakat'])
+                ->with([
+                    'user',                     // wajib agar user muncul
+                    'user.profileMasyarakat',  // nested relasi
+                    'surat'                    // relasi surat
+                ])
                 ->get();
         } elseif ($user->hasAnyRole(['staff-desa'])) {
-            $pengajuanSurat = Ajuan::with(['user', 'user.profileMasyarakat','surat'])
+            $pengajuanSurat = Ajuan::with([
+                    'user',
+                    'user.profileMasyarakat',
+                    'surat'
+                ])
                 ->whereHas('surat', function ($query) use ($slug) {
                     $query->where('slug', $slug);
                 })
                 ->get();
         } else {
-            return response()->json(['error' => 'Akses ditolak. Anda tidak memiliki izin untuk mengakses pengajuan surat ini'], 403);
+            return response()->json([
+                'error' => 'Akses ditolak. Anda tidak memiliki izin untuk mengakses pengajuan surat ini'
+            ], 403);
         }
 
         if ($pengajuanSurat->isEmpty()) {
@@ -105,9 +114,9 @@ class PengajuanSuratController extends Controller
         return response()->json([
             'message' => 'Berhasil mendapatkan detail pengajuan surat.',
             'pengajuan_surat' => $pengajuanSurat,
-            
         ], 200);
     }
+
 
     public function getDetailPengajuanSurat($slug, $ajuanId)
     {
