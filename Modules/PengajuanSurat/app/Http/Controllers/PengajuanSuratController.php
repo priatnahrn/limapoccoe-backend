@@ -129,7 +129,7 @@ class PengajuanSuratController extends Controller
             return response()->json(['error' => 'Akses ditolak. Anda tidak memiliki izin untuk mengakses detail pengajuan surat ini'], 403);
         }
 
-        $pengajuanSurat = Ajuan::with(['user', 'surat'])
+        $pengajuanSurat = Ajuan::with(['user', 'user.profileMasyarakat', 'surat'])
             ->where('id', $ajuanId)
             ->whereHas('surat', function ($query) use ($slug) {
                 $query->where('slug', $slug);
@@ -183,5 +183,33 @@ class PengajuanSuratController extends Controller
         ], 200);
     }
 
+    public function deletePengajuan($ajuanId)
+    {
+        $user = JWTAuth::parseToken()->authenticate();
+        if (!$user) {
+            return response()->json(['error' => 'User belum login. Silakan login terlebih dahulu'], 401);
+        }
+
+        if (!$user->hasAnyRole(['staff-desa', 'admin'])) {
+            return response()->json(['error' => 'Akses ditolak. Anda tidak memiliki izin untuk menghapus pengajuan surat'], 403);
+        }
+
+        $pengajuanSurat = Ajuan::find($ajuanId);
+        if (!$pengajuanSurat) {
+            return response()->json(['error' => 'Pengajuan surat tidak ditemukan'], 404);
+        }
+
+        $pengajuanSurat->delete();
+
+        LogActivity::create([
+            'id' => Str::uuid(),
+            'user_id' => $user->id,
+            'activity_type' => 'delete_pengajuan',
+            'description' => 'Pengajuan surat dengan ID ' . $pengajuanSurat->id . ' telah dihapus.',
+            'ip_address' => $request->ip(),
+        ]);
+
+        return response()->json(['message' => 'Pengajuan surat berhasil dihapus'], 200);
+    }
     
 }
