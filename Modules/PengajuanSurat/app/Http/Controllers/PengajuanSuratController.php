@@ -86,7 +86,7 @@ class PengajuanSuratController extends Controller
                 ->whereHas('surat', function ($query) use ($slug) {
                     $query->where('slug', $slug);
                 })
-                ->with('surat', 'profile')
+                ->with('surat', 'profileMasyarakat')
                 ->get();
         } elseif ($user->hasAnyRole(['staff-desa'])) {
             $pengajuanSurat = Ajuan::with(['user', 'surat'])

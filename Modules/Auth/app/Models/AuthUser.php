@@ -10,6 +10,7 @@ use Spatie\Permission\Traits\HasRoles;
 use Spatie\Permission\Traits\HasPermissions;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Modules\Auth\Database\Factories\AuthUserFactory;
+use Modules\Profile\Models\ProfileMasyarakat;
 
 class AuthUser extends Authenticatable implements JWTSubject
 {
@@ -115,6 +116,11 @@ class AuthUser extends Authenticatable implements JWTSubject
     public function getJWTCustomClaims()
     {
         return [];
+    }
+
+    public function profileMasyarakat()
+    {
+        return $this->hasOne(ProfileMasyarakat::class, 'user_id', 'id');
     }
 
 
