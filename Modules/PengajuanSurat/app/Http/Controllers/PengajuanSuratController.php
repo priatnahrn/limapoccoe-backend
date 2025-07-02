@@ -86,7 +86,7 @@ class PengajuanSuratController extends Controller
                 ->whereHas('surat', function ($query) use ($slug) {
                     $query->where('slug', $slug);
                 })
-                ->with('surat')
+                ->with('surat', 'profile')
                 ->get();
         } elseif ($user->hasAnyRole(['staff-desa'])) {
             $pengajuanSurat = Ajuan::with(['user', 'surat'])
@@ -132,6 +132,43 @@ class PengajuanSuratController extends Controller
 
         return response()->json([
             'message' => 'Berhasil mendapatkan detail pengajuan surat.',
+            'pengajuan_surat' => $pengajuanSurat,
+        ], 200);
+    }
+
+    public function updateStatusPengajuan(Request $request, $ajuanId)
+    {
+        $user = JWTAuth::parseToken()->authenticate();
+        if (!$user) {
+            return response()->json(['error' => 'User belum login. Silakan login terlebih dahulu'], 401);
+        }
+
+        if (!$user->hasAnyRole(['staff-desa', 'admin'])) {
+            return response()->json(['error' => 'Akses ditolak. Anda tidak memiliki izin untuk mengupdate status pengajuan surat'], 403);
+        }
+
+        $pengajuanSurat = Ajuan::find($ajuanId);
+        if (!$pengajuanSurat) {
+            return response()->json(['error' => 'Pengajuan surat tidak ditemukan'], 404);
+        }
+
+        $validatedData = $request->validate([
+            'status' => 'required|string|in:processed,approved,rejected',
+        ]);
+
+        $pengajuanSurat->status = $validatedData['status'];
+        $pengajuanSurat->save();
+
+        LogActivity::create([
+            'id' => Str::uuid(),
+            'user_id' => $user->id,
+            'activity_type' => 'update_status_pengajuan',
+            'description' => 'Status pengajuan surat dengan ID ' . $pengajuanSurat->id . ' telah diupdate menjadi ' . $pengajuanSurat->status,
+            'ip_address' => $request->ip(),
+        ]);
+
+        return response()->json([
+            'message' => 'Status pengajuan surat berhasil diupdate.',
             'pengajuan_surat' => $pengajuanSurat,
         ], 200);
     }
