@@ -1,0 +1,11 @@
+{
+    "name": "PengajuanSurat",
+    "alias": "pengajuansurat",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\PengajuanSurat\\Providers\\PengajuanSuratServiceProvider"
+    ],
+    "files": []
+}

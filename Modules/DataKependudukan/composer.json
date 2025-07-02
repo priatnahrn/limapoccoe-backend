@@ -1,0 +1,30 @@
+{
+    "name": "nwidart/datakependudukan",
+    "description": "",
+    "authors": [
+        {
+            "name": "Nicolas Widart",
+            "email": "n.widart@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\DataKependudukan\\": "app/",
+            "Modules\\DataKependudukan\\Database\\Factories\\": "database/factories/",
+            "Modules\\DataKependudukan\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\DataKependudukan\\Tests\\": "tests/"
+        }
+    }
+}

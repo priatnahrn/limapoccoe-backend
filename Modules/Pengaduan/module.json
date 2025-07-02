@@ -1,0 +1,11 @@
+{
+    "name": "Pengaduan",
+    "alias": "pengaduan",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Pengaduan\\Providers\\PengaduanServiceProvider"
+    ],
+    "files": []
+}

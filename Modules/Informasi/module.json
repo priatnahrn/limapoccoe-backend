@@ -1,0 +1,11 @@
+{
+    "name": "Informasi",
+    "alias": "informasi",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Informasi\\Providers\\InformasiServiceProvider"
+    ],
+    "files": []
+}

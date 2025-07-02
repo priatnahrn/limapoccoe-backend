@@ -1,0 +1,10 @@
+{
+    "Auth": true,
+    "Profile": true,
+    "PengajuanSurat": true,
+    "Pengaduan": true,
+    "DataKependudukan": true,
+    "Informasi": true,
+    "TandaTangan": true,
+    "Ajuan": true
+}

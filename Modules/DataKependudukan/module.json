@@ -1,0 +1,11 @@
+{
+    "name": "DataKependudukan",
+    "alias": "datakependudukan",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\DataKependudukan\\Providers\\DataKependudukanServiceProvider"
+    ],
+    "files": []
+}

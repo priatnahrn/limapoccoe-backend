@@ -1,0 +1,30 @@
+{
+    "name": "nwidart/pengajuansurat",
+    "description": "",
+    "authors": [
+        {
+            "name": "Nicolas Widart",
+            "email": "n.widart@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\PengajuanSurat\\": "app/",
+            "Modules\\PengajuanSurat\\Database\\Factories\\": "database/factories/",
+            "Modules\\PengajuanSurat\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\PengajuanSurat\\Tests\\": "tests/"
+        }
+    }
+}

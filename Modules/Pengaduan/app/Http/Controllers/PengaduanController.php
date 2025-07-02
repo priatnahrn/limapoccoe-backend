@@ -1,0 +1,242 @@
+<?php
+
+namespace Modules\Pengaduan\Http\Controllers;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Modules\Pengaduan\Models\Pengaduan;
+use Modules\Pengaduan\Http\Resources\AduanResource;
+use Tymon\JWTAuth\Facades\JWTAuth;
+
+class PengaduanController extends Controller
+{
+
+    public function create(Request $request)
+    {
+        $user = JWTAuth::parseToken()->authenticate();
+
+        if (!$user) {
+            return response()->json(['error' => 'User belum login. Silakan login terlebih dahulu'], 401);
+        }
+
+        if (!$user->hasRole('masyarakat')) {
+            return response()->json(['error' => 'Akses ditolak. Anda bukan masyarakat'], 401);
+        }
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
+            'location' => 'nullable|string|max:255',
+            'category' => 'required|in:Administrasi,Infrastruktur & Fasilitas,Kesehatan,Keamanan & Ketertiban,Pendidikan,Lingkungan,Kinerja Perangkat Desa,Ekonomi & Pekerjaan,Teknologi,Lainnya',
+            'evidence' => 'nullable|file|mimes:jpg,jpeg,png|max:2048',
+        ]);
+
+        // Simpan file evidence jika ada
+        $evidencePath = null;
+        if ($request->hasFile('evidence')) {
+            $evidencePath = $request->file('evidence')->store('aduan/evidence', 'public');
+        }
+
+        $aduan = Pengaduan::create([
+            'user_id' => $user->id,
+            'title' => $validated['title'],
+            'content' => $validated['content'],
+            'location' => $validated['location'] ?? null,
+            'category' => $validated['category'] ?? null,
+            'evidence' => $evidencePath,
+            'status' => 'waiting',
+        ]);
+
+        return response()->json([
+            'message' => 'Aduan berhasil dibuat.',
+            'aduan' => $aduan
+        ], 201);
+    }
+
+    public function getAllAduan()
+    {
+        $user = JWTAuth::parseToken()->authenticate();
+
+        if (!$user) {
+            return response()->json(['error' => 'User belum login. Silakan login terlebih dahulu'], 401);
+        }
+
+        // Masyarakat: hanya lihat aduan miliknya
+        if ($user->hasRole('masyarakat')) {
+            $aduan = Pengaduan::where('user_id', $user->id)->get();
+        }
+        // Admin atau Kepala Desa: lihat semua
+        elseif ($user->hasAnyRole(['staff-desa', 'kepala-desa'])) {
+            $aduan = Pengaduan::with('user')->get();
+        }
+        // Role lain: tidak diizinkan
+        else {
+            return response()->json(['error' => 'Akses ditolak.'], 403);
+        }
+
+        if ($aduan->isEmpty()) {
+            return response()->json(['message' => 'Tidak ada aduan yang ditemukan'], 404);
+        }
+
+        return response()->json([
+            'message' => 'Berhasil mendapatkan daftar aduan.',
+            'aduan' => $aduan,
+        ], 200);
+    }
+
+     public function getDetailAduan($aduan_id)
+    {
+       $user = JWTAuth::parseToken()->authenticate();
+
+        if (!$user) {
+            return response()->json(['error' => 'User belum login. Silakan login terlebih dahulu'], 401);
+        }
+
+        if($user->hasRole('masyarakat')) {
+            $aduan = Pengaduan::where('id', $aduan_id)->where('user_id', $user->id)->first();
+        } elseif ($user->hasAnyRole(['super-admin', 'staff-desa'])) {
+            $aduan = Pengaduan::with('user')->where('id', $aduan_id)->first();
+        } else {
+            return response()->json(['error' => 'Akses ditolak. Anda bukan admin atau masyarakat'], 403);
+        }
+
+        if (!$aduan) {
+            return response()->json(['error' => 'Aduan tidak ditemukan'], 404);
+        }
+
+        return response()->json([
+            'message' => 'Berhasil mendapatkan detail aduan.',
+            'aduan' => $aduan,
+        ], 200);
+    }
+
+
+
+
+    // public function getDetailAduanUser($aduan_id)
+    // {
+    //     $user = JWTAuth::parseToken()->authenticate();
+
+    //     if (!$user) {
+    //         return response()->json(['error' => 'User belum login. Silakan login terlebih dahulu'], 401);
+    //     }
+
+    //     if (!$user->hasRole('masyarakat')) {
+    //         return response()->json(['error' => 'Akses ditolak. Anda bukan masyarakat'], 401);
+    //     }
+
+    //     $aduan = Aduan::where('id', $aduan_id)->where('user_id', $user->id)->first();
+
+    //     return response()->json([
+    //         'message' => 'Berhasil mendapatkan detail aduan.',
+    //         'aduan' => new AduanResource($aduan)
+    //     ], 200);
+    // }
+
+    // public function getAllAduan()
+    // {
+    //     $admin = JWTAuth::parseToken()->authenticate();
+    //     if (!$admin) {
+    //         return response()->json(['error' => 'Admin belum login. Silakan login terlebih dahulu'], 401);
+    //     }
+
+    //     if (!$admin->hasAnyRole(['super_admin', 'staff_desa'])) {
+    //         return response()->json(['error' => 'Akses ditolak. Anda bukan admin'], 403);
+    //     }
+
+    //     $aduan = Aduan::with('user')->get();
+
+    //     return response()->json([
+    //         'message' => 'Berhasil mendapatkan semua aduan.',
+    //         'aduan' => AduanResource::collection($aduan)
+    //     ], 200);
+    // }
+
+    public function updatePengaduan(Request $request, $aduan_id)
+    {
+        $user = JWTAuth::parseToken()->authenticate();
+
+        if (!$user) {
+            return response()->json(['error' => 'User belum login. Silakan login terlebih dahulu'], 401);
+        }
+
+        if(!user->hasRole('staff-desa')) {
+            return response()->json(['error' => 'Akses ditolak. Anda bukan admin'], 403);
+        }
+
+        $aduan = Pengaduan::find($aduan_id);
+        if (!$aduan) {
+            return response()->json(['error' => 'Aduan tidak ditemukan'], 404);
+        }
+
+        $aduan->update($request->all());
+
+        return response()->json([
+            'message' => 'Berhasil memperbarui aduan.',
+            'aduan' => new PengaduanResource($aduan)
+        ], 200);
+
+    }
+       public function processedStatusAduan(Request $request, $aduan_id)
+    {
+        $validated = $request->validate([
+            'response' => 'required|string',
+        ]);
+
+        $admin = JWTAuth::parseToken()->authenticate();
+        if (!$admin) {
+            return response()->json(['error' => 'Admin belum login. Silakan login terlebih dahulu'], 401);
+        }
+
+        if (!$admin->hasAnyRole(['super_admin', 'staff_desa'])) {
+            return response()->json(['error' => 'Akses ditolak. Anda bukan admin'], 403);
+        }
+
+        $aduan = Aduan::with('user', 'responseBy')->where('id', $aduan_id)->first();
+
+        if (!$aduan) {
+            return response()->json(['error' => 'Aduan tidak ditemukan'], 404);
+        }
+
+
+        $aduan->response = $validated['response'];
+        $aduan->response_by = $admin->id;
+        $aduan->response_date = now();
+        $aduan->status = 'processed';
+        $aduan->save();
+
+
+        return response()->json([
+            'message' => 'Berhasil memproses aduan.',
+            'aduan' => new AduanResource($aduan),
+        ], 200);
+    }
+
+    public function approvedStatusAduan($aduan_id)
+    {
+        $admin = JWTAuth::parseToken()->authenticate();
+        if (!$admin) {
+            return response()->json(['error' => 'Admin belum login. Silakan login terlebih dahulu'], 401);
+        }
+
+        if (!$admin->hasAnyRole(['super_admin', 'staff_desa'])) {
+            return response()->json(['error' => 'Akses ditolak. Anda bukan admin'], 403);
+        }
+
+        $aduan = Aduan::with('user', 'responseBy')->where('id', $aduan_id)->first();
+
+        if (!$aduan) {
+            return response()->json(['error' => 'Aduan tidak ditemukan'], 404);
+        }
+
+        $aduan->status = 'approved';
+        $aduan->save();
+
+        return response()->json([
+            'message' => 'Berhasil memproses aduan.',
+            'aduan' => new AduanResource($aduan),
+        ], 200);
+    }
+
+    
+}
