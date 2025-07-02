@@ -105,6 +105,7 @@ class PengajuanSuratController extends Controller
         return response()->json([
             'message' => 'Berhasil mendapatkan detail pengajuan surat.',
             'pengajuan_surat' => $pengajuanSurat,
+            
         ], 200);
     }
 

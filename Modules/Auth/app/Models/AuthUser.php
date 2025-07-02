@@ -11,6 +11,7 @@ use Spatie\Permission\Traits\HasPermissions;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Modules\Auth\Database\Factories\AuthUserFactory;
 use Modules\Profile\Models\ProfileMasyarakat;
+use Modules\Profile\Models\ProfileStaff;
 
 class AuthUser extends Authenticatable implements JWTSubject
 {
@@ -120,7 +121,12 @@ class AuthUser extends Authenticatable implements JWTSubject
 
     public function profileMasyarakat()
     {
-        return $this->hasOne(ProfileMasyarakat::class);
+        return $this->hasOne(ProfileMasyarakat::class, 'user_id');
+    }
+
+    public function profileStaff()
+    {
+        return $this->hasOne(ProfileStaff::class, 'user_id');
     }
 
 
