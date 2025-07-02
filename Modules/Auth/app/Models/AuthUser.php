@@ -120,7 +120,7 @@ class AuthUser extends Authenticatable implements JWTSubject
 
     public function profileMasyarakat()
     {
-        return $this->hasOne(ProfileMasyarakat::class, 'user_id', 'id');
+        return $this->hasOne(ProfileMasyarakat::class);
     }
 
 
