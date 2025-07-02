@@ -8,13 +8,16 @@ Route::middleware(['auth:api'])->group(function () {
     Route::prefix('surat')->group(function () {
         Route::get('/', [SuratController::class, 'getAllSurat']);
         Route::get('/{slug}', [SuratController::class, 'getDetailSurat']);
-    });
 
-    Route::prefix('pengajuan-surat')->group(function () {
-        Route::post('/{suratId}', [PengajuanSuratController::class, 'ajukanSurat']);
-        Route::get('/{suratId}', [PengajuanSuratController::class, 'getPengajuanSurat']);
-        Route::get('/{id}', [PengajuanSuratController::class, 'getDetailPengajuan']);
-        Route::put('/{id}', [PengajuanSuratController::class, 'updatePengajuan']);
-        Route::delete('/{id}', [PengajuanSuratController::class, 'deletePengajuan']);
+        // Rute pengajuan yang berada di dalam surat/{slug}
+        Route::prefix('{slug}/pengajuan')->group(function () {
+            Route::post('/', [PengajuanSuratController::class, 'ajukanSurat']);
+            Route::get('/', [PengajuanSuratController::class, 'getPengajuanSurat']);
+            Route::get('/{id}', [PengajuanSuratController::class, 'getDetailPengajuanSurat']);
+        });
+
+        // Rute yang tidak tergantung slug
+        Route::put('/pengajuan/{id}', [PengajuanSuratController::class, 'updatePengajuan']);
+        Route::delete('/pengajuan/{id}', [PengajuanSuratController::class, 'deletePengajuan']);
     });
 });
