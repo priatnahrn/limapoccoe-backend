@@ -13,21 +13,21 @@ services:
     networks:
       - limapoccoe-backend-network
   
-    nginx:
-      image: nginx:alpine
-      container_name: limapoccoe-backend-nginx
-      volumes:
-        - .:/var/www/html
-        - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
-        - /etc/letsencrypt:/etc/letsencrypt:ro    # ✅ mount sertifikat SSL
-      ports:
-        - "80:80"
-        - "443:443"                                # ✅ buka port 443
-      depends_on:
-        - app
-      restart: always
-      networks:
-        - limapoccoe-backend-network
+  nginx:
+    image: nginx:alpine
+    container_name: limapoccoe-backend-nginx
+    volumes:
+      - .:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - /etc/letsencrypt:/etc/letsencrypt:ro    
+    ports:
+      - "80:80"
+      - "443:443"                                
+    depends_on:
+      - app
+    restart: always
+    networks:
+      - limapoccoe-backend-network
 
 
   mysql:
