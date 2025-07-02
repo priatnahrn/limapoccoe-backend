@@ -14,7 +14,7 @@ class Ajuan extends Model
 {
      use HasFactory, HasUuids;
 
-    protected $table = 'ajuan_surats';
+    protected $table = 'ajuans';
 
     public $incrementing = false;
     protected $keyType = 'string';

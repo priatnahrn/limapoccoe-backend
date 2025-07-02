@@ -5,10 +5,11 @@ namespace Modules\PengajuanSurat\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Modules\PengajuanSurat\Models\PengajuanSurat;
+use Modules\PengajuanSurat\Models\Ajuan;
 use Modules\PengajuanSurat\Models\Surat;
 use Modules\PengajuanSurat\Models\LogActivity;
 use Tymon\JWTAuth\Facades\JWTAuth;
+
 
 class PengajuanSuratController extends Controller
 {
@@ -37,7 +38,7 @@ class PengajuanSuratController extends Controller
             'lampiran.*' => 'file|mimes:jpg,jpeg,png,pdf|max:5120', // Maksimal 2MB
         ]);
 
-        $pengajuanSurat = PengajuanSurat::create([
+        $pengajuanSurat = Ajuan::create([
             'user_id' => $user->id,
             'surat_id' => $suratId,
             'data_surat' => isset($validatedData['data_surat']) ? json_encode($validatedData['data_surat']) : null,
@@ -71,4 +72,32 @@ class PengajuanSuratController extends Controller
             'ajuan_surat' => $pengajuanSurat,
         ], 200);
     }
+
+    public function getPengajuanSurat($suratId)
+    {
+        $user = JWTAuth::parseToken()->authenticate();
+        if (!$user) {
+            return response()->json(['error' => 'User belum login. Silakan login terlebih dahulu'], 401);
+        }
+
+       if($user->hasRole('masyarakat')) {
+            $pengajuanSurat = Ajuan::where('user_id', $user->id)
+                ->where('surat_id', $suratId)
+                ->get();
+        } elseif ($user->hasAnyRole(['staff-desa'])) {
+            $pengajuanSurat = Ajuan::with('user')->where('surat_id', $suratId)->get();
+        } else {
+            return response()->json(['error' => 'Akses ditolak. Anda tidak memiliki izin untuk mengakses pengajuan surat ini'], 403);
+        }
+
+        if ($pengajuanSurat->isEmpty()) {
+            return response()->json(['message' => 'Tidak ada pengajuan surat yang ditemukan'], 200);
+        }
+        
+        return response()->json([
+            'message' => 'Berhasil mendapatkan detail pengajuan surat.',
+            'pengajuan_surat' => $pengajuanSurat,
+        ], 200);
+    }
+    
 }
