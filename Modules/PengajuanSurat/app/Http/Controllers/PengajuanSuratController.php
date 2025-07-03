@@ -14,19 +14,13 @@ use Carbon\Carbon;
 
 class PengajuanSuratController extends Controller
 {
+    
+
     public function ajukanSurat(Request $request, $slug)
     {
-        $user = JWTAuth::parseToken()->authenticate();
-        if (!$user) {
+        $authUser = JWTAuth::parseToken()->authenticate();
+        if (!$authUser) {
             return response()->json(['error' => 'User belum login. Silakan login terlebih dahulu'], 401);
-        }
-
-        if (!$user->hasRole('masyarakat')) {
-            return response()->json(['error' => 'Akses ditolak. Anda bukan masyarakat'], 403);
-        }
-
-        if (!$user->is_profile_complete) {
-            return response()->json(['error' => 'Profil belum lengkap. Silakan lengkapi profil terlebih dahulu'], 400);
         }
 
         $surat = Surat::where('slug', $slug)->first();
@@ -37,16 +31,37 @@ class PengajuanSuratController extends Controller
         $validatedData = $request->validate([
             'data_surat' => 'required|array',
             'lampiran' => 'nullable|array',
-            'lampiran.*' => 'file|mimes:jpg,jpeg,png,pdf|max:5120', // 5MB
+            'lampiran.*' => 'file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'user_id' => 'required_if:role,staff-desa|exists:users,id', // hanya untuk staff-desa
         ]);
 
+        // Role: masyarakat
+        if ($authUser->hasRole('masyarakat')) {
+            if (!$authUser->is_profile_complete) {
+                return response()->json(['error' => 'Profil belum lengkap. Silakan lengkapi profil terlebih dahulu'], 400);
+            }
+
+            $targetUser = $authUser;
+        } elseif ($authUser->hasRole('staff-desa')) {
+            $targetUser =AuthUser::find($validatedData['user_id']);
+
+            if (!$targetUser || !$targetUser->hasRole('masyarakat')) {
+                return response()->json(['error' => 'User yang dipilih bukan masyarakat'], 400);
+            }
+        }
+        else {
+            return response()->json(['error' => 'Akses ditolak. Anda tidak berhak mengajukan surat'], 403);
+        }
+
+        // Simpan ajuan
         $pengajuanSurat = Ajuan::create([
-            'user_id' => $user->id,
+            'user_id' => $targetUser->id,
             'surat_id' => $surat->id,
             'data_surat' => json_encode($validatedData['data_surat']),
             'status' => 'processed',
         ]);
 
+        // Simpan lampiran jika ada
         if (isset($validatedData['lampiran'])) {
             foreach ($validatedData['lampiran'] as $file) {
                 $path = $file->store('lampiran', 'public');
@@ -56,17 +71,14 @@ class PengajuanSuratController extends Controller
             }
         }
 
+        // Log aktivitas
         LogActivity::create([
             'id' => Str::uuid(),
-            'user_id' => $user->id,
+            'user_id' => $authUser->id,
             'activity_type' => 'ajuan_surat',
-            'description' => 'Surat dengan nama ' . $surat->nama_surat . ' telah diajukan.',
+            'description' => 'Surat "' . $surat->nama_surat . '" diajukan untuk ' . $targetUser->name,
             'ip_address' => $request->ip(),
         ]);
-
-        if (!$pengajuanSurat) {
-            return response()->json(['error' => 'Gagal mengajukan surat'], 500);
-        }
 
         return response()->json([
             'message' => 'Surat berhasil diajukan.',
