@@ -18,7 +18,6 @@ use Modules\Auth\Models\AuthUser;
 class PengajuanSuratController extends Controller
 {
     
-
     public function ajukanSurat(Request $request, $slug)
     {
         $authUser = JWTAuth::parseToken()->authenticate();
@@ -30,8 +29,6 @@ class PengajuanSuratController extends Controller
             return response()->json(['error' => 'Akses ditolak. Anda tidak memiliki izin untuk mengajukan surat'], 403);
         }
 
-        
-
         $surat = Surat::where('slug', $slug)->first();
         if (!$surat) {
             return response()->json(['error' => 'Surat tidak ditemukan'], 404);
@@ -41,41 +38,43 @@ class PengajuanSuratController extends Controller
             'data_surat' => 'required|array',
             'lampiran' => 'nullable|array',
             'lampiran.*' => 'file|mimes:jpg,jpeg,png,pdf|max:5120',
-            'user_id' => 'required_if:role,staff-desa|exists:users,id',
         ]);
 
         $ajuan = Ajuan::create([
-            'user_id' => $authUser->id,
+            'user_id' => $authUser->id, // pencatat pengaju, bukan yang diajukan
             'surat_id' => $surat->id,
             'data_surat' => json_encode($validatedData['data_surat']),
             'status' => 'processed',
         ]);
 
-
         // Simpan lampiran jika ada
         if (isset($validatedData['lampiran'])) {
             foreach ($validatedData['lampiran'] as $file) {
                 $path = $file->store('lampiran', 'public');
-                $pengajuanSurat->lampiran()->create([
+                $ajuan->lampiran()->create([
                     'file_path' => $path,
                 ]);
             }
         }
+
+        // Ambil nama dari data_surat untuk keperluan log
+        $namaPemohon = $validatedData['data_surat']['nama_lengkap'] ?? 'tidak diketahui';
 
         // Log aktivitas
         LogActivity::create([
             'id' => Str::uuid(),
             'user_id' => $authUser->id,
             'activity_type' => 'ajuan_surat',
-            'description' => 'Surat "' . $surat->nama_surat . '" diajukan untuk ' . $targetUser->name,
+            'description' => 'Surat "' . $surat->nama_surat . '" diajukan untuk ' . $namaPemohon,
             'ip_address' => $request->ip(),
         ]);
 
         return response()->json([
             'message' => 'Surat berhasil diajukan.',
-            'ajuan_surat' => $pengajuanSurat,
+            'ajuan_surat' => $ajuan,
         ], 200);
     }
+
 
     public function getPengajuanSurat($slug)
     {
