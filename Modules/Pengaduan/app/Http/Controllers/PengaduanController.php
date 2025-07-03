@@ -52,7 +52,7 @@ class PengaduanController extends Controller
         LogActivity::create([
             'id' => Str::uuid(),
             'user_id' => $user->id,
-            'activity' => 'created_aduan',
+            'activity_type' => 'created_aduan',
             'description' => "Aduan ID {$aduan->id} telah dibuat oleh {$user->name}",
             'ip_address' => $request->ip(),
             'created_at' => now(),
@@ -92,7 +92,7 @@ class PengaduanController extends Controller
         // Log activity
         LogActivity::create([
             'user_id' => $user->id,
-            'activity' => 'viewed_all_aduan',
+            'activity_type' => 'viewed_all_aduan',
             'description' => "Aduan telah dilihat oleh {$user->name}",
             'ip_address' => request()->ip(),
             'created_at' => now(),
@@ -127,7 +127,7 @@ class PengaduanController extends Controller
         LogActivity::create([
             'id' => Str::uuid(),
             'user_id' => $user->id,
-            'activity' => 'viewed aduan',
+            'activity_type' => 'viewed-aduan',
             'description' => "Aduan ID {$aduan->id} telah dilihat oleh {$user->name}",
             'ip_address' => request()->ip(),
             'created_at' => now(),
@@ -175,7 +175,7 @@ class PengaduanController extends Controller
         LogActivity::create([
             'id' => Str::uuid(),
             'user_id' => $admin->id,
-            'activity' => 'processed aduan',
+            'activity_type' => 'processed-aduan',
             'description' => "Aduan ID {$aduan->id} telah diproses oleh {$admin->name}",
             'ip_address' => $request->ip(),
             'created_at' => now(),
@@ -215,6 +215,7 @@ class PengaduanController extends Controller
         LogActivity::create([
             'id' => Str::uuid(),
             'user_id' => $admin->id,
+            'activity_type' => 'approved_aduan',
             'activity' => 'approved aduan',
             'description' => "Aduan ID {$aduan->id} telah disetujui oleh {$admin->name}",
             'created_at' => now(),
