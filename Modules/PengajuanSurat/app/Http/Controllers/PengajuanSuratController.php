@@ -9,6 +9,7 @@ use Modules\PengajuanSurat\Models\Ajuan;
 use Modules\PengajuanSurat\Models\Surat;
 use App\Models\LogActivity;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use Carbon\Carbon;
 
 
 class PengajuanSuratController extends Controller
@@ -147,6 +148,109 @@ class PengajuanSuratController extends Controller
     }
 
 
-   public function confirmedPengajuan()
+   
+    public function fillNumber(Request $request, $slug, $ajuanId){
+        $user = JWTAuth::parseToken()->authenticate();
+
+        if (!$user->hasRole('staff-desa')) {
+            return response()->json(['error' => 'Akses ditolak. Anda tidak memiliki izin untuk mengisi nomor pengajuan surat ini'], 403);
+        }
+
+        $validated = $request->validate([
+            'nomor_surat' => 'required|string|max:255',
+        ]);
+
+        $pengajuanSurat = Ajuan::with(['user', 'surat'])
+            ->where('id', $ajuanId)
+            ->whereHas('surat', function ($query) use ($slug) {
+                $query->where('slug', $slug);
+            })
+            ->first();
+
+        if (!$pengajuanSurat) {
+            return response()->json(['error' => 'Pengajuan surat tidak ditemukan'], 404);
+        }
+
+        $surat = Surat::where('slug', $slug)->first();
+        $kodeSurat = $surat ? $surat->kode_surat : 'XXX';
+
+        $kodeWilayah = '10.2003';
+        $nomorUrutManual = $validated['nomor_surat'];
+        $bulanRomawi = $this->toRoman(Carbon::now()->month);
+        $tahun = Carbon::now()->year;
+
+        $nomorSurat = $nomorUrutManual . '/' . $kodeSurat . '/' . $kodeWilayah . '/' . $bulanRomawi . '/' . $tahun;
+
+        $pengajuanSurat->nomor_surat = $nomorSurat;
+        $pengajuanSurat->save();
+
+        return response()->json([
+            'message' => 'Nomor surat berhasil diisi.',
+            'pengajuan_surat' => $pengajuanSurat,
+        ], 200);
+    }
+
+
+    private function toRoman($number){
+        $map = [
+            'I',
+            'II',
+            'III',
+            'IV',
+            'V',
+            'VI',
+            'VII',
+            'VIII',
+            'IX',
+            'X',
+            'XI',
+            'XII',
+        ];
+        return $map[$number-1] ?? $number;
+    }
+
+
+   public function confirmedStatusPengajuan($slug, $ajuanId){
+        $user = JWTAuth::parseToken()->authenticate();
+
+        if (!$user) {
+            return response()->json(['error' => 'User belum login. Silakan login terlebih dahulu'], 401);
+        }
+
+        if (!$user->hasRole('staff-desa')) {
+            return response()->json(['error' => 'Akses ditolak. Anda tidak memiliki izin untuk mengonfirmasi pengajuan surat ini'], 403);
+        }
+
+        $pengajuanSurat = Ajuan::with(['user', 'surat'])
+            ->where('id', $ajuanId)
+            ->whereHas('surat', function ($query) use ($slug) {
+                $query->where('slug', $slug);
+            })
+            ->first();
+
+        if (!$pengajuanSurat) {
+            return response()->json(['error' => 'Pengajuan surat tidak ditemukan'], 404);
+        }
+
+        if ($pengajuanSurat->status !== 'processed') {
+            return response()->json(['error' => 'Pengajuan surat tidak dalam status yang dapat dikonfirmasi'], 400);
+        }
+
+        $pengajuanSurat->status = 'confirmed';
+        $pengajuanSurat->save();
+
+        LogActivity::create([
+            'id' => Str::uuid(),
+            'user_id' => $user->id,
+            'activity_type' => 'konfirmasi_pengajuan_surat',
+            'description' => 'Pengajuan surat dengan ID ' . $pengajuanSurat->id . ' telah dikonfirmasi.',
+            'ip_address' => request()->ip(),
+        ]);
+
+        return response()->json([
+            'message' => 'Pengajuan surat berhasil dikonfirmasi.',
+            'pengajuan_surat' => $pengajuanSurat,
+        ], 200);    
+   }
     
 }

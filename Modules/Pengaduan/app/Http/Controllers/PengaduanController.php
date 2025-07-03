@@ -145,7 +145,7 @@ class PengaduanController extends Controller
 
         return response()->json([
             'message' => 'Berhasil memproses aduan.',
-            'aduan' => new AduanResource($aduan),
+            'aduan' => $aduan,
         ], 200);
     }
 
@@ -175,7 +175,7 @@ class PengaduanController extends Controller
 
         return response()->json([
             'message' => 'Berhasil memproses aduan.',
-            'aduan' => new AduanResource($aduan),
+            'aduan' => $aduan
         ], 200);
     }
 
