@@ -14,6 +14,7 @@ Route::middleware(['auth:api'])->group(function () {
             Route::post('/', [PengajuanSuratController::class, 'ajukanSurat']);
             Route::get('/', [PengajuanSuratController::class, 'getPengajuanSurat']);
             Route::get('/{id}', [PengajuanSuratController::class, 'getDetailPengajuanSurat']);
+            Route::post('/status/{status}', [PengajuanSuratController::class, 'updateStatusPengajuan']);
         });
 
         // Rute yang tidak tergantung slug

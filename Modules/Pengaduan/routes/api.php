@@ -8,7 +8,7 @@ Route::middleware(['auth:api'])->group(function () {
         Route::post('/', [PengaduanController::class, 'create']);
         Route::get('/', [PengaduanController::class, 'getAllAduan']);
         Route::get('/{id}', [PengaduanController::class, 'getDetailAduan']);
-        Route::put('/{id}', [PengaduanController::class, 'updatePengaduan']);
-        Route::delete('/{id}', [PengaduanController::class, 'deletePengaduan']);
+        Route::put('/{id}/confirmed', [PengaduanController::class, 'confirmedPengaduan']);
+        Route::put('/{id}/approved', [PengaduanController::class, 'approvedPengaduan']);
     });
 });

@@ -110,6 +110,79 @@ class PengaduanController extends Controller
         ], 200);
     }
 
+    public function processedStatusAduan($aduan_id, Request $request){
+        
+        
+        $user = JWTAuth::parseToken()->authenticate();
+
+        if (!$user->hasRole('staff-desa')) {
+            return response()->json(['error' => 'Akses ditolak. Anda bukan admin'], 403);
+        }
+
+        $validated = $request->validate([
+            'response' => 'required|string',
+        ]);
+
+        
+
+        $aduan = Pengaduan::with('user', 'responseBy')->where('id', $aduan_id)->first();
+
+        if (!$aduan) {
+            return response()->json(['error' => 'Aduan tidak ditemukan'], 404);
+        }
+
+        if($aduan->status !== 'waiting') {
+            return response()->json(['error' => 'Aduan sudah diproses sebelumnya'], 400);
+        }
+
+        $aduan->response = $validated['response'];
+        $aduan->response_by = $user->id;
+        $aduan->response_date = now();
+        $aduan->status = 'processed';
+        $aduan->save();
+
+        return response()->json([
+            'message' => 'Berhasil memproses aduan.',
+            'aduan' =>$aduan
+        ], 200);
+    }
+
+
+    public function approvedStatusAduan($aduan_id)
+    {
+        $user = JWTAuth::parseToken()->authenticate();
+
+        if (!$user) {
+            return response()->json(['error' => 'User belum login. Silakan login terlebih dahulu'], 401);
+        }
+
+        if (!$user->hasRole('staff-desa')) {
+            return response()->json(['error' => 'Akses ditolak. Anda bukan admin'], 403);
+        }
+
+        $aduan = Pengaduan::with('user', 'responseBy')->where('id', $aduan_id)->first();
+
+        if (!$aduan) {
+            return response()->json(['error' => 'Aduan tidak ditemukan'], 404);
+        }
+
+        if($aduan->status !== 'processed') {
+            return response()->json(['error' => 'Aduan belum diproses sebelumnya'], 400);
+        }
+
+        $aduan->status = 'approved';
+        $aduan->save();
+
+        return response()->json([
+            'message' => 'Berhasil menyetujui aduan.',
+            'aduan' => $aduan,
+        ], 200);
+    }
+
+
+
+
+
 
 
 
