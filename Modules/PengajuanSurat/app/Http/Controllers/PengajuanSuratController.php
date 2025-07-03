@@ -233,6 +233,54 @@ class PengajuanSuratController extends Controller
         return $map[$number-1] ?? $number;
     }
 
+    public function previewSurat($surat_id, $ajuan_id)
+    {
+        $token = request()->query('token'); // 🔑 Ambil token dari query string
+
+        if (!$token) {
+            return response('Unauthorized: token tidak ditemukan', 401);
+        }
+
+        try {
+            $admin = JWTAuth::setToken($token)->authenticate();
+        } catch (\Exception $e) {
+            return response('Unauthorized: token tidak valid', 401);
+        }
+
+        if (!$admin->hasAnyRole(['super_admin', 'staff_desa', 'kepala_desa'])) {
+            return response('Forbidden: bukan admin', 403);
+        }
+
+        $ajuanSurat = AjuanSurat::with(['user.profile', 'surat'])
+            ->where('surat_id', $surat_id)
+            ->where('id', $ajuan_id)
+            ->first();
+
+        if (!$ajuanSurat) {
+            return response('Not Found: data tidak ditemukan', 404);
+        }
+
+        $dataSurat = is_array($ajuanSurat->data_surat)
+            ? $ajuanSurat->data_surat
+            : json_decode($ajuanSurat->data_surat, true);
+
+        $template = 'surat.templates.' . strtolower($ajuanSurat->surat->kode_surat ?? 'default');
+
+        if (!view()->exists($template)) {
+            return response("Template surat untuk kode tidak ditemukan", 500);
+        }
+
+        $html = View::make($template, [
+            'ajuan' => $ajuanSurat,
+            'user' => $ajuanSurat->user,
+            'profile' => $ajuanSurat->user->profile,
+            'data' => $dataSurat,
+        ])->render();
+
+        return response($html, 200)->header('Content-Type', 'text/html');
+    }
+
+
 
    public function confirmedStatusPengajuan($slug, $ajuanId){
         $user = JWTAuth::parseToken()->authenticate();

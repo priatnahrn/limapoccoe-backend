@@ -155,7 +155,7 @@ class PengaduanController extends Controller
             return response()->json(['error' => 'Akses ditolak. Anda bukan admin'], 403);
         }
 
-        $aduan = Aduan::with('user', 'responseBy')->where('id', $aduan_id)->first();
+        $aduan = Pengaduan::with('user', 'responseBy')->where('id', $aduan_id)->first();
 
         if (!$aduan) {
             return response()->json(['error' => 'Aduan tidak ditemukan'], 404);
@@ -198,7 +198,7 @@ class PengaduanController extends Controller
             return response()->json(['error' => 'Akses ditolak. Anda bukan admin'], 403);
         }
 
-        $aduan = Aduan::with('user', 'responseBy')->where('id', $aduan_id)->first();
+        $aduan = Pengaduan::with('user', 'responseBy')->where('id', $aduan_id)->first();
 
         if (!$aduan) {
             return response()->json(['error' => 'Aduan tidak ditemukan'], 404);
@@ -227,6 +227,7 @@ class PengaduanController extends Controller
     }
 
 
+    
    
     
 }
