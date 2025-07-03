@@ -140,7 +140,7 @@ class PengaduanController extends Controller
     }
 
     
-       public function processedStatusAduan(Request $request, $aduan_id)
+    public function processedStatusAduan(Request $request, $aduan_id)
     {
         $validated = $request->validate([
             'response' => 'required|string',

@@ -9,6 +9,6 @@ Route::middleware(['auth:api'])->group(function () {
         Route::get('/', [PengaduanController::class, 'getAllAduan']);
         Route::get('/{id}', [PengaduanController::class, 'getDetailAduan']);
         Route::put('/{id}/processed', [PengaduanController::class, 'processedStatusAduan']);
-        Route::put('/{id}/approved', [PengaduanController::class, 'approvedStatusPengaduan']);
+        Route::put('/{id}/approved', [PengaduanController::class, 'approvedStatusAduan']);
     });
 });
