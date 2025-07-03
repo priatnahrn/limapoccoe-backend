@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Modules\Pengaduan\Models\Pengaduan;
 use Modules\Pengaduan\Http\Resources\AduanResource;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use App\Models\LogActivity;
+use Illuminate\Support\Str;
 
 class PengaduanController extends Controller
 {
@@ -47,6 +49,15 @@ class PengaduanController extends Controller
             'status' => 'waiting',
         ]);
 
+        LogActivity::create([
+            'id' => Str::uuid(),
+            'user_id' => $user->id,
+            'activity' => 'created_aduan',
+            'description' => "Aduan ID {$aduan->id} telah dibuat oleh {$user->name}",
+            'ip_address' => $request->ip(),
+            'created_at' => now(),
+        ]);
+
         return response()->json([
             'message' => 'Aduan berhasil dibuat.',
             'aduan' => $aduan
@@ -78,6 +89,15 @@ class PengaduanController extends Controller
             return response()->json(['message' => 'Tidak ada aduan yang ditemukan'], 404);
         }
 
+        // Log activity
+        LogActivity::create([
+            'user_id' => $user->id,
+            'activity' => 'viewed_all_aduan',
+            'description' => "Aduan telah dilihat oleh {$user->name}",
+            'ip_address' => request()->ip(),
+            'created_at' => now(),
+        ]);
+
         return response()->json([
             'message' => 'Berhasil mendapatkan daftar aduan.',
             'aduan' => $aduan,
@@ -104,6 +124,15 @@ class PengaduanController extends Controller
             return response()->json(['error' => 'Aduan tidak ditemukan'], 404);
         }
 
+        LogActivity::create([
+            'id' => Str::uuid(),
+            'user_id' => $user->id,
+            'activity' => 'viewed aduan',
+            'description' => "Aduan ID {$aduan->id} telah dilihat oleh {$user->name}",
+            'ip_address' => request()->ip(),
+            'created_at' => now(),
+        ]);
+
         return response()->json([
             'message' => 'Berhasil mendapatkan detail aduan.',
             'aduan' => $aduan,
@@ -122,7 +151,7 @@ class PengaduanController extends Controller
             return response()->json(['error' => 'Admin belum login. Silakan login terlebih dahulu'], 401);
         }
 
-        if (!$admin->hasAnyRole(['super_admin', 'staff_desa'])) {
+        if (!$admin->hasRole(['staff-desa'])) {
             return response()->json(['error' => 'Akses ditolak. Anda bukan admin'], 403);
         }
 
@@ -135,13 +164,22 @@ class PengaduanController extends Controller
             return response()->json(['error' => 'Aduan sudah diproses sebelumnya'], 400);
         }
 
-
+        
         $aduan->response = $validated['response'];
         $aduan->response_by = $admin->id;
         $aduan->response_date = now();
         $aduan->status = 'processed';
         $aduan->save();
-
+        // Log activity
+        
+        LogActivity::create([
+            'id' => Str::uuid(),
+            'user_id' => $admin->id,
+            'activity' => 'processed aduan',
+            'description' => "Aduan ID {$aduan->id} telah diproses oleh {$admin->name}",
+            'ip_address' => $request->ip(),
+            'created_at' => now(),
+        ]);
 
         return response()->json([
             'message' => 'Berhasil memproses aduan.',
@@ -156,7 +194,7 @@ class PengaduanController extends Controller
             return response()->json(['error' => 'Admin belum login. Silakan login terlebih dahulu'], 401);
         }
 
-        if (!$admin->hasAnyRole(['super_admin', 'staff_desa'])) {
+        if (!$admin->hasRole('staff-desa')) {
             return response()->json(['error' => 'Akses ditolak. Anda bukan admin'], 403);
         }
 
@@ -172,6 +210,15 @@ class PengaduanController extends Controller
 
         $aduan->status = 'approved';
         $aduan->save();
+
+
+        LogActivity::create([
+            'id' => Str::uuid(),
+            'user_id' => $admin->id,
+            'activity' => 'approved aduan',
+            'description' => "Aduan ID {$aduan->id} telah disetujui oleh {$admin->name}",
+            'created_at' => now(),
+        ]);
 
         return response()->json([
             'message' => 'Berhasil memproses aduan.',

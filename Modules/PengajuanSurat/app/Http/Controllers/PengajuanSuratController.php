@@ -112,6 +112,14 @@ class PengajuanSuratController extends Controller
             return response()->json(['message' => 'Tidak ada pengajuan surat yang ditemukan'], 200);
         }
 
+        LogActivity::create([
+            'id' => Str::uuid(),
+            'user_id' => $user->id,
+            'activity_type' => 'get_pengajuan_surat',
+            'description' => 'Daftar pengajuan surat dengan slug ' . $slug . ' telah diakses.',
+            'ip_address' => request()->ip(),
+        ]);
+
         return response()->json([
             'message' => 'Berhasil mendapatkan daftar pengajuan surat.',
             'pengajuan_surat' => $pengajuanSurat,
@@ -140,6 +148,14 @@ class PengajuanSuratController extends Controller
         if (!$pengajuanSurat) {
             return response()->json(['error' => 'Pengajuan surat tidak ditemukan'], 404);
         }
+
+        LogActivity::create([
+            'id' => Str::uuid(),
+            'user_id' => $user->id,
+            'activity_type' => 'detail_pengajuan_surat',
+            'description' => 'Detail pengajuan surat dengan ID ' . $pengajuanSurat->id . ' telah diakses.',
+            'ip_address' => request()->ip(),
+        ]);
 
         return response()->json([
             'message' => 'Berhasil mendapatkan detail pengajuan surat.',
@@ -183,6 +199,14 @@ class PengajuanSuratController extends Controller
 
         $pengajuanSurat->nomor_surat = $nomorSurat;
         $pengajuanSurat->save();
+
+        LogActivity::create([
+            'id' => Str::uuid(),
+            'user_id' => $user->id,
+            'activity_type' => 'isi_nomor_surat',
+            'description' => 'Nomor surat dengan ID ' . $pengajuanSurat->id . ' telah diisi.',
+            'ip_address' => request()->ip(),
+        ]);
 
         return response()->json([
             'message' => 'Nomor surat berhasil diisi.',
