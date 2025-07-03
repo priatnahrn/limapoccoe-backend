@@ -10,6 +10,9 @@ use Modules\PengajuanSurat\Models\Surat;
 use App\Models\LogActivity;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\View;
+use Modules\AuthUser\Models\AuthUser;
 
 
 class PengajuanSuratController extends Controller
@@ -41,7 +44,7 @@ class PengajuanSuratController extends Controller
                 return response()->json(['error' => 'Profil belum lengkap. Silakan lengkapi profil terlebih dahulu'], 400);
             }
 
-            $targetUser = $authUser;
+        $targetUser = $authUser;
         } elseif ($authUser->hasRole('staff-desa')) {
             $targetUser =AuthUser::find($validatedData['user_id']);
 
