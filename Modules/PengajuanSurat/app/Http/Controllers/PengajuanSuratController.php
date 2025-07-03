@@ -12,7 +12,7 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View;
-use Modules\AuthUser\Models\AuthUser;
+use Modules\Auth\Models\AuthUser;
 
 
 class PengajuanSuratController extends Controller
@@ -26,6 +26,12 @@ class PengajuanSuratController extends Controller
             return response()->json(['error' => 'User belum login. Silakan login terlebih dahulu'], 401);
         }
 
+        if (!$authUser->hasRole('masyarakat') && !$authUser->hasRole('staff-desa')) {
+            return response()->json(['error' => 'Akses ditolak. Anda tidak memiliki izin untuk mengajukan surat'], 403);
+        }
+
+        
+
         $surat = Surat::where('slug', $slug)->first();
         if (!$surat) {
             return response()->json(['error' => 'Surat tidak ditemukan'], 404);
@@ -35,34 +41,16 @@ class PengajuanSuratController extends Controller
             'data_surat' => 'required|array',
             'lampiran' => 'nullable|array',
             'lampiran.*' => 'file|mimes:jpg,jpeg,png,pdf|max:5120',
-            'user_id' => 'required_if:role,staff-desa|exists:users,id', // hanya untuk staff-desa
+            'user_id' => 'required_if:role,staff-desa|exists:users,id',
         ]);
 
-        // Role: masyarakat
-        if ($authUser->hasRole('masyarakat')) {
-            if (!$authUser->is_profile_complete) {
-                return response()->json(['error' => 'Profil belum lengkap. Silakan lengkapi profil terlebih dahulu'], 400);
-            }
-
-        $targetUser = $authUser;
-        } elseif ($authUser->hasRole('staff-desa')) {
-            $targetUser =AuthUser::find($validatedData['user_id']);
-
-            if (!$targetUser || !$targetUser->hasRole('masyarakat')) {
-                return response()->json(['error' => 'User yang dipilih bukan masyarakat'], 400);
-            }
-        }
-        else {
-            return response()->json(['error' => 'Akses ditolak. Anda tidak berhak mengajukan surat'], 403);
-        }
-
-        // Simpan ajuan
-        $pengajuanSurat = Ajuan::create([
-            'user_id' => $targetUser->id,
+        $ajuan = Ajuan::create([
+            'user_id' => $authUser->id,
             'surat_id' => $surat->id,
             'data_surat' => json_encode($validatedData['data_surat']),
             'status' => 'processed',
         ]);
+
 
         // Simpan lampiran jika ada
         if (isset($validatedData['lampiran'])) {
