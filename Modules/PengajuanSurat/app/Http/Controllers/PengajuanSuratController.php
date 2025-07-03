@@ -29,6 +29,12 @@ class PengajuanSuratController extends Controller
             return response()->json(['error' => 'Akses ditolak. Anda tidak memiliki izin untuk mengajukan surat'], 403);
         }
 
+        if ($authUser->hasRole('masyarakat') && !$authUser->is_profile_complete) {
+            return response()->json([
+                'error' => 'Profil Anda belum lengkap. Harap lengkapi profil terlebih dahulu sebelum mengajukan surat.'
+            ], 422);
+        }
+
         $surat = Surat::where('slug', $slug)->first();
         if (!$surat) {
             return response()->json(['error' => 'Surat tidak ditemukan'], 404);
