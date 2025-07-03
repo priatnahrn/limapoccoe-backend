@@ -110,146 +110,7 @@ class PengaduanController extends Controller
         ], 200);
     }
 
-    public function processedStatusAduan($aduan_id, Request $request){
-        
-        
-        $user = JWTAuth::parseToken()->authenticate();
-
-        if (!$user->hasRole('staff-desa')) {
-            return response()->json(['error' => 'Akses ditolak. Anda bukan admin'], 403);
-        }
-
-        $validated = $request->validate([
-            'response' => 'required|string',
-        ]);
-
-        
-
-        $aduan = Pengaduan::with('user', 'responseBy')->where('id', $aduan_id)->first();
-
-        if (!$aduan) {
-            return response()->json(['error' => 'Aduan tidak ditemukan'], 404);
-        }
-
-        if($aduan->status !== 'waiting') {
-            return response()->json(['error' => 'Aduan sudah diproses sebelumnya'], 400);
-        }
-
-        $aduan->response = $validated['response'];
-        $aduan->response_by = $user->id;
-        $aduan->response_date = now();
-        $aduan->status = 'processed';
-        $aduan->save();
-
-        return response()->json([
-            'message' => 'Berhasil memproses aduan.',
-            'aduan' =>$aduan
-        ], 200);
-    }
-
-
-    public function approvedStatusAduan($aduan_id)
-    {
-        $user = JWTAuth::parseToken()->authenticate();
-
-        if (!$user) {
-            return response()->json(['error' => 'User belum login. Silakan login terlebih dahulu'], 401);
-        }
-
-        if (!$user->hasRole('staff-desa')) {
-            return response()->json(['error' => 'Akses ditolak. Anda bukan admin'], 403);
-        }
-
-        $aduan = Pengaduan::with('user', 'responseBy')->where('id', $aduan_id)->first();
-
-        if (!$aduan) {
-            return response()->json(['error' => 'Aduan tidak ditemukan'], 404);
-        }
-
-        if($aduan->status !== 'processed') {
-            return response()->json(['error' => 'Aduan belum diproses sebelumnya'], 400);
-        }
-
-        $aduan->status = 'approved';
-        $aduan->save();
-
-        return response()->json([
-            'message' => 'Berhasil menyetujui aduan.',
-            'aduan' => $aduan,
-        ], 200);
-    }
-
-
-
-
-
-
-
-
-    // public function getDetailAduanUser($aduan_id)
-    // {
-    //     $user = JWTAuth::parseToken()->authenticate();
-
-    //     if (!$user) {
-    //         return response()->json(['error' => 'User belum login. Silakan login terlebih dahulu'], 401);
-    //     }
-
-    //     if (!$user->hasRole('masyarakat')) {
-    //         return response()->json(['error' => 'Akses ditolak. Anda bukan masyarakat'], 401);
-    //     }
-
-    //     $aduan = Aduan::where('id', $aduan_id)->where('user_id', $user->id)->first();
-
-    //     return response()->json([
-    //         'message' => 'Berhasil mendapatkan detail aduan.',
-    //         'aduan' => new AduanResource($aduan)
-    //     ], 200);
-    // }
-
-    // public function getAllAduan()
-    // {
-    //     $admin = JWTAuth::parseToken()->authenticate();
-    //     if (!$admin) {
-    //         return response()->json(['error' => 'Admin belum login. Silakan login terlebih dahulu'], 401);
-    //     }
-
-    //     if (!$admin->hasAnyRole(['super_admin', 'staff_desa'])) {
-    //         return response()->json(['error' => 'Akses ditolak. Anda bukan admin'], 403);
-    //     }
-
-    //     $aduan = Aduan::with('user')->get();
-
-    //     return response()->json([
-    //         'message' => 'Berhasil mendapatkan semua aduan.',
-    //         'aduan' => AduanResource::collection($aduan)
-    //     ], 200);
-    // }
-
-    public function updatePengaduan(Request $request, $aduan_id)
-    {
-        $user = JWTAuth::parseToken()->authenticate();
-
-        if (!$user) {
-            return response()->json(['error' => 'User belum login. Silakan login terlebih dahulu'], 401);
-        }
-
-        if(!user->hasRole('staff-desa')) {
-            return response()->json(['error' => 'Akses ditolak. Anda bukan admin'], 403);
-        }
-
-        $aduan = Pengaduan::find($aduan_id);
-        if (!$aduan) {
-            return response()->json(['error' => 'Aduan tidak ditemukan'], 404);
-        }
-
-        $aduan->update($request->all());
-
-        return response()->json([
-            'message' => 'Berhasil memperbarui aduan.',
-            'aduan' => new PengaduanResource($aduan)
-        ], 200);
-
-    }
+    
        public function processedStatusAduan(Request $request, $aduan_id)
     {
         $validated = $request->validate([
@@ -269,6 +130,9 @@ class PengaduanController extends Controller
 
         if (!$aduan) {
             return response()->json(['error' => 'Aduan tidak ditemukan'], 404);
+        }
+        if ($aduan->status !== 'waiting') {
+            return response()->json(['error' => 'Aduan sudah diproses sebelumnya'], 400);
         }
 
 
@@ -302,6 +166,10 @@ class PengaduanController extends Controller
             return response()->json(['error' => 'Aduan tidak ditemukan'], 404);
         }
 
+        if ($aduan->status !== 'processed') {
+            return response()->json(['error' => 'Aduan belum diproses'], 400);
+        }
+
         $aduan->status = 'approved';
         $aduan->save();
 
@@ -311,5 +179,7 @@ class PengaduanController extends Controller
         ], 200);
     }
 
+
+   
     
 }
