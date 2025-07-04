@@ -78,8 +78,6 @@
         <div>Limapoccoe, {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d F Y') }}</div>
         <div>An. KEPALA DESA LIMAPOCCOE</div>
         <div>KEPALA DESA</div>
-        <br><br>
-
         @if ($ajuan->status === 'approved' && $ajuan->tandaTangan)
         @php
             $ttdPath = storage_path('app/private/tanda-tangan-digital.png');
