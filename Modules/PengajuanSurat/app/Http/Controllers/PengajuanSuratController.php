@@ -250,17 +250,15 @@ class PengajuanSuratController extends Controller
         try {
             $admin = JWTAuth::setToken($token)->authenticate();
         } catch (\Exception $e) {
-            return response(
-                'message' => 'Unauthorized: token tidak valid atau telah kedaluwarsa',
-                401
-            );
+            return response()->json([
+                'message' => 'Unauthorized: token tidak valid atau telah kedaluwarsa'
+            ], 401);
         }
 
         if (!$admin->hasAnyRole(['super-admin', 'staff-desa', 'kepala-desa'])) {
-            return response(
-                'message' => 'Akses ditolak. Anda tidak memiliki izin untuk mengakses preview surat ini',
-                403
-            );
+            return response()->json([
+                'message' => 'Akses ditolak. Anda tidak memiliki izin untuk mengakses preview surat ini'
+            ], 403);
         }
 
         $ajuanSurat = Ajuan::with(['user.profileMasyarakat', 'surat'])
