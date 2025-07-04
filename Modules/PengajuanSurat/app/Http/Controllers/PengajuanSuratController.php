@@ -241,7 +241,7 @@ class PengajuanSuratController extends Controller
 
     public function previewSurat($slug, $ajuan_id)
     {
-        $token = request()->query('token');
+        $token = request()->query('token')->bearerToken();
 
         if (!$token) {
             return response('Unauthorized: token tidak ditemukan', 401);
