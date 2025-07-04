@@ -15,13 +15,24 @@
 </head>
 <body>
 
+    <table width="100%">
+        <tr>
+            <td style="width: 100px;">
+                <img src="{{ asset('storage/logo-limapoccoe.png') }}" alt="Logo Desa" style="height: 100px;">
+            </td>
+            <td class="center">
+                <div class="bold">PEMERINTAH DESA LIMAPOCCOE</div>
+                <div class="bold">KECAMATAN CENRANA</div>
+                <div class="bold">KABUPATEN MAROS</div>
+                <div>Alamat: Jl Poros Maros-Bone Km 36 Kode Pos 90562</div>
+                <div>Email: desalimapoccoe07@gmail.com</div>
+            </td>
+        </tr>
+    </table>
+
+    <hr>
+
     <div class="center">
-        <div class="bold">PEMERINTAH DESA LIMAPOCCOE</div>
-        <div class="bold">KECAMATAN CENRANA</div>
-        <div class="bold">KABUPATEN MAROS</div>
-        <div>Alamat: Jl Poros Maros-Bone Km 36 Kode Pos 90562</div>
-        <div>Email: desalimapoccoe07@gmail.com</div>
-        <hr>
         <h2><u>SURAT KETERANGAN TIDAK MAMPU</u></h2>
         <div>Nomor: {{ $ajuan->nomor_surat ?? '___/SKTM/___/__/____' }}</div>
     </div>
@@ -63,22 +74,20 @@
         Demikian surat keterangan ini kami buat dengan sebenarnya untuk digunakan seperlunya.
     </p>
 
-   <div class="text-right mt-5">
-    <div>Limapoccoe, {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d F Y') }}</div>
-    <div>An. KEPALA DESA LIMAPOCCOE</div>
-    <div>KEPALA DESA</div>
-    <br><br>
+    <div class="text-right mt-5">
+        <div>Limapoccoe, {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d F Y') }}</div>
+        <div>An. KEPALA DESA LIMAPOCCOE</div>
+        <div>KEPALA DESA</div>
+        <br><br>
 
-   @if ($ajuan->status === 'approved' && $ajuan->tandaTangan)
-    <img src="{{ asset('storage/ttd/ttd_kepala_desa.png') }}" alt="Tanda Tangan" style="height: 100px;">
-    <div><strong>{{ $ajuan->tandaTangan->user->name ?? 'ABDUL RAHMAN' }}</strong></div>
-    @else
-        <div style="height: 100px;"></div>
-        <div><strong style="color: grey">Belum ditandatangani</strong></div>
-    @endif
-
-</div>
-
+        @if ($ajuan->status === 'approved' && $ajuan->tandaTangan)
+            <img src="{{ asset('storage/ttd/ttd_kepala_desa.png') }}" alt="Tanda Tangan" style="height: 100px;">
+            <div><strong>{{ $ajuan->tandaTangan->user->name ?? 'ABDUL RAHMAN' }}</strong></div>
+        @else
+            <div style="height: 100px;"></div>
+            <div><strong style="color: grey">Belum ditandatangani</strong></div>
+        @endif
+    </div>
 
 </body>
 </html>
