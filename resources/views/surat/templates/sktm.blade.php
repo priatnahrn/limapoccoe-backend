@@ -18,7 +18,7 @@
     <table width="100%">
         <tr>
             <td style="width: 100px;">
-                <img src="{{ asset('storage/logo-limapoccoe.png') }}" alt="Logo Desa" style="height: 100px;">
+                <img src="{{ storage_path('app/private/logo-limapoccoe.png') }}" alt="Logo Desa" style="height: 100px;">
             </td>
             <td class="center">
                 <div class="bold">PEMERINTAH DESA LIMAPOCCOE</div>
