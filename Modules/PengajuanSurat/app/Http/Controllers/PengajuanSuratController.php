@@ -409,7 +409,7 @@ class PengajuanSuratController extends Controller
         }
 
         $signatureData = json_encode([
-            'ajuan_id' => $ajuan->id,
+            'ajuan_id' => $ajuanId,
             'nomor_surat' => $ajuan->nomor_surat,
             'data_surat' => $ajuan->data_surat,
             'user_id' => $ajuan->user_id,
@@ -429,9 +429,9 @@ class PengajuanSuratController extends Controller
         openssl_sign($signatureData, $signature, $privateKey, OPENSSL_ALGO_SHA256);
         $encodedSignature = base64_encode($signature);
 
-        \Modules\PengajuanSurat\Models\TandaTangan::create([
+        TandaTangan::create([
             'id' => Str::uuid(),
-            'ajuan_id' => $ajuan->id,
+            'ajuan_id' => $ajuanId,
             'signed_by' => $kepdes->id,
             'signature' => $encodedSignature,
             'signature_data' => $signatureData,
@@ -453,7 +453,7 @@ class PengajuanSuratController extends Controller
         return response()->json([
             'message' => 'Surat berhasil ditandatangani.',
             'signed_at' => now()->toIso8601String(),
-            'ajuan_id' => $ajuan->id,
+            'ajuan_id' => $ajuanId,
             'nomor_surat' => $ajuan->nomor_surat,
             'signed_by' => $kepdes->name,
         ]);
