@@ -110,7 +110,17 @@ class PengajuanSuratController extends Controller
                     $query->where('slug', $slug);
                 })
                 ->get();
-        } else {
+        } elseif($user->hasRole('kepala-desa')) {
+            $pengajuanSurat = Ajuan::with([
+                    'user',
+                    'user.profileMasyarakat',
+                    'surat'
+                ])
+                ->whereHas('surat', function ($query) use ($slug) {
+                    $query->where('slug', $slug);
+                })->where('status', ['confirmed, approved']) // Kepala desa hanya melihat yang sudah diproses
+                ->get();
+        }else{
             return response()->json([
                 'error' => 'Akses ditolak. Anda tidak memiliki izin untuk mengakses pengajuan surat ini'
             ], 403);
@@ -332,5 +342,7 @@ class PengajuanSuratController extends Controller
             'pengajuan_surat' => $pengajuanSurat,
         ], 200);    
    }
+
+
     
 }
