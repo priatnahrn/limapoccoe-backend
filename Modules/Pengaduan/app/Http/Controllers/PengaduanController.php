@@ -112,17 +112,16 @@ class PengaduanController extends Controller
 
      public function getDetailAduan($aduan_id)
     {
-       $user = JWTAuth::parseToken()->authenticate();
+        $user = JWTAuth::parseToken()->authenticate();
 
         if (!$user) {
             return response()->json(['error' => 'User belum login. Silakan login terlebih dahulu'], 401);
         }
 
-        if($user->hasRole('masyarakat')) {
+        if ($user->hasRole('masyarakat')) {
             $aduan = Pengaduan::where('id', $aduan_id)->where('user_id', $user->id)->first();
         } elseif ($user->hasAnyRole(['super-admin', 'staff-desa', 'kepala-desa'])) {
             $aduan = Pengaduan::with('user')->where('id', $aduan_id)->first();
-        }
         } else {
             return response()->json(['error' => 'Akses ditolak. Anda bukan admin atau masyarakat'], 403);
         }
@@ -132,7 +131,7 @@ class PengaduanController extends Controller
         }
 
         LogActivity::create([
-            'id' => Str::uuid(),
+            'id' => \Illuminate\Support\Str::uuid(),
             'user_id' => $user->id,
             'activity_type' => 'viewed-aduan',
             'description' => "Aduan ID {$aduan->id} telah dilihat oleh {$user->name}",
