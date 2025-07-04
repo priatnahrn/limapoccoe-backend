@@ -13,6 +13,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View;
 use Modules\Auth\Models\AuthUser;
+use Modules\PengajuanSurat\Models\TandaTangan;
 
 
 class PengajuanSuratController extends Controller
