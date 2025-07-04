@@ -298,6 +298,48 @@ class PengajuanSuratController extends Controller
         return response($html, 200)->header('Content-Type', 'text/html');
     }
 
+    public function rejectedStatusPengajuan($slug, $ajuanId){
+        $user = JWTAuth::parseToken()->authenticate();
+
+        if (!$user) {
+            return response()->json(['error' => 'User belum login. Silakan login terlebih dahulu'], 401);
+        }
+
+        if (!$user->hasRole('staff-desa')) {
+            return response()->json(['error' => 'Akses ditolak. Anda tidak memiliki izin untuk menolak pengajuan surat ini'], 403);
+        }
+
+        $pengajuanSurat = Ajuan::with(['user', 'surat'])
+            ->where('id', $ajuanId)
+            ->whereHas('surat', function ($query) use ($slug) {
+                $query->where('slug', $slug);
+            })
+            ->first();
+
+        if (!$pengajuanSurat) {
+            return response()->json(['error' => 'Pengajuan surat tidak ditemukan'], 404);
+        }
+
+        if ($pengajuanSurat->status !== 'processed') {
+            return response()->json(['error' => 'Pengajuan surat tidak dalam status yang dapat ditolak'], 400);
+        }
+
+        $pengajuanSurat->status = 'rejected';
+        $pengajuanSurat->save();
+
+        LogActivity::create([
+            'id' => Str::uuid(),
+            'user_id' => $user->id,
+            'activity_type' => 'tolak_pengajuan_surat',
+            'description' => 'Pengajuan surat dengan ID ' . $pengajuanSurat->id . ' telah ditolak.',
+            'ip_address' => request()->ip(),
+        ]);
+
+        return response()->json([
+            'message' => 'Pengajuan surat berhasil ditolak.',
+            'pengajuan_surat' => $pengajuanSurat,
+        ], 200);    
+    }
 
 
    public function confirmedStatusPengajuan($slug, $ajuanId){
