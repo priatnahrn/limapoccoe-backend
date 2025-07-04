@@ -27,6 +27,7 @@ class Ajuan extends Model
     ];
 
     protected $fillable = [
+        'id',
         'user_id',
         'surat_id',
         'nomor_surat',
