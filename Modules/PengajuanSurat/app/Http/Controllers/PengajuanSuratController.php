@@ -409,7 +409,7 @@ class PengajuanSuratController extends Controller
         }
 
         $signatureData = json_encode([
-            'ajuan_id' => $ajuanId,
+            'ajuan_id' => $ajuan->id,
             'nomor_surat' => $ajuan->nomor_surat,
             'data_surat' => $ajuan->data_surat,
             'user_id' => $ajuan->user_id,
@@ -426,12 +426,18 @@ class PengajuanSuratController extends Controller
             return response()->json(['error' => 'Gagal membaca private key.'], 500);
         }
 
-        openssl_sign($signatureData, $signature, $privateKey, OPENSSL_ALGO_SHA256);
+       $privateKeyRes = openssl_pkey_get_private($privateKey);
+        if (!$privateKeyRes) {
+            return response()->json(['error' => 'Format private key tidak valid.'], 500);
+        }
+
+        openssl_sign($signatureData, $signature, $privateKeyRes, OPENSSL_ALGO_SHA256);
+
         $encodedSignature = base64_encode($signature);
 
         TandaTangan::create([
             'id' => Str::uuid(),
-            'ajuan_id' => $ajuanId,
+            'ajuan_id' => $ajuan->id,
             'signed_by' => $kepdes->id,
             'signature' => $encodedSignature,
             'signature_data' => $signatureData,
@@ -453,7 +459,7 @@ class PengajuanSuratController extends Controller
         return response()->json([
             'message' => 'Surat berhasil ditandatangani.',
             'signed_at' => now()->toIso8601String(),
-            'ajuan_id' => $ajuanId,
+            'ajuan_id' => $ajuan->id,
             'nomor_surat' => $ajuan->nomor_surat,
             'signed_by' => $kepdes->name,
         ]);
