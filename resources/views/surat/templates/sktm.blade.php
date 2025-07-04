@@ -81,8 +81,18 @@
         <br><br>
 
         @if ($ajuan->status === 'approved' && $ajuan->tandaTangan)
-            <img src="{{ storage_path('app/private/tanda-tangan-digital.png') }}" alt="Tanda Tangan" style="height: 100px;">
+        @php
+            $ttdPath = storage_path('app/private/tanda-tangan-digital.png');
+            $ttdBase64 = file_exists($ttdPath) ? base64_encode(file_get_contents($ttdPath)) : null;
+        @endphp
+
+        @if ($ttdBase64)
+            <img src="data:image/png;base64,{{ $ttdBase64 }}" alt="Tanda Tangan" style="height: 100px;">
             <div><strong>{{ $ajuan->tandaTangan->user->name ?? 'H ANDI ABU BAKRI' }}</strong></div>
+        @else
+            <div style="height: 100px;"></div>
+            <div><strong style="color: grey">Tanda tangan tidak ditemukan</strong></div>
+        @endif
         @else
             <div style="height: 100px;"></div>
             <div><strong style="color: grey">Belum ditandatangani</strong></div>
