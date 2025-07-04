@@ -76,14 +76,15 @@ class PengaduanController extends Controller
         if ($user->hasRole('masyarakat')) {
             $aduan = Pengaduan::where('user_id', $user->id)->get();
         }
-        // Admin atau Kepala Desa: lihat semua
+        // Admin atau Super Admin: lihat semua aduan
         elseif ($user->hasAnyRole(['staff-desa', 'super-admin'])) {
             $aduan = Pengaduan::with('user')->get();
-        } elseif($user->hasRole('kepala-desa')) {
-            // Kepala Desa: lihat semua aduan
-           $aduan = Pengaduan::with('user', 'status')
-            ->whereIn('status',  ['processed', 'approved'])->get();
-
+        }
+        // Kepala Desa: hanya lihat aduan dengan status tertentu
+        elseif ($user->hasRole('kepala-desa')) {
+            $aduan = Pengaduan::with('user')
+                ->whereIn('status', ['processed', 'approved'])
+                ->get();
         }
         // Role lain: tidak diizinkan
         else {
