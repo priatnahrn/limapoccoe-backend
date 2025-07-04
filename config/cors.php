@@ -19,8 +19,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://localhost:3000', 'https://3ab3-180-243-252-239.ngrok-free.app/'],
-
+    'allowed_origins' => ['http://localhost:3000', 'https://api.limapoccoedigital.id/'],
     'allowed_origins_patterns' => [],
 
     'allowed_headers' => ['*'],
