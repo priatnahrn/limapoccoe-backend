@@ -82,7 +82,7 @@
 
         @if ($ajuan->status === 'approved' && $ajuan->tandaTangan)
             <img src="{{ asset('storage/ttd/ttd_kepala_desa.png') }}" alt="Tanda Tangan" style="height: 100px;">
-            <div><strong>{{ $ajuan->tandaTangan->user->name ?? 'ABDUL RAHMAN' }}</strong></div>
+            <div><strong>{{ $ajuan->tandaTangan->user->name ?? 'H ANDI ABU BAKRI' }}</strong></div>
         @else
             <div style="height: 100px;"></div>
             <div><strong style="color: grey">Belum ditandatangani</strong></div>

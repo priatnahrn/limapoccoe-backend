@@ -380,6 +380,85 @@ class PengajuanSuratController extends Controller
         ], 200);    
    }
 
+   public function signedStatusPengajuan($slug, $ajuanId)
+    {
+        $kepdes = JWTAuth::parseToken()->authenticate();
+
+        if (!$kepdes) {
+            return response()->json(['error' => 'Kepala Desa belum login. Silakan login terlebih dahulu'], 401);
+        }
+
+        if (!$kepdes->hasRole('kepala-desa')) {
+            return response()->json(['error' => 'Akses ditolak. Anda bukan kepala desa.'], 403);
+        }
+
+        $ajuan = Ajuan::with(['user.profileMasyarakat', 'surat', 'tandaTangan'])
+            ->where('id', $ajuanId)
+            ->whereHas('surat', function ($query) use ($slug) {
+                $query->where('slug', $slug);
+            })
+            ->where('status', 'confirmed')
+            ->first();
+
+        if (!$ajuan) {
+            return response()->json(['error' => 'Surat tidak ditemukan atau belum dikonfirmasi.'], 404);
+        }
+
+        if ($ajuan->tandaTangan) {
+            return response()->json(['error' => 'Surat sudah ditandatangani sebelumnya.'], 400);
+        }
+
+        $signatureData = json_encode([
+            'ajuan_id' => $ajuan->id,
+            'nomor_surat' => $ajuan->nomor_surat,
+            'data_surat' => $ajuan->data_surat,
+            'user_id' => $ajuan->user_id,
+            'timestamp' => now()->toIso8601String(),
+        ]);
+
+        $privateKeyPath = storage_path('app/keys/private.pem');
+        if (!file_exists($privateKeyPath)) {
+            return response()->json(['error' => 'Private key tidak ditemukan.'], 500);
+        }
+
+        $privateKey = file_get_contents($privateKeyPath);
+        if (!$privateKey) {
+            return response()->json(['error' => 'Gagal membaca private key.'], 500);
+        }
+
+        openssl_sign($signatureData, $signature, $privateKey, OPENSSL_ALGO_SHA256);
+        $encodedSignature = base64_encode($signature);
+
+        \Modules\PengajuanSurat\Models\TandaTangan::create([
+            'id' => Str::uuid(),
+            'ajuan_id' => $ajuan->id,
+            'signed_by' => $kepdes->id,
+            'signature' => $encodedSignature,
+            'signature_data' => $signatureData,
+            'signed_at' => now(),
+        ]);
+
+        $ajuan->update([
+            'status' => 'approved',
+        ]);
+
+        LogActivity::create([
+            'id' => Str::uuid(),
+            'user_id' => $kepdes->id,
+            'activity_type' => 'ttd_surat',
+            'description' => 'Surat dengan ID ' . $ajuan->id . ' telah ditandatangani oleh Kepala Desa.',
+            'ip_address' => request()->ip(),
+        ]);
+
+        return response()->json([
+            'message' => 'Surat berhasil ditandatangani.',
+            'signed_at' => now()->toIso8601String(),
+            'ajuan_id' => $ajuan->id,
+            'nomor_surat' => $ajuan->nomor_surat,
+            'signed_by' => $kepdes->name,
+        ]);
+    }
+
 
     
 }

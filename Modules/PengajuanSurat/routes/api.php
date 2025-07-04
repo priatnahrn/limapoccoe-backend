@@ -17,6 +17,7 @@ Route::middleware(['auth:api'])->group(function () {
             Route::put('/{id}/number', [PengajuanSuratController::class, 'fillNumber']);
             Route::put('/{id}/rejected', [PengajuanSuratController::class, 'rejectedStatusPengajuan']);
             Route::put('/{id}/confirmed', [PengajuanSuratController::class, 'confirmedStatusPengajuan']);
+            Route::put('/{id}/signed', [PengajuanSuratController::class, 'signedStatusPengajuan']);
         });
 
         // Rute yang tidak tergantung slug
