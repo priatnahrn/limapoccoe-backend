@@ -5,6 +5,9 @@ namespace Modules\PengajuanSurat\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Modules\Auth\Models\AuthUser;
+use Modules\PengajuanSurat\Models\Ajuan;
+
 // use Modules\PengajuanSurat\Database\Factories\TandaTanganFactory;
 
 class TandaTangan extends Model
