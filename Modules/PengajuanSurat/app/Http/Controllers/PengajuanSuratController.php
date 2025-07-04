@@ -239,9 +239,9 @@ class PengajuanSuratController extends Controller
         return $map[$number-1] ?? $number;
     }
 
-    public function previewSurat($surat_id, $ajuan_id)
+    public function previewSurat($slug, $ajuan_id)
     {
-        $token = request()->query('token'); // 🔑 Ambil token dari query string
+        $token = request()->query('token');
 
         if (!$token) {
             return response('Unauthorized: token tidak ditemukan', 401);
@@ -250,16 +250,24 @@ class PengajuanSuratController extends Controller
         try {
             $admin = JWTAuth::setToken($token)->authenticate();
         } catch (\Exception $e) {
-            return response('Unauthorized: token tidak valid', 401);
+            return response(
+                'message' => 'Unauthorized: token tidak valid atau telah kedaluwarsa',
+                401
+            );
         }
 
-        if (!$admin->hasAnyRole(['super_admin', 'staff_desa', 'kepala_desa'])) {
-            return response('Forbidden: bukan admin', 403);
+        if (!$admin->hasAnyRole(['super-admin', 'staff-desa', 'kepala-desa'])) {
+            return response(
+                'message' => 'Akses ditolak. Anda tidak memiliki izin untuk mengakses preview surat ini',
+                403
+            );
         }
 
-        $ajuanSurat = AjuanSurat::with(['user.profile', 'surat'])
-            ->where('surat_id', $surat_id)
+        $ajuanSurat = Ajuan::with(['user.profileMasyarakat', 'surat'])
             ->where('id', $ajuan_id)
+            ->whereHas('surat', function ($query) use ($slug) {
+                $query->where('slug', $slug);
+            })
             ->first();
 
         if (!$ajuanSurat) {
@@ -270,16 +278,17 @@ class PengajuanSuratController extends Controller
             ? $ajuanSurat->data_surat
             : json_decode($ajuanSurat->data_surat, true);
 
-        $template = 'surat.templates.' . strtolower($ajuanSurat->surat->kode_surat ?? 'default');
+        $kodeSurat = optional($ajuanSurat->surat)->kode_surat ?? 'default';
+        $template = 'surat.templates.' . strtolower($kodeSurat);
 
         if (!view()->exists($template)) {
-            return response("Template surat untuk kode tidak ditemukan", 500);
+            return response("Template surat tidak ditemukan", 500);
         }
 
-        $html = View::make($template, [
+        $html = view($template, [
             'ajuan' => $ajuanSurat,
             'user' => $ajuanSurat->user,
-            'profile' => $ajuanSurat->user->profile,
+            'profile' => $ajuanSurat->user->profileMasyarakat,
             'data' => $dataSurat,
         ])->render();
 
