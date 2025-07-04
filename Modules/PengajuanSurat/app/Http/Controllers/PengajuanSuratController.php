@@ -85,42 +85,28 @@ class PengajuanSuratController extends Controller
     public function getPengajuanSurat($slug)
     {
         $user = JWTAuth::parseToken()->authenticate();
+
         if (!$user) {
             return response()->json(['error' => 'User belum login. Silakan login terlebih dahulu'], 401);
         }
 
+        $baseQuery = Ajuan::with([
+            'user',
+            'user.profileMasyarakat',
+            'surat'
+        ])->whereHas('surat', function ($query) use ($slug) {
+            $query->where('slug', $slug);
+        });
+
         if ($user->hasRole('masyarakat')) {
-            $pengajuanSurat = Ajuan::where('user_id', $user->id)
-                ->whereHas('surat', function ($query) use ($slug) {
-                    $query->where('slug', $slug);
-                })
-                ->with([
-                    'user',                     // wajib agar user muncul
-                    'user.profileMasyarakat',  // nested relasi
-                    'surat'                    // relasi surat
-                ])
-                ->get();
+            $pengajuanSurat = $baseQuery->where('user_id', $user->id)->get();
         } elseif ($user->hasRole('staff-desa')) {
-            $pengajuanSurat = Ajuan::with([
-                    'user',
-                    'user.profileMasyarakat',
-                    'surat'
-                ])
-                ->whereHas('surat', function ($query) use ($slug) {
-                    $query->where('slug', $slug);
-                })
+            $pengajuanSurat = $baseQuery->get();
+        } elseif ($user->hasRole('kepala-desa')) {
+            $pengajuanSurat = $baseQuery
+                ->whereIn('status', ['confirmed', 'approved'])
                 ->get();
-        } elseif($user->hasRole('kepala-desa')) {
-            $pengajuanSurat = Ajuan::with([
-                    'user',
-                    'user.profileMasyarakat',
-                    'surat'
-                ])
-                ->whereHas('surat', function ($query) use ($slug) {
-                    $query->where('slug', $slug);
-                })->where('status', ['confirmed, approved']) // Kepala desa hanya melihat yang sudah diproses
-                ->get();
-        }else{
+        } else {
             return response()->json([
                 'error' => 'Akses ditolak. Anda tidak memiliki izin untuk mengakses pengajuan surat ini'
             ], 403);
@@ -136,6 +122,7 @@ class PengajuanSuratController extends Controller
             'activity_type' => 'get_pengajuan_surat',
             'description' => 'Daftar pengajuan surat dengan slug ' . $slug . ' telah diakses.',
             'ip_address' => request()->ip(),
+            'created_at' => now(), // tambahkan ini jika kolom `created_at` tidak auto
         ]);
 
         return response()->json([
@@ -143,6 +130,7 @@ class PengajuanSuratController extends Controller
             'pengajuan_surat' => $pengajuanSurat,
         ], 200);
     }
+
 
 
     public function getDetailPengajuanSurat($slug, $ajuanId)
