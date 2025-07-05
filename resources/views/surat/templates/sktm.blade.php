@@ -82,7 +82,9 @@
     <div class="mt-5" style="display: flex; justify-content: space-between; align-items: flex-start;">
     {{-- QR Code di kiri --}}
     <div style="width: 130px; text-align: center;">
-        <img src="{{ $qrCodeBase64 }}" width="100" alt="QR Code">
+        <div style="width: 100px;">
+            {!! $qrCodeSvg !!}
+        </div>
         <div style="font-size: 10px;">Verifikasi: {{ $downloaded_at }}</div>
     </div>
 

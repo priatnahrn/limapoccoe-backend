@@ -292,16 +292,14 @@ class PengajuanSuratController extends Controller
 
         // ✅ Tambahkan QR Code dan timestamp untuk preview
         $verificationUrl = url("/verifikasi-surat/{$ajuanSurat->id}");
-        $qrCodeImage = QrCode::format('png')->size(150)->generate($verificationUrl);
-        $qrCodeBase64 = 'data:image/png;base64,' . base64_encode($qrCodeImage);
-        $downloadedAt = Carbon::now()->translatedFormat('l, d F Y H:i');
+        $qrCodeSvg = QrCode::format('svg')->size(150)->generate($verificationUrl);
 
         $html = view($template, [
             'ajuan' => $ajuanSurat,
             'user' => $ajuanSurat->user,
             'profile' => $ajuanSurat->user->profileMasyarakat,
             'data' => $dataSurat,
-            'qrCodeBase64' => $qrCodeBase64,
+            'qrCodeSvg' => $qrCodeSvg,
             'downloaded_at' => $downloadedAt,
         ])->render();
 
@@ -530,16 +528,16 @@ public function downloadSurat($slug, $ajuanId)
 
     // Generate QR Code in base64
     $verificationUrl = url("/verifikasi-surat/{$ajuanSurat->id}");
-    $qrCodeImage = QrCode::format('png')->size(150)->generate($verificationUrl);
-    $qrCodeBase64 = 'data:image/png;base64,' . base64_encode($qrCodeImage);
+    $qrCodeSvg = QrCode::format('svg')->size(150)->generate($verificationUrl);
+    $downloadedAt = Carbon::now()->translatedFormat('l, d F Y H:i');
 
     $html = view($template, [
         'ajuan' => $ajuanSurat,
         'user' => $ajuanSurat->user,
         'profile' => $ajuanSurat->user->profileMasyarakat,
         'data' => $dataSurat,
-        'qrCodeBase64' => $qrCodeBase64,
-        'downloaded_at' => Carbon::now()->translatedFormat('l, d F Y H:i'),
+        'qrCodeSvg' => $qrCodeSvg,
+        'downloaded_at' => $downloadedAt,
     ])->render();
 
     $nomorSurat = preg_replace('/[\/\\\\]/', '-', $ajuanSurat->nomor_surat ?? 'tanpa-nomor');
