@@ -87,7 +87,7 @@
             @endphp
 
             @if ($ttdBase64)
-                <img src="data:image/png;base64,{{ $ttdBase64 }}" alt="Tanda Tangan" style="height: 120px;"><br>
+                <img src="data:image/png;base64,{{ $ttdBase64 }}" alt="Tanda Tangan" style="height: 200px;"><br>
                 <strong>{{ $ajuan->tandaTangan->user->name ?? 'H ANDI ABU BAKRI' }}</strong>
             @else
                 <div style="height: 100px;"></div>
