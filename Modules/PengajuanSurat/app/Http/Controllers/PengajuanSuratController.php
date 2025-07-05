@@ -517,7 +517,7 @@ public function downloadSurat($slug, $ajuanId)
     $verificationUrl = url("/verifikasi-surat/{$ajuanSurat->id}");
     $qrCodeImage = QrCode::format('png')
         ->size(150)
-        ->mergeString('', .0)
+        ->backend('gd')
         ->generate($verificationUrl);
     $qrCodeBase64 = 'data:image/png;base64,' . base64_encode($qrCodeImage);
 
