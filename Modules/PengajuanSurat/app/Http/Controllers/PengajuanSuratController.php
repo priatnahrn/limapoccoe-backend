@@ -295,7 +295,7 @@ class PengajuanSuratController extends Controller
         $qrCodeSvg = QrCode::format('svg')->size(150)->generate($verificationUrl);
 
         $downloadedAt = now()->format('d F Y, H:i:s');
-        
+
         $html = view($template, [
             'ajuan' => $ajuanSurat,
             'user' => $ajuanSurat->user,
@@ -545,6 +545,42 @@ public function downloadSurat($slug, $ajuanId)
     $nomorSurat = preg_replace('/[\/\\\\]/', '-', $ajuanSurat->nomor_surat ?? 'tanpa-nomor');
     $pdf = Pdf::loadHTML($html);
     return $pdf->download("surat-{$nomorSurat}.pdf");
+}
+
+public function verifikasiSurat($ajuanId)
+{
+    $ajuan = Ajuan::with('tandaTangan')->find($ajuanId);
+
+    if (!$ajuan || !$ajuan->tandaTangan) {
+        return view('verifikasi-surat', [
+            'valid' => false,
+            'message' => '❌ Dokumen tidak ditemukan atau belum ditandatangani.'
+        ]);
+    }
+
+    $signatureData = $ajuan->tandaTangan->signature_data;
+    $signature = base64_decode($ajuan->tandaTangan->signature);
+
+    $publicKeyPath = storage_path('app/keys/public.pem');
+    if (!file_exists($publicKeyPath)) {
+        return view('verifikasi-surat', [
+            'valid' => false,
+            'message' => '❌ Public key tidak tersedia.'
+        ]);
+    }
+
+    $publicKey = file_get_contents($publicKeyPath);
+    $publicKeyRes = openssl_pkey_get_public($publicKey);
+
+    $verified = openssl_verify($signatureData, $signature, $publicKeyRes, OPENSSL_ALGO_SHA256);
+
+    return view('pengajuan-surat::verifikasi-surat', [
+        'valid' => $verified === 1,
+        'message' => $verified === 1
+            ? '✅ Dokumen ASLI dan belum dimodifikasi.'
+            : '❌ Dokumen tidak valid atau telah dimodifikasi.',
+        'data' => json_decode($signatureData, true)
+    ]);
 }
 
 
