@@ -23,7 +23,7 @@
     <table width="100%">
         <tr>
             <td style="width: 100px;">
-               <img src="{{ public_path('storage/logo-limapoccoe.png') }}" alt="Logo Desa" style="height: 90px;">
+              <img src="{{ asset('storage/logo-limapoccoe.png') }}" alt="Logo Desa" style="height: 90px;">
             </td>
             <td class="center">
                 <div class="bold">PEMERINTAH DESA LIMAPOCCOE</div>
@@ -44,8 +44,8 @@
 
     <p class="mt-3">Yang bertanda tangan di bawah ini:</p>
     <table>
-        <tr><td>Nama</td><td>: {{ $data['ttd_nama'] ?? 'MARLINA' }}</td></tr>
-        <tr><td>Jabatan</td><td>: {{ $data['ttd_jabatan'] ?? 'SEKRETARIS DESA LIMAPOCCOE' }}</td></tr>
+        <tr><td>Nama</td><td>: {{ $ajuan->tandaTangan->user->name ?? 'MARLINA' }}</td></tr>
+        <tr><td>Jabatan</td><td>: {{ 'KEPALA DESA LIMAPOCCOE' }}</td></tr>
     </table>
 
     <p class="mt-3">Menerangkan bahwa:</p>
@@ -81,13 +81,16 @@
 
     <div class="mt-5" style="display: flex; justify-content: space-between; align-items: flex-start;">
     {{-- QR Code di kiri --}}
-    {{-- QR Code di kiri --}}
-    <div style="width: 130px; text-align: center;">
+    @if ($ajuan->status === 'approved')
+    <div style="width: 80px; text-align: center;">
         {!! $qrCodeSvg ?? '' !!}
         @if(isset($downloaded_at))
             <div style="font-size: 10px;">Verifikasi: {{ $downloaded_at }}</div>
         @endif
     </div>
+        @else
+            <div style="width: 130px;"></div> {{-- Placeholder kosong biar layout tetap rapi --}}
+        @endif
 
     {{-- Tanda tangan di kanan --}}
     <div style="text-align: center; width: 50%;">
