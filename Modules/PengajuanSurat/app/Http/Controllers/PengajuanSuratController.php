@@ -294,6 +294,8 @@ class PengajuanSuratController extends Controller
         $verificationUrl = url("/verifikasi-surat/{$ajuanSurat->id}");
         $qrCodeSvg = QrCode::format('svg')->size(150)->generate($verificationUrl);
 
+        $downloadedAt = now()->format('d F Y, H:i:s');
+        
         $html = view($template, [
             'ajuan' => $ajuanSurat,
             'user' => $ajuanSurat->user,
