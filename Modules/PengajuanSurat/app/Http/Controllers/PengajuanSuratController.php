@@ -484,9 +484,12 @@ class PengajuanSuratController extends Controller
 
 
 
+
 public function downloadSurat($slug, $ajuanId)
 {
     Carbon::setLocale('id');
+    ini_set('memory_limit', '-1');
+
     $user = JWTAuth::parseToken()->authenticate();
 
     if (!$user->hasAnyRole(['masyarakat', 'staff-desa', 'kepala-desa', 'super-admin'])) {
@@ -514,25 +517,23 @@ public function downloadSurat($slug, $ajuanId)
         return response("Template surat tidak ditemukan", 500);
     }
 
-    // === QR CODE as SVG ===
+    // Generate QR Code in base64
     $verificationUrl = url("/verifikasi-surat/{$ajuanSurat->id}");
-    $qrCodeSvg = QrCode::format('svg')->size(150)->generate($verificationUrl);
+    $qrCodeImage = QrCode::format('png')->size(150)->generate($verificationUrl);
+    $qrCodeBase64 = 'data:image/png;base64,' . base64_encode($qrCodeImage);
 
     $html = view($template, [
         'ajuan' => $ajuanSurat,
         'user' => $ajuanSurat->user,
         'profile' => $ajuanSurat->user->profileMasyarakat,
         'data' => $dataSurat,
-        'qrCodeSvg' => $qrCodeSvg,
+        'qrCodeBase64' => $qrCodeBase64,
         'downloaded_at' => Carbon::now()->translatedFormat('l, d F Y H:i'),
     ])->render();
 
-    ini_set('memory_limit', '-1');
-
-    $pdf = Pdf::loadHTML($html);
     $nomorSurat = preg_replace('/[\/\\\\]/', '-', $ajuanSurat->nomor_surat ?? 'tanpa-nomor');
+    $pdf = Pdf::loadHTML($html);
     return $pdf->download("surat-{$nomorSurat}.pdf");
-
 }
 
 
