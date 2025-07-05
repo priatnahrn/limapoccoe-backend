@@ -4,13 +4,18 @@
     <meta charset="UTF-8">
     <title>Surat Keterangan Tidak Mampu</title>
     <style>
-        body { font-family: 'Times New Roman', Times, serif; line-height: 1.6; margin: 40px; }
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            line-height: 1.6;
+            margin: 30px;
+        }
         .center { text-align: center; }
         .bold { font-weight: bold; }
         .mt-3 { margin-top: 1rem; }
         .mt-5 { margin-top: 3rem; }
         .text-right { text-align: right; }
         .indent { text-indent: 2em; }
+        table { page-break-inside: avoid; }
     </style>
 </head>
 <body>
@@ -18,7 +23,7 @@
     <table width="100%">
         <tr>
             <td style="width: 100px;">
-               <img src="{{ asset('storage/logo-limapoccoe.png') }}" alt="Logo Desa" style="height: 100px;">
+               <img src="{{ public_path('storage/logo-limapoccoe.png') }}" alt="Logo Desa" style="height: 90px;">
             </td>
             <td class="center">
                 <div class="bold">PEMERINTAH DESA LIMAPOCCOE</div>
@@ -37,15 +42,15 @@
         <div>Nomor: {{ $ajuan->nomor_surat ?? '___/SKTM/___/__/____' }}</div>
     </div>
 
-    <p class="mt-3">Yang bertanda tangan dibawah ini:</p>
+    <p class="mt-3">Yang bertanda tangan di bawah ini:</p>
     <table>
-        <tr><td>N a m a</td><td>: {{ $data['ttd_nama'] ?? 'MARLINA' }}</td></tr>
-        <tr><td>J a b a t a n</td><td>: {{ $data['ttd_jabatan'] ?? 'SEKRETARIS DESA LIMAPOCCOE' }}</td></tr>
+        <tr><td>Nama</td><td>: {{ $data['ttd_nama'] ?? 'MARLINA' }}</td></tr>
+        <tr><td>Jabatan</td><td>: {{ $data['ttd_jabatan'] ?? 'SEKRETARIS DESA LIMAPOCCOE' }}</td></tr>
     </table>
 
     <p class="mt-3">Menerangkan bahwa:</p>
     <table>
-        <tr><td>N a m a</td><td>: {{ $user->name ?? $data['nama'] ?? '-' }}</td></tr>
+        <tr><td>Nama</td><td>: {{ $user->name ?? $data['nama'] ?? '-' }}</td></tr>
         <tr><td>NIK</td><td>: {{ $user->nik ?? $data['nik'] ?? '-' }}</td></tr>
         <tr><td>Tempat/Tanggal Lahir</td>
             <td>: {{ optional($profile)->tempat_lahir ?? $data['tempat_lahir'] ?? '-' }},
@@ -74,51 +79,46 @@
         Demikian surat keterangan ini kami buat dengan sebenarnya untuk digunakan seperlunya.
     </p>
 
-   <div class="mt-5" style="display: flex; justify-content: space-between; align-items: flex-start;">
-    {{-- QR Code di kiri --}}
-    <div style="width: 150px; text-align: center;">
-        {!! $qrCodeSvg !!}
-        <div style="font-size: 10px;">Verifikasi: {{ $downloaded_at }}</div>
-    </div>
+    {{-- QR dan tanda tangan --}}
+    <div class="mt-5" style="display: flex; justify-content: space-between; align-items: flex-start;">
+        {{-- QR Code di kiri --}}
+        <div style="width: 130px; text-align: center;">
+            <img src="{{ $qrCodeBase64 }}" width="100" alt="QR Code">
+            <div style="font-size: 10px;">Verifikasi: {{ $downloaded_at }}</div>
+        </div>
 
-    {{-- Tanda tangan di kanan --}}
-    <div style="text-align: center;">
-        <div>Limapoccoe, {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d F Y') }}</div>
-        <div>KEPALA DESA LIMAPOCCOE</div>
-        <div>KEPALA DESA</div>
+        {{-- Tanda tangan di kanan --}}
+        <div style="text-align: center; width: 50%;">
+            <div>Limapoccoe, {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d F Y') }}</div>
+            <div>KEPALA DESA LIMAPOCCOE</div>
+            <div>KEPALA DESA</div>
 
-        <div style="margin-top: 20px;">
-            @if ($ajuan->status === 'approved' && $ajuan->tandaTangan)
+            <div style="margin-top: 20px;">
                 @php
                     $ttdPath = storage_path('app/private/tanda-tangan-digital.png');
                     $ttdBase64 = file_exists($ttdPath) ? base64_encode(file_get_contents($ttdPath)) : null;
                 @endphp
 
-                @if ($ttdBase64)
-                    <img src="data:image/png;base64,{{ $ttdBase64 }}" alt="Tanda Tangan" style="height: 200px;"><br>
+                @if ($ajuan->status === 'approved' && $ttdBase64)
+                    <img src="data:image/png;base64,{{ $ttdBase64 }}" alt="Tanda Tangan" style="height: 120px;"><br>
                     <strong>{{ $ajuan->tandaTangan->user->name ?? 'H ANDI ABU BAKRI' }}</strong>
                 @else
                     <div style="height: 100px;"></div>
-                    <strong style="color: grey">Tanda tangan tidak ditemukan</strong>
+                    <strong style="color: grey">Belum ditandatangani</strong>
                 @endif
-            @else
-                <div style="height: 100px;"></div>
-                <strong style="color: grey">Belum ditandatangani</strong>
-            @endif
+            </div>
         </div>
     </div>
-</div>
+
     <div class="text-right mt-3">
-        <p>Catatan: Surat ini berlaku selama 6 bulan sejak tanggal terbit.</p>
+        <p><em>Catatan:</em> Surat ini berlaku selama 6 bulan sejak tanggal terbit.</p>
     </div>
 
     <hr>
 
     <div class="text-right">
-        <p>Dicetak pada: {{ now()->translatedFormat('d F Y H:i') }}</p>
+        <p><small>Dicetak pada: {{ now()->translatedFormat('d F Y H:i') }}</small></p>
     </div>
-
-
 
 </body>
 </html>

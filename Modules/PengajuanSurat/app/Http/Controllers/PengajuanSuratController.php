@@ -486,6 +486,7 @@ class PengajuanSuratController extends Controller
 
 public function downloadSurat($slug, $ajuanId)
 {
+    Carbon::setLocale('id');
     $user = JWTAuth::parseToken()->authenticate();
 
     if (!$user->hasAnyRole(['masyarakat', 'staff-desa', 'kepala-desa', 'super-admin'])) {
