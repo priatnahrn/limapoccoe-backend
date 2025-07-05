@@ -75,28 +75,31 @@
     </p>
 
     <div class="text-right mt-5">
-        <div>Limapoccoe, {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d F Y') }}</div>
-        <div>An. KEPALA DESA LIMAPOCCOE</div>
-        <div>KEPALA DESA</div>
+    <div>Limapoccoe, {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d F Y') }}</div>
+    <div>KEPALA DESA LIMAPOCCOE</div>
+    <div>KEPALA DESA</div>
+    <div style="margin-top: 20px; position: relative;">
+        {{-- Tanda tangan --}}
         @if ($ajuan->status === 'approved' && $ajuan->tandaTangan)
-        @php
-            $ttdPath = storage_path('app/private/tanda-tangan-digital.png');
-            $ttdBase64 = file_exists($ttdPath) ? base64_encode(file_get_contents($ttdPath)) : null;
-        @endphp
+            @php
+                $ttdPath = storage_path('app/private/tanda-tangan-digital.png');
+                $ttdBase64 = file_exists($ttdPath) ? base64_encode(file_get_contents($ttdPath)) : null;
+            @endphp
 
-        @if ($ttdBase64)
-            <img src="data:image/png;base64,{{ $ttdBase64 }}" alt="Tanda Tangan" style="height: 200px;">
-            <div><strong>{{ $ajuan->tandaTangan->user->name ?? 'H ANDI ABU BAKRI' }}</strong></div>
+            @if ($ttdBase64)
+                <img src="data:image/png;base64,{{ $ttdBase64 }}" alt="Tanda Tangan" style="height: 120px;"><br>
+                <strong>{{ $ajuan->tandaTangan->user->name ?? 'H ANDI ABU BAKRI' }}</strong>
+            @else
+                <div style="height: 100px;"></div>
+                <strong style="color: grey">Tanda tangan tidak ditemukan</strong>
+            @endif
         @else
             <div style="height: 100px;"></div>
-            <div><strong style="color: grey">Tanda tangan tidak ditemukan</strong></div>
+            <strong style="color: grey">Belum ditandatangani</strong>
         @endif
-        @else
-            <div style="height: 100px;"></div>
-            <div><strong style="color: grey">Belum ditandatangani</strong></div>
-        @endif
-
     </div>
+    </div>
+
 
 </body>
 </html>

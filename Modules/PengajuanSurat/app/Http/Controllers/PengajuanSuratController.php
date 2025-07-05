@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\View;
 use Modules\Auth\Models\AuthUser;
 use Modules\PengajuanSurat\Models\TandaTangan;
 use Barryvdh\DomPDF\Facade\Pdf;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 
 
@@ -482,12 +483,13 @@ class PengajuanSuratController extends Controller
 }
 
 
+
 public function downloadSurat($slug, $ajuanId)
 {
     $user = JWTAuth::parseToken()->authenticate();
 
     if (!$user->hasAnyRole(['masyarakat', 'staff-desa', 'kepala-desa', 'super-admin'])) {
-        return response()->json(['error' => 'Akses ditolak. Anda tidak memiliki izin untuk mengunduh surat ini'], 403);
+        return response()->json(['error' => 'Akses ditolak.'], 403);
     }
 
     $ajuanSurat = Ajuan::with([
@@ -495,20 +497,11 @@ public function downloadSurat($slug, $ajuanId)
         'surat',
         'tandaTangan.user'
     ])->where('id', $ajuanId)
-      ->whereHas('surat', function ($query) use ($slug) {
-          $query->where('slug', $slug);
-      })->first();
+      ->whereHas('surat', fn($q) => $q->where('slug', $slug))
+      ->first();
 
-    if (!$ajuanSurat) {
-        return response()->json(['error' => 'Pengajuan surat tidak ditemukan'], 404);
-    }
-
-    if ($ajuanSurat->status !== 'approved') {
-        return response()->json(['error' => 'Surat belum disetujui.'], 400);
-    }
-
-    if (!$ajuanSurat->tandaTangan) {
-        return response()->json(['error' => 'Surat belum ditandatangani.'], 400);
+    if (!$ajuanSurat || $ajuanSurat->status !== 'approved' || !$ajuanSurat->tandaTangan) {
+        return response()->json(['error' => 'Surat tidak valid atau belum disetujui.'], 400);
     }
 
     $dataSurat = is_array($ajuanSurat->data_surat)
@@ -516,20 +509,25 @@ public function downloadSurat($slug, $ajuanId)
         : json_decode($ajuanSurat->data_surat, true);
 
     $template = 'surat.templates.' . strtolower(optional($ajuanSurat->surat)->kode_surat ?? 'default');
-
     if (!view()->exists($template)) {
         return response("Template surat tidak ditemukan", 500);
     }
+
+    // === QR CODE ===
+    $verificationUrl = url("/verifikasi-surat/{$ajuanSurat->id}");
+    $qrCodeImage = QrCode::format('png')->size(150)->generate($verificationUrl);
+    $qrCodeBase64 = 'data:image/png;base64,' . base64_encode($qrCodeImage);
 
     $html = view($template, [
         'ajuan' => $ajuanSurat,
         'user' => $ajuanSurat->user,
         'profile' => $ajuanSurat->user->profileMasyarakat,
         'data' => $dataSurat,
+        'qrCode' => $qrCodeBase64,
+        'downloaded_at' => Carbon::now()->translatedFormat('l, d F Y H:i'),
     ])->render();
 
     $pdf = Pdf::loadHTML($html);
-
     return $pdf->download('surat-' . ($ajuanSurat->nomor_surat ?? 'tanpa-nomor') . '.pdf');
 }
 
