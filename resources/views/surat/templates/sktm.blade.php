@@ -81,11 +81,12 @@
 
     <div class="mt-5" style="display: flex; justify-content: space-between; align-items: flex-start;">
     {{-- QR Code di kiri --}}
+    {{-- QR Code di kiri --}}
     <div style="width: 130px; text-align: center;">
-        <div style="width: 100px;">
-            {!! $qrCodeSvg !!}
-        </div>
-        <div style="font-size: 10px;">Verifikasi: {{ $downloaded_at }}</div>
+        {!! $qrCodeSvg ?? '' !!}
+        @if(isset($downloaded_at))
+            <div style="font-size: 10px;">Verifikasi: {{ $downloaded_at }}</div>
+        @endif
     </div>
 
     {{-- Tanda tangan di kanan --}}
