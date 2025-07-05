@@ -246,6 +246,8 @@ class PengajuanSuratController extends Controller
 
     public function previewSurat($slug, $ajuan_id)
     {
+        Carbon::setLocale('id');
+
         $token = request()->query('token') ?? request()->bearerToken();
 
         if (!$token) {
@@ -288,15 +290,24 @@ class PengajuanSuratController extends Controller
             return response("Template surat tidak ditemukan", 500);
         }
 
+        // ✅ Tambahkan QR Code dan timestamp untuk preview
+        $verificationUrl = url("/verifikasi-surat/{$ajuanSurat->id}");
+        $qrCodeImage = QrCode::format('png')->size(150)->generate($verificationUrl);
+        $qrCodeBase64 = 'data:image/png;base64,' . base64_encode($qrCodeImage);
+        $downloadedAt = Carbon::now()->translatedFormat('l, d F Y H:i');
+
         $html = view($template, [
             'ajuan' => $ajuanSurat,
             'user' => $ajuanSurat->user,
             'profile' => $ajuanSurat->user->profileMasyarakat,
             'data' => $dataSurat,
+            'qrCodeBase64' => $qrCodeBase64,
+            'downloaded_at' => $downloadedAt,
         ])->render();
 
         return response($html, 200)->header('Content-Type', 'text/html');
     }
+
 
     public function rejectedStatusPengajuan($slug, $ajuanId){
         $user = JWTAuth::parseToken()->authenticate();
