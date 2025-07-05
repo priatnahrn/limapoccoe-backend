@@ -526,6 +526,8 @@ public function downloadSurat($slug, $ajuanId)
         'downloaded_at' => Carbon::now()->translatedFormat('l, d F Y H:i'),
     ])->render();
 
+    ini_set('memory_limit', '-1');
+
     $pdf = Pdf::loadHTML($html);
     return $pdf->download('surat-' . ($ajuanSurat->nomor_surat ?? 'tanpa-nomor') . '.pdf');
 }
