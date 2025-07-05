@@ -74,31 +74,50 @@
         Demikian surat keterangan ini kami buat dengan sebenarnya untuk digunakan seperlunya.
     </p>
 
-    <div class="text-right mt-5">
-    <div>Limapoccoe, {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d F Y') }}</div>
-    <div>KEPALA DESA LIMAPOCCOE</div>
-    <div>KEPALA DESA</div>
-    <div style="margin-top: 20px; position: relative;">
-        {{-- Tanda tangan --}}
-        @if ($ajuan->status === 'approved' && $ajuan->tandaTangan)
-            @php
-                $ttdPath = storage_path('app/private/tanda-tangan-digital.png');
-                $ttdBase64 = file_exists($ttdPath) ? base64_encode(file_get_contents($ttdPath)) : null;
-            @endphp
+   <div class="mt-5" style="display: flex; justify-content: space-between; align-items: flex-start;">
+    {{-- QR Code di kiri --}}
+    <div style="width: 150px; text-align: center;">
+        {!! $qrCodeSvg !!}
+        <div style="font-size: 10px;">Verifikasi: {{ $downloaded_at }}</div>
+    </div>
 
-            @if ($ttdBase64)
-                <img src="data:image/png;base64,{{ $ttdBase64 }}" alt="Tanda Tangan" style="height: 200px;"><br>
-                <strong>{{ $ajuan->tandaTangan->user->name ?? 'H ANDI ABU BAKRI' }}</strong>
+    {{-- Tanda tangan di kanan --}}
+    <div style="text-align: center;">
+        <div>Limapoccoe, {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d F Y') }}</div>
+        <div>KEPALA DESA LIMAPOCCOE</div>
+        <div>KEPALA DESA</div>
+
+        <div style="margin-top: 20px;">
+            @if ($ajuan->status === 'approved' && $ajuan->tandaTangan)
+                @php
+                    $ttdPath = storage_path('app/private/tanda-tangan-digital.png');
+                    $ttdBase64 = file_exists($ttdPath) ? base64_encode(file_get_contents($ttdPath)) : null;
+                @endphp
+
+                @if ($ttdBase64)
+                    <img src="data:image/png;base64,{{ $ttdBase64 }}" alt="Tanda Tangan" style="height: 200px;"><br>
+                    <strong>{{ $ajuan->tandaTangan->user->name ?? 'H ANDI ABU BAKRI' }}</strong>
+                @else
+                    <div style="height: 100px;"></div>
+                    <strong style="color: grey">Tanda tangan tidak ditemukan</strong>
+                @endif
             @else
                 <div style="height: 100px;"></div>
-                <strong style="color: grey">Tanda tangan tidak ditemukan</strong>
+                <strong style="color: grey">Belum ditandatangani</strong>
             @endif
-        @else
-            <div style="height: 100px;"></div>
-            <strong style="color: grey">Belum ditandatangani</strong>
-        @endif
+        </div>
     </div>
+</div>
+    <div class="text-right mt-3">
+        <p>Catatan: Surat ini berlaku selama 6 bulan sejak tanggal terbit.</p>
     </div>
+
+    <hr>
+
+    <div class="text-right">
+        <p>Dicetak pada: {{ now()->translatedFormat('d F Y H:i') }}</p>
+    </div>
+
 
 
 </body>

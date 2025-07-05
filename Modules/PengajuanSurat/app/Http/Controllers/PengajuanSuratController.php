@@ -513,26 +513,23 @@ public function downloadSurat($slug, $ajuanId)
         return response("Template surat tidak ditemukan", 500);
     }
 
-    // === QR CODE ===
+    // === QR CODE as SVG ===
     $verificationUrl = url("/verifikasi-surat/{$ajuanSurat->id}");
-    $qrCodeImage = QrCode::format('png')
-        ->size(150)
-        ->backend('gd')
-        ->generate($verificationUrl);
-    $qrCodeBase64 = 'data:image/png;base64,' . base64_encode($qrCodeImage);
+    $qrCodeSvg = QrCode::format('svg')->size(150)->generate($verificationUrl);
 
     $html = view($template, [
         'ajuan' => $ajuanSurat,
         'user' => $ajuanSurat->user,
         'profile' => $ajuanSurat->user->profileMasyarakat,
         'data' => $dataSurat,
-        'qrCode' => $qrCodeBase64,
+        'qrCodeSvg' => $qrCodeSvg,
         'downloaded_at' => Carbon::now()->translatedFormat('l, d F Y H:i'),
     ])->render();
 
     $pdf = Pdf::loadHTML($html);
     return $pdf->download('surat-' . ($ajuanSurat->nomor_surat ?? 'tanpa-nomor') . '.pdf');
 }
+
 
 
 
