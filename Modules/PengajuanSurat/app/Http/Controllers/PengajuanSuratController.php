@@ -552,7 +552,7 @@ public function verifikasiSurat($ajuanId)
     $ajuan = Ajuan::with('tandaTangan')->find($ajuanId);
 
     if (!$ajuan || !$ajuan->tandaTangan) {
-        return view('verifikasi-surat', [
+        return view('pengajuan-surat::verifikasi-surat', [
             'valid' => false,
             'message' => '❌ Dokumen tidak ditemukan atau belum ditandatangani.'
         ]);
@@ -563,7 +563,7 @@ public function verifikasiSurat($ajuanId)
 
     $publicKeyPath = storage_path('app/keys/public.pem');
     if (!file_exists($publicKeyPath)) {
-        return view('verifikasi-surat', [
+        return view('pengajuan-surat::verifikasi-surat', [
             'valid' => false,
             'message' => '❌ Public key tidak tersedia.'
         ]);
