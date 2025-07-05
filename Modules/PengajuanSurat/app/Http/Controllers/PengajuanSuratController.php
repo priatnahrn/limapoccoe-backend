@@ -529,7 +529,9 @@ public function downloadSurat($slug, $ajuanId)
     ini_set('memory_limit', '-1');
 
     $pdf = Pdf::loadHTML($html);
-    return $pdf->download('surat-' . ($ajuanSurat->nomor_surat ?? 'tanpa-nomor') . '.pdf');
+    $nomorSurat = preg_replace('/[\/\\\\]/', '-', $ajuanSurat->nomor_surat ?? 'tanpa-nomor');
+    return $pdf->download("surat-{$nomorSurat}.pdf");
+
 }
 
 
