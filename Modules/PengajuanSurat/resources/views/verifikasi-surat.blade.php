@@ -1,29 +1,35 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-    <title>Verifikasi Dokumen Surat</title>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding: 40px; }
-        .status { font-size: 22px; font-weight: bold; margin-bottom: 20px; }
-        .valid { color: green; }
-        .invalid { color: red; }
-        table { margin: 0 auto; border-collapse: collapse; }
-        th, td { padding: 10px 15px; border: 1px solid #ccc; }
-    </style>
+    <meta charset="UTF-8">
+    <title>Verifikasi Dokumen</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <h1>Hasil Verifikasi Dokumen</h1>
-    <div class="status {{ $valid ? 'valid' : 'invalid' }}">
-        {{ $message }}
-    </div>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center py-12 px-4">
+    <div class="bg-white shadow-lg rounded-xl p-8 max-w-xl w-full text-center">
+        <img src="{{ asset('logo-limapoccoe.png') }}" class="mx-auto h-20 mb-4" alt="Logo">
 
-    @if ($valid && isset($data))
-        <table>
-            <tr><th>Ajuan ID</th><td>{{ $data['ajuan_id'] }}</td></tr>
-            <tr><th>User ID</th><td>{{ $data['user_id'] }}</td></tr>
-            <tr><th>Nomor Surat</th><td>{{ $data['nomor_surat'] }}</td></tr>
-            <tr><th>Waktu TTD</th><td>{{ \Carbon\Carbon::parse($data['timestamp'])->format('d F Y H:i:s') }}</td></tr>
-        </table>
-    @endif
+        <h1 class="text-2xl font-bold text-gray-800 mb-2">Verifikasi Keaslian Dokumen Surat</h1>
+        <p class="text-gray-600 mb-6">Situs resmi untuk verifikasi keaslian dokumen surat oleh Pemerintah Desa Limapoccoe</p>
+
+        <div class="text-lg font-semibold {{ $valid ? 'text-green-600' : 'text-red-600' }} mb-4">
+            {{ $message }}
+        </div>
+
+        @if ($valid && isset($data))
+            <table class="table-auto w-full text-left text-sm border border-gray-300 rounded-lg overflow-hidden">
+                <tbody>
+                    <tr class="border-b"><th class="p-3 bg-gray-50 w-1/3">Ajuan ID</th><td class="p-3">{{ $data['ajuan_id'] }}</td></tr>
+                    <tr class="border-b"><th class="p-3 bg-gray-50">Nama Pemohon</th><td class="p-3">{{ $profile->nama_lengkap ?? 'Tidak diketahui' }}</td></tr>
+                    <tr class="border-b"><th class="p-3 bg-gray-50">Jenis Surat</th><td class="p-3">{{ $ajuan->surat->nama_surat ?? '-' }}</td></tr>
+                    <tr><th class="p-3 bg-gray-50">Waktu TTD</th><td class="p-3">{{ \Carbon\Carbon::parse($data['timestamp'])->translatedFormat('d F Y H:i:s') }}</td></tr>
+                </tbody>
+            </table>
+        @endif
+
+        <div class="mt-6 text-sm text-gray-400">
+            &copy; {{ now()->year }} Pemerintah Desa Limapoccoe
+        </div>
+    </div>
 </body>
 </html>
