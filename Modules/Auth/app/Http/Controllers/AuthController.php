@@ -22,12 +22,8 @@ use Modules\Auth\Http\Requests\LoginMasyarakatRequest;
 use Modules\Auth\Http\Requests\LoginAdminRequest;
 use Illuminate\Support\Facades\Log;
 use Modules\Auth\Http\Requests\VerifyRequest;
+use Modules\Auth\Http\Requests\ResendOtpRequest;
 use Exception;
-
-
-
-
-
 
 class AuthController extends Controller
 {
@@ -221,21 +217,26 @@ class AuthController extends Controller
         }
     }
 
-    public function resendOtp(Request $request)
+    public function resendOtp(ResendOtpRequest $request)
     {
+        // ✅ ASVS 5.1.1 – Validasi input
+        $validated = $request->validated();
 
-        $request->validate([
-            'registration_token' => 'required|string',
-        ]);
-        $encryptedData = Redis::get('otp:' . $request->registration_token);
+        $token = $request->registration_token;
+        $redisKey = 'otp:data:' . $token;
+        $rateLimitKey = 'resend_otp:' . $token;
 
-        if (RateLimiter::tooManyAttempts('resend_otp:' . $request->registration_token, 1)) {
-            $seconds = RateLimiter::availableIn('resend_otp:' . $request->registration_token);
+        // ✅ ASVS 7.5.1 / SCP #94 – Rate limiting agar tidak spam OTP
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 1)) {
+            $seconds = RateLimiter::availableIn($rateLimitKey);
             return response()->json([
                 'message' => 'Terlalu banyak permintaan. Silakan coba lagi dalam ' . $seconds . ' detik.',
             ], 429);
         }
+        RateLimiter::hit($rateLimitKey, 60); // 1x kirim per 60 detik
 
+        // ✅ Ambil data dari Redis
+        $encryptedData = Redis::get($redisKey);
         if (!$encryptedData || !is_string($encryptedData)) {
             return response()->json([
                 'message' => 'Token tidak ditemukan atau sudah kedaluwarsa.',
@@ -243,80 +244,105 @@ class AuthController extends Controller
         }
 
         try {
-            
             $data = json_decode(Crypt::decrypt($encryptedData), true);
 
+            // ✅ Validasi isi Redis (ASVS 5.1.3)
             if (!isset($data['no_whatsapp'], $data['name'], $data['nik'])) {
                 return response()->json(['message' => 'Data OTP tidak valid.'], 400);
             }
 
-            // Generate ulang kode OTP
-            $otpCode = rand(100000, 999999);
-            $hashedOtp = Hash::make($otpCode);
+            // ✅ Buat ulang OTP yang aman
+            $otpCode = random_int(100000, 999999); // ASVS 2.1.1 / SCP #104
+            $hashedOtp = Hash::make($otpCode);     // ASVS 2.1.4 / SCP #30
             $expiredAt = now()->addMinutes(5);
 
-            // Update data di Redis
-            $data['otp_code'] = $hashedOtp;
-            $data['tgl_expire'] = $expiredAt;
+            // ✅ Perbarui Redis
+            $data['otp_hash'] = $hashedOtp;
+            $data['otp_expires_at'] = $expiredAt->toDateTimeString();
 
-            Redis::setex('otp:' . $request->registration_token, 300, Crypt::encrypt(json_encode($data)));
+            Redis::setex($redisKey, 300, Crypt::encrypt(json_encode($data))); // ASVS 6.1.1
 
-            // Kirim ulang OTP ke WhatsApp
-            $message = "Hi {$data['name']} dengan NIK {$data['nik']},\n\n"
+            // ✅ Kirim OTP ke WhatsApp (ASVS 10.2.1 / SCP #143)
+            $message = "Hai {$data['name']} dengan NIK {$data['nik']},\n\n"
                 . "Kode OTP Anda adalah *$otpCode*\n\n"
-                . "Kode ini hanya berlaku 5 menit.\n"
-                . "Jangan berikan kode ini kepada siapapun.";
+                . "Kode ini berlaku selama 5 menit.\n"
+                . "Jangan bagikan kode ini kepada siapa pun.";
 
-            FonnteHelper::sendWhatsAppMessage($data['no_whatsapp'], $message);
+            $sent = FonnteHelper::sendWhatsAppMessage($data['no_whatsapp'], $message);
+
+            if (!$sent) {
+                return response()->json([
+                    'message' => 'Kode OTP gagal dikirim ke WhatsApp.',
+                ], 500);
+            }
+
+            // ✅ Log aktivitas OTP resend (ASVS 7.1.3 / SCP #127)
+            LogActivity::create([
+                'id' => Str::uuid(),
+                'user_id' => null,
+                'activity_type' => 'otp_resend',
+                'description' => 'Kode OTP dikirim ulang via WhatsApp.',
+                'ip_address' => $request->ip(),
+                'metadata' => json_encode(['no_whatsapp' => $data['no_whatsapp']]),
+            ]);
 
             return response()->json([
                 'message' => 'Kode OTP berhasil dikirim ulang ke WhatsApp.',
             ], 200);
 
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
+            Log::error('Resend OTP error', [
+                'error' => $e->getMessage(),
+                'token' => $token,
+            ]);
+
             return response()->json([
                 'message' => 'Terjadi kesalahan saat mengirim ulang OTP.',
-                'error' => $e->getMessage(), // bisa dihapus di production
             ], 500);
         }
     }
 
     public function login(Request $request)
     {
-        //Role Masyarakat
         if ($request->has('nik') && $request->has('password')) {
             return $this->loginMasyarakat($request);
         }
 
-        // Role Internal (Staff Desa dan Kepala Desa)
         if ($request->has('username') && $request->has('password')) {
             return $this->loginInternal($request);
         }
-
     }
 
-     public function loginMasyarakat(LoginMasyarakatRequest $request)
+    private function loginMasyarakat(LoginMasyarakatRequest $request)
     {
-        $validated = $request->validate([
-            'nik' => 'required|digits:16',
-            'password' => 'required|string|min:8|regex:/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).+$/',
-        ], [
-            'nik.required' => 'NIK harus diisi.',
-            'nik.digits' => 'NIK harus terdiri dari 16 angka.',
-            'password.required' => 'Password harus diisi.',
-            'password.min' => 'Password harus terdiri dari minimal 8 karakter.',
-            'password.regex' => 'Password harus terdiri dari huruf besar, huruf kecil, dan angka.',
-        ]);
+        $validated = $request->validated();
+        $rateKey = 'login:masyarakat:' . $validated['nik'];
 
-
-        $user = AuthUser::where('nik', $validated['nik'])->whereHas('roles', fn($q) => $q->where('name', 'masyarakat'))->first();
-
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json(['message' => 'NIK atau password salah. Silakan coba lagi.'], 401);
+        // ✅ ASVS 7.5.1 – Rate limiting untuk brute-force login
+        if (RateLimiter::tooManyAttempts($rateKey, 5)) {
+            $seconds = RateLimiter::availableIn($rateKey);
+            return response()->json([
+                'message' => 'Terlalu banyak percobaan login. Coba lagi dalam ' . $seconds . ' detik.',
+            ], 429);
         }
+
+        $user = AuthUser::where('nik', $validated['nik'])
+            ->whereHas('roles', fn($q) => $q->where('name', 'masyarakat'))
+            ->first();
+
+        // ✅ ASVS 2.1.4 – Password hash check
+        if (!$user || !Hash::check($validated['password'], $user->password)) {
+            RateLimiter::hit($rateKey, 60); // Hit limit untuk brute-force protection
+            return response()->json([
+                'message' => 'NIK atau password salah. Silakan coba lagi.',
+            ], 401);
+        }
+
+        RateLimiter::clear($rateKey); // Clear jika login sukses
 
         $token = JWTAuth::fromUser($user);
 
+        // ✅ ASVS 7.1.3 – Logging aktivitas keamanan
         LogActivity::create([
             'id' => Str::uuid(),
             'user_id' => $user->id,
@@ -325,49 +351,63 @@ class AuthController extends Controller
             'ip_address' => $request->ip(),
         ]);
 
-
         return response()->json([
             'message' => 'Berhasil melakukan login.',
             'user' => $user->only(['id', 'name', 'nik', 'no_whatsapp']),
             'access_token' => $token,
             'token_type' => 'Bearer',
             'expires_in' => JWTAuth::factory()->getTTL() * 60,
-        ], 200);
+        ]);
     }
 
-     public function loginInternal(LoginAdminRequest $request)
+    private function loginInternal(LoginAdminRequest $request)
     {
-        $request->validate([
-            'username' => 'required|string',
-            'password' => 'required|string|min:6',
-        ]);
+        $validated = $request->validated();
+        $rateKey = 'login:internal:' . $validated['username'];
 
-        // Ambil user berdasarkan username
-        $user = AuthUser::where('username', $request->username)->first();
-
-        // Cek user dan password
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        // ✅ ASVS 7.5.1 – Rate limiting untuk brute-force login
+        if (RateLimiter::tooManyAttempts($rateKey, 5)) {
+            $seconds = RateLimiter::availableIn($rateKey);
             return response()->json([
-                'message' => 'Username atau password salah.'
+                'message' => 'Terlalu banyak percobaan login. Coba lagi dalam ' . $seconds . ' detik.',
+            ], 429);
+        }
+
+        $user = AuthUser::where('username', $validated['username'])->first();
+
+        if (!$user || !Hash::check($validated['password'], $user->password)) {
+            RateLimiter::hit($rateKey, 60); // Delay brute-force
+            return response()->json([
+                'message' => 'Username atau password salah.',
             ], 401);
         }
 
-        // Pastikan user memiliki role staff atau kepala desa
+        // ✅ ASVS 5.1.6 – Cek role apakah diizinkan
         $allowedRoles = ['staff-desa', 'kepala-desa'];
         $role = $user->roles->pluck('name')->first();
 
         if (!in_array($role, $allowedRoles)) {
             return response()->json([
-                'message' => 'Role tidak diizinkan untuk login di sini.'
+                'message' => 'Role tidak diizinkan untuk login di sini.',
             ], 403);
         }
 
-        // Generate JWT token
+        RateLimiter::clear($rateKey); // Login sukses → bersihkan limit
+
         $token = JWTAuth::fromUser($user);
+
+        // ✅ Logging login internal
+        LogActivity::create([
+            'id' => Str::uuid(),
+            'user_id' => $user->id,
+            'activity_type' => 'login',
+            'description' => 'User internal berhasil login sebagai ' . $role . '.',
+            'ip_address' => $request->ip(),
+        ]);
 
         return response()->json([
             'message' => 'Login berhasil sebagai ' . $role,
-            'user' => $user,
+            'user' => $user->only(['id', 'name', 'username', 'email']),
             'role' => $role,
             'access_token' => $token,
             'token_type' => 'Bearer',
@@ -375,43 +415,85 @@ class AuthController extends Controller
         ]);
     }
 
-    public function me(Request $request)
+    public function me()
     {
         try {
+            // ✅ Autentikasi user dari token (ASVS 2.1.1)
             $user = JWTAuth::parseToken()->authenticate();
 
             if (!$user) {
-                return response()->json(['message' => 'User belum login. Silakan login terlebih dahulu'], 401);
+                return response()->json([
+                    'message' => 'User tidak ditemukan atau belum login.'
+                ], 401);
             }
+
+            // ✅ Ambil role name (tanpa expose relasi penuh)
+            $roles = $user->roles->pluck('name');
 
             return response()->json([
                 'message' => 'Berhasil mendapatkan data user.',
-                'user' => $user->only(['id', 'name', 'nik', 'no_whatsapp', 'roles']),
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'nik' => $user->nik,
+                    'no_whatsapp' => $user->no_whatsapp,
+                    'roles' => $roles,
+                ],
             ], 200);
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Gagal mendapatkan data user.', 'error' => $e->getMessage()], 500);
+
+        // ✅ Tangani berbagai exception JWT (ASVS 2.1.1 / SCP #107)
+        } catch (\Tymon\JWTAuth\Exceptions\TokenExpiredException $e) {
+            return response()->json(['message' => 'Token telah kedaluwarsa. Silakan login kembali.'], 401);
+        } catch (\Tymon\JWTAuth\Exceptions\TokenInvalidException $e) {
+            return response()->json(['message' => 'Token tidak valid.'], 401);
+        } catch (\Tymon\JWTAuth\Exceptions\JWTException $e) {
+            return response()->json(['message' => 'Token tidak ditemukan.'], 401);
+        } catch (\Throwable $e) {
+            Log::error('Gagal mendapatkan data user', ['error' => $e->getMessage()]);
+            return response()->json(['message' => 'Terjadi kesalahan internal.'], 500);
         }
     }
 
     public function logout(Request $request)
     {
         try {
-            // Ambil token dari header Authorization
+            // ✅ Ambil token dari header Authorization (ASVS 2.1.1)
             $token = JWTAuth::parseToken()->getToken();
 
             if (!$token) {
-                return response()->json(['message' => 'Token tidak ditemukan.'], 400);
+                return response()->json([
+                    'message' => 'Token tidak ditemukan dalam permintaan.',
+                ], 400);
             }
 
-            JWTAuth::invalidate($token); // Invalidate token supaya tidak bisa dipakai lagi
+            // ✅ Invalidate token agar tidak bisa dipakai lagi (ASVS 2.2.4)
+            JWTAuth::invalidate($token);
+
+            // ✅ Logging aktivitas logout (ASVS 7.1.3 / SCP #127)
+            $user = JWTAuth::authenticate($token);
+            if ($user) {
+                LogActivity::create([
+                    'id' => Str::uuid(),
+                    'user_id' => $user->id,
+                    'activity_type' => 'logout',
+                    'description' => 'User melakukan logout.',
+                    'ip_address' => $request->ip(),
+                ]);
+            }
 
             return response()->json([
-                'message' => 'Logout berhasil.'
+                'message' => 'Logout berhasil.',
             ], 200);
+
         } catch (JWTException $e) {
+            Log::warning('Logout error', ['error' => $e->getMessage()]); // 🧾 Log internal
             return response()->json([
-                'message' => 'Gagal logout.',
-                'error' => $e->getMessage()
+                'message' => 'Gagal logout karena token tidak valid atau sudah kadaluwarsa.',
+            ], 401);
+        } catch (\Throwable $e) {
+            Log::error('Logout exception', ['error' => $e->getMessage()]);
+            return response()->json([
+                'message' => 'Terjadi kesalahan saat logout.',
             ], 500);
         }
     }
