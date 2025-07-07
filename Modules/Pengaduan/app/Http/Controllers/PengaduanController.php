@@ -40,8 +40,13 @@ class PengaduanController extends Controller
             // ✅ ASVS 13.2.1 – Validasi dan pembatasan upload file (tipe dan ukuran)
             $evidencePath = null;
             if ($request->hasFile('evidence')) {
-                $evidencePath = $request->file('evidence')->store('aduan/evidence', 'public');
-                // ✅ SCP #37 – Simpan file di lokasi aman dan terbatas (storage/public)
+                $originalExtension = $request->file('evidence')->getClientOriginalExtension();
+                $timestamp = now()->format('YmdHis');
+                $slugName = Str::slug($user->name); // gunakan slug nama user
+                $fileName = 'aduan_' . $slugName . '_' . $timestamp . '.' . $originalExtension;
+
+                // ✅ SCP #37 – Gunakan nama file aman dan konsisten
+                $evidencePath = $request->file('evidence')->storeAs('aduan/evidence', $fileName, 'public');
             }
 
             DB::beginTransaction();
