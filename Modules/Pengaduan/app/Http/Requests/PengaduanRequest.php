@@ -3,6 +3,7 @@
 namespace Modules\Pengaduan\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class PengaduanRequest extends FormRequest
 {
