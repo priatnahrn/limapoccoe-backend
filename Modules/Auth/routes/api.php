@@ -3,18 +3,16 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Auth\Http\Controllers\AuthController;
 
+Route::get('ping', function () {
+    return response()->json(['message' => 'API ready 🔥']);
+});
+
 Route::prefix('auth')->group(function () {
 
-    Route::get('ping', function () {
-        return response()->json(['message' => 'API ready 🔥']);
-    });
-
-    // Register tanpa otentikasi
+    // Registration and Login Routes
     Route::post('register', [AuthController::class, 'register']);
     Route::post('register/otp', [AuthController::class, 'verifyOtp']);
-
     Route::post('register/resend', [AuthController::class, 'resendOtp']);
-
     Route::post('login', [AuthController::class, 'login']);
  
     Route::middleware(['auth:api'])->group(function () {

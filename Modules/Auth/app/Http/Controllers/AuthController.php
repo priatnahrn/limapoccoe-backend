@@ -17,98 +17,97 @@ use App\Http\Resources\AuthUserResource;
 use Carbon\Carbon;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Facades\DB;
+use Modules\Auth\Http\Requests\RegisterRequest;
+use Modules\Auth\Http\Requests\LoginMasyarakatRequest;
+use Modules\Auth\Http\Requests\LoginAdminRequest;
+use Illuminate\Support\Facades\Log;
+use Exception;
+
+
 
 
 
 
 class AuthController extends Controller
 {
-    
-     public function register(Request $request)
+
+    public function register(RegisterRequest $request)
     {
-        // Input Validation
-        $validated = $request->validate([
-            'name' => 'required|string|min:3|max:255',
-            'nik' => 'required|digits:16|unique:auth_users,nik',
-            'no_whatsapp' => 'required|string|min:11|unique:auth_users,no_whatsapp',
-            'password' => 'required|string|min:8|confirmed|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/',
-        ], [
-            'name.required' => 'Nama lengkap harus diisi. Pastikan Anda mengisi nama lengkap dengan benar.',
-            'name.min' => 'Nama harus terdiri dari minimal 3 karakter.',
-            'name.max' => 'Nama harus terdiri dari maksimal 255 karakter.',
-            'nik.required' => 'NIK harus diisi. Pastikan NIK Anda sudah benar.',
-            'nik.unique' => 'NIK sudah terdaftar. Mohon gunakan NIK lain.',
-            'nik.digits' => 'NIK harus terdiri dari 16 angka.',
-            'no_whatsapp.required' => 'Nomor WhatsApp harus diisi. Pastikan Anda memasukkan nomor WhatsApp yang benar.',
-            'no_whatsapp.min' => 'Nomor WhatsApp harus terdiri dari minimal 11 angka.',
-            'no_whatsapp.unique' => 'Nomor WhatsApp sudah terdaftar. Mohon gunakan nomor WhatsApp lain.',
-            'password.required' => 'Password harus diisi. Pastikan Anda memasukkan password yang benar.',
-            'password.min' => 'Password harus terdiri dari minimal 8 karakter.',
-            'password.confirmed' => 'Konfirmasi password tidak cocok. Pastikan Anda memasukkan password yang sama.',
-            'password.regex' => 'Password harus terdiri dari minimal 8 karakter dan mengandung setidaknya satu huruf besar, satu huruf kecil, satu angka, dan satu karakter khusus.',
-        ]);
+        $validated = $request->validated();
 
-        // Rate Limitter
-        $key = 'otp:' . $validated['no_whatsapp'];
-
-        if (RateLimiter::tooManyAttempts($key, 1)) {
-            $seconds = RateLimiter::availableIn($key);
+        // Rate Limiting untuk pengiriman OTP (ASVS 7.5.1 / SCP #94)
+        $rateLimitKey = 'rl:register:wa:' . $validated['no_whatsapp'];
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 1)) {
+            $seconds = RateLimiter::availableIn($rateLimitKey);
             return response()->json([
                 'message' => 'Terlalu banyak permintaan. Silakan coba lagi dalam ' . $seconds . ' detik.',
             ], 429);
         }
+        RateLimiter::hit($rateLimitKey, 60); // delay 60 detik antar OTP
 
-        RateLimiter::hit($key, 60);
+        // Buat token registrasi dan OTP secara aman (ASVS 6.2.2 / SCP #104)
+        $reg_token = Str::uuid()->toString();
+        $otpCode = random_int(100000, 999999); // lebih aman daripada rand()
+        $hashedOtp = Hash::make($otpCode); // ASVS 2.1.4 / SCP #30
+        $expiredAt = now()->addMinutes(5); // Masa berlaku OTP
 
-        $reg_token = Str::uuid();
-        $otpCode = rand(100000, 999999);
-        $hashedOtp = Hash::make($otpCode);
-        $expiredAt = now()->addMinutes(5);
+        // Data yang disimpan di Redis (tanpa menyimpan password mentah)
+        $redisKey = 'otp:data:' . $reg_token;
 
-        // Storage Management to Redis
         $data = [
             'name' => $validated['name'],
             'nik' => $validated['nik'],
             'no_whatsapp' => $validated['no_whatsapp'],
-            'password' => Hash::make($validated['password']),
-            'otp_code' => $hashedOtp,
-            'tgl_expire' => $expiredAt,
+            'password_hash' => Hash::make($validated['password']), // simpan hanya hash
+            'otp_hash' => $hashedOtp,
+            'otp_expires_at' => $expiredAt->toDateTimeString(),
         ];
 
-        Redis::setex('otp:' . $reg_token, 300, Crypt::encrypt(json_encode($data)));
-    
-
-        if (!Redis::exists('otp:' . $reg_token)) {
+        try {
+            Redis::setex($redisKey, 300, Crypt::encrypt(json_encode($data))); // ASVS 6.1.1 / SCP #132
+        } catch (Exception $e) {
+            Log::error('Redis OTP store error', ['error' => $e->getMessage(), 'whatsapp' => $validated['no_whatsapp']]);
             return response()->json([
                 'message' => 'Terjadi kesalahan saat menyimpan data. Silakan coba lagi.',
             ], 500);
         }
 
-        // Send OTP to WhatsApp
-        $message = "Hi {$validated['name']} dengan NIK {$validated['nik']},\n\n"
+        // Validasi apakah data Redis berhasil disimpan (ASVS 6.2.1)
+        if (!Redis::exists($redisKey)) {
+            return response()->json([
+                'message' => 'Terjadi kesalahan penyimpanan data OTP. Silakan coba lagi.',
+            ], 500);
+        }
+
+        // Kirim OTP via WhatsApp (ASVS 10.2.1 / SCP #143)
+        $message = "Hai {$validated['name']} dengan NIK {$validated['nik']},\n\n"
             . "Kode OTP Anda adalah *$otpCode*\n\n"
-            . "Kode ini hanya berlaku 5 menit.\n"
-            . "Jangan berikan kode ini kepada siapapun.";
+            . "Kode ini berlaku selama 5 menit.\n"
+            . "Jangan bagikan kode ini kepada siapapun.";
 
         $sent = FonnteHelper::sendWhatsAppMessage($validated['no_whatsapp'], $message);
 
         if (!$sent) {
+            // Optional: Hapus Redis jika pengiriman gagal (data tidak berguna)
+            Redis::del($redisKey);
+
             return response()->json([
                 'message' => 'Kode OTP gagal dikirim ke WhatsApp. Silakan coba lagi.',
             ], 500);
         }
 
-        // Activity Log Management
+        // Logging aktivitas pengiriman OTP (ASVS 7.1.3 / SCP #127)
         LogActivity::create([
             'id' => Str::uuid(),
             'user_id' => null,
-            'activity_type' => 'kirim_otp',
-            'description' => 'Kode OTP baru telah dikirim ke WhatsApp.',
+            'activity_type' => 'otp_sent',
+            'description' => 'Kode OTP dikirim via WhatsApp ke pengguna baru.',
             'ip_address' => $request->ip(),
+            'metadata' => json_encode(['no_whatsapp' => $validated['no_whatsapp']]),
         ]);
 
         return response()->json([
-            'message' => 'Kode OTP berhasil dikirim ke WhatsApp. Silakan cek WhatsApp Anda.',
+            'message' => 'Kode OTP berhasil dikirim ke WhatsApp. Silakan cek pesan Anda.',
             'registration_token' => $reg_token,
         ], 200);
     }
@@ -278,7 +277,7 @@ class AuthController extends Controller
 
     }
 
-     public function loginMasyarakat(Request $request)
+     public function loginMasyarakat(LoginMasyarakatRequest $request)
     {
         $validated = $request->validate([
             'nik' => 'required|digits:16',
@@ -318,7 +317,7 @@ class AuthController extends Controller
         ], 200);
     }
 
-     public function loginInternal(Request $request)
+     public function loginInternal(LoginAdminRequest $request)
     {
         $request->validate([
             'username' => 'required|string',
