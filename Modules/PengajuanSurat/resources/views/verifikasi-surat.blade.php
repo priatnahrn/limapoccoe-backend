@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Verifikasi Dokumen</title>
+    <title>Verifikasi Dokumen Surat Desa Limapoccoe</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center py-12 px-4">
@@ -22,6 +22,8 @@
                     <tr class="border-b"><th class="p-3 bg-gray-50 w-1/3">Ajuan ID</th><td class="p-3">{{ $data['ajuan_id'] }}</td></tr>
                     <tr class="border-b"><th class="p-3 bg-gray-50">Nama Pemohon</th><td class="p-3">{{ $profile->nama_lengkap ?? 'Tidak diketahui' }}</td></tr>
                     <tr class="border-b"><th class="p-3 bg-gray-50">Jenis Surat</th><td class="p-3">{{ $ajuan->surat->nama_surat ?? '-' }}</td></tr>
+                    <tr class="border-b"><th class="p-3 bg-gray-50">Tanggal Pengajuan</th><td class="p-3">{{ \Carbon\Carbon::parse($data['tanggal_pengajuan'])->translatedFormat('d F Y H:i:s') }}</td></tr>
+                    <tr class="border-b"><th class="p-3 bg-gray-50">Nomor Surat</th><td class="p-3">{{ $data['nomor_surat'] ?? '-' }}</td></tr>
                     <tr><th class="p-3 bg-gray-50">Waktu TTD</th><td class="p-3">{{ \Carbon\Carbon::parse($data['timestamp'])->translatedFormat('d F Y H:i:s') }}</td></tr>
                 </tbody>
             </table>
