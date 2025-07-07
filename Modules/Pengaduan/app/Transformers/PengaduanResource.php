@@ -28,6 +28,8 @@ class PengaduanResource extends JsonResource
                 'name' => optional($this->user)->name,
                 'nik' => optional($this->user)->nik,
             ],
+            'response' => $this->response,
+            'response_date' => $this->response_date,
             'responded_by' => $this->whenLoaded('responseBy', function () {
                 return [
                     'id' => optional($this->responseBy)->id,
