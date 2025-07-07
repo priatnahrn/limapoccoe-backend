@@ -21,6 +21,7 @@ use Modules\Auth\Http\Requests\RegisterRequest;
 use Modules\Auth\Http\Requests\LoginMasyarakatRequest;
 use Modules\Auth\Http\Requests\LoginAdminRequest;
 use Illuminate\Support\Facades\Log;
+use Modules\Auth\Http\Requests\VerifyRequest;
 use Exception;
 
 
@@ -112,20 +113,22 @@ class AuthController extends Controller
         ], 200);
     }
 
-   public function verifyOtp(Request $request)
+    public function verifyOtp(VerifyRequest $request)
     {
-        $request->validate([
-            'registration_token' => 'required|string',
-            'otp_code' => 'required|digits:6',
-        ], [
-            'registration_token.required' => 'Token OTP harus diisi.',
-            'registration_token.string' => 'Token OTP harus berupa string.',
-            'otp_code.required' => 'Kode OTP harus diisi.',
-            'otp_code.digits' => 'Kode OTP harus terdiri dari 6 angka.',
-        ]);
+        $validated = $request->validated();
+        $token = $validated['registration_token'];
+        $otpKey = 'otp:data:' . $token;
+        $attemptKey = 'otp:attempt:' . $token;
 
-        // Ambil data OTP dari Redis
-        $encryptedData = Redis::get('otp:' . $request->registration_token);
+        // ✅ Batasi brute-force OTP (ASVS 7.5.1 / SCP #94)
+        if (RateLimiter::tooManyAttempts($attemptKey, 5)) {
+            $seconds = RateLimiter::availableIn($attemptKey);
+            return response()->json([
+                'message' => 'Terlalu banyak percobaan OTP. Silakan coba lagi dalam ' . $seconds . ' detik.',
+            ], 429);
+        }
+
+        $encryptedData = Redis::get($otpKey);
 
         if (!$encryptedData || !is_string($encryptedData)) {
             return response()->json([
@@ -136,69 +139,84 @@ class AuthController extends Controller
         try {
             $data = json_decode(Crypt::decrypt($encryptedData), true);
 
-            if (!isset($data['otp_code'], $data['nik'], $data['no_whatsapp'], $data['name'], $data['password'], $data['tgl_expire'])) {
+            // ✅ Validasi struktur data yang disimpan di Redis
+            if (!isset($data['otp_hash'], $data['nik'], $data['no_whatsapp'], $data['name'], $data['password_hash'], $data['otp_expires_at'])) {
                 return response()->json(['message' => 'Data OTP tidak valid.'], 400);
             }
 
-            if (!Hash::check($request->otp_code, $data['otp_code'])) {
-                return response()->json(['message' => 'Kode OTP salah. Silakan coba lagi.'], 400);
+            // ✅ Cek OTP
+            if (!Hash::check($validated['otp_code'], $data['otp_hash'])) {
+                RateLimiter::hit($attemptKey, 300); // Tambah percobaan selama 5 menit
+                return response()->json(['message' => 'Kode OTP salah.'], 400);
             }
 
-            if (Carbon::parse($data['tgl_expire'])->isPast()) {
-                return response()->json(['message' => 'Kode OTP telah kadaluwarsa.'], 400);
+            // ✅ Cek apakah OTP sudah expired
+            if (Carbon::parse($data['otp_expires_at'])->isPast()) {
+                RateLimiter::hit($attemptKey, 300);
+                return response()->json(['message' => 'Kode OTP telah kedaluwarsa.'], 400);
             }
 
+            // ✅ Cek apakah user sudah ada
             $userExists = AuthUser::where('nik', $data['nik'])
                 ->orWhere('no_whatsapp', $data['no_whatsapp'])
                 ->exists();
 
             if ($userExists) {
                 return response()->json([
-                    'message' => 'User sudah terdaftar dengan data tersebut. Silakan gunakan data lain.',
+                    'message' => 'User sudah terdaftar dengan data tersebut.',
                 ], 409);
             }
 
             DB::beginTransaction();
 
+            // ✅ Buat user baru
             $user = AuthUser::create([
                 'name' => $data['name'],
                 'nik' => $data['nik'],
                 'no_whatsapp' => $data['no_whatsapp'],
-                'password' => $data['password'], // Hash::make(...) jika belum di-hash
+                'password' => $data['password_hash'],
                 'status' => 'active',
                 'is_verified' => true,
             ]);
 
             $user->assignRole('masyarakat');
 
-            $token = JWTAuth::fromUser($user);
+            // ✅ Generate JWT Token
+            $jwt = JWTAuth::fromUser($user);
 
+            // ✅ Catat aktivitas registrasi
             LogActivity::create([
                 'id' => Str::uuid(),
                 'user_id' => $user->id,
                 'activity_type' => 'register',
-                'description' => 'User baru telah terdaftar.',
+                'description' => 'User berhasil mendaftar dan diverifikasi.',
                 'ip_address' => $request->ip(),
             ]);
 
-            Redis::del('otp:' . $request->registration_token);
+            // ✅ Bersihkan Redis dan limiter
+            Redis::del($otpKey);
+            RateLimiter::clear($attemptKey);
 
             DB::commit();
 
             return response()->json([
-                'message' => 'Registrasi dan login berhasil. Lengkapi profil sekarang untuk mengakses fitur',
+                'message' => 'Registrasi berhasil. Selamat datang!',
                 'user' => $user->only(['id', 'name', 'nik', 'no_whatsapp']),
-                'access_token' => $token,
+                'access_token' => $jwt,
                 'token_type' => 'Bearer',
-                'expires_in' => (int) JWTAuth::factory()->getTTL() * 60,
+                'expires_in' => JWTAuth::factory()->getTTL() * 60,
             ], 200);
 
         } catch (\Throwable $e) {
             DB::rollBack();
 
+            Log::error('Verifikasi OTP gagal', [
+                'error' => $e->getMessage(),
+                'token' => $token,
+            ]);
+
             return response()->json([
                 'message' => 'Terjadi kesalahan saat memverifikasi OTP.',
-                'error' => $e->getMessage(), // bisa dihapus di production
             ], 500);
         }
     }
