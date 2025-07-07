@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Log;
 use Modules\Auth\Http\Requests\VerifyRequest;
 use Modules\Auth\Http\Requests\ResendOtpRequest;
 use Exception;
+use Modules\Auth\Transformers\AuthResource;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Throwable;
 
@@ -200,13 +201,13 @@ class AuthController extends Controller
 
             return response()->json([
                 'message' => 'Registrasi berhasil. Selamat datang!',
-                'user' => $user->only(['id', 'name', 'nik', 'no_whatsapp']),
+                'user' => new AuthResource($user),
                 'access_token' => $jwt,
                 'token_type' => 'Bearer',
                 'expires_in' => JWTAuth::factory()->getTTL() * 60,
             ], 200);
 
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             DB::rollBack();
 
             Log::error('Verifikasi OTP gagal', [
@@ -344,13 +345,7 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Berhasil melakukan login.',
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'nik' => $user->nik,
-                'no_whatsapp' => $user->no_whatsapp,
-                'roles' => $roles,
-            ],
+            'user' => new AuthResource($user),
             'access_token' => $token,
             'token_type' => 'Bearer',
             'expires_in' => JWTAuth::factory()->getTTL() * 60,
@@ -405,13 +400,7 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Login berhasil sebagai ' . $roles->implode(', '),
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'username' => $user->username,
-                'email' => $user->email,
-                'roles' => $roles, 
-            ],
+            'user' => new AuthResource($user),
             'access_token' => $token,
             'token_type' => 'Bearer',
             'expires_in' => JWTAuth::factory()->getTTL() * 60,
@@ -436,13 +425,7 @@ class AuthController extends Controller
 
             return response()->json([
                 'message' => 'Berhasil mendapatkan data user.',
-                'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'nik' => $user->nik,
-                    'no_whatsapp' => $user->no_whatsapp,
-                    'roles' => $roles,
-                ],
+                'user' => new AuthResource($user),
             ], 200);
 
         // ✅ Tangani berbagai exception JWT (ASVS 2.1.1 / SCP #107)

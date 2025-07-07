@@ -14,7 +14,9 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-
+use Modules\Auth\Transformers\AuthResource;
+use Modules\Profile\Transformers\ProfileMasyarakatResource;
+use Throwable;
 
 class ProfileController extends Controller
 {
@@ -58,13 +60,12 @@ class ProfileController extends Controller
             DB::commit();
 
             return response()->json([
-                'message' => 'Profil berhasil disimpan.',
-                'user_id' => $user->id,
-                'is_profile_complete' => true,
-                'profile' => $profile,
+                'message' => 'Profil berhasil disimpan. Anda telah dapat menggunakan layanan kami.',
+                'profile' => new ProfileMasyarakatResource($profile),
+                'user' => new AuthResource($user),
             ], 201);
 
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             DB::rollBack();
             Log::error('Gagal menyimpan profil', ['error' => $e->getMessage()]);
             return response()->json(['message' => 'Terjadi kesalahan saat menyimpan profil.'], 500);
@@ -100,8 +101,8 @@ class ProfileController extends Controller
 
             return response()->json([
                 'message' => 'Berhasil mendapatkan data profil.',
-                'profile' => $profile,
-                'user' => $user->only(['id', 'name', 'nik', 'no_whatsapp', 'roles']),
+                'profile' => new ProfileMasyarakatResource($profile),
+                'user' => new AuthResource($user),
             ]);
         } catch (\Throwable $e) {
             Log::error('Gagal mengambil data profil', ['error' => $e->getMessage()]);
