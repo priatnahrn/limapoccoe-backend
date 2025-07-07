@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Log;
 use Modules\Auth\Http\Requests\VerifyRequest;
 use Modules\Auth\Http\Requests\ResendOtpRequest;
 use Exception;
+use JWTAuth\Exceptions\JWTException;
 
 class AuthController extends Controller
 {
@@ -458,100 +459,43 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         try {
-            // ✅ Ambil token dari header Authorization (ASVS 2.1.1)
-            $token = JWTAuth::parseToken()->getToken();
+            // ✅ Ambil token dan user sebelum invalidasi
+            $token = JWTAuth::getToken();
+            $user = JWTAuth::authenticate($token);
 
-            if (!$token) {
+            if (!$token || !$user) {
                 return response()->json([
-                    'message' => 'Token tidak ditemukan dalam permintaan.',
-                ], 400);
+                    'message' => 'Token tidak ditemukan atau user tidak terautentikasi.',
+                ], 401);
             }
 
-            // ✅ Invalidate token agar tidak bisa dipakai lagi (ASVS 2.2.4)
+            // ✅ Invalidate token agar tidak bisa dipakai lagi
             JWTAuth::invalidate($token);
 
-            // ✅ Logging aktivitas logout (ASVS 7.1.3 / SCP #127)
-            $user = JWTAuth::authenticate($token);
-            if ($user) {
-                LogActivity::create([
-                    'id' => Str::uuid(),
-                    'user_id' => $user->id,
-                    'activity_type' => 'logout',
-                    'description' => 'User melakukan logout.',
-                    'ip_address' => $request->ip(),
-                ]);
-            }
+            // ✅ Logging aktivitas logout
+            LogActivity::create([
+                'id' => Str::uuid(),
+                'user_id' => $user->id,
+                'activity_type' => 'logout',
+                'description' => 'User melakukan logout.',
+                'ip_address' => $request->ip(),
+            ]);
 
             return response()->json([
                 'message' => 'Logout berhasil.',
             ], 200);
 
         } catch (JWTException $e) {
-            Log::warning('Logout error', ['error' => $e->getMessage()]); // 🧾 Log internal
+            \Log::warning('Logout JWTException', ['error' => $e->getMessage()]);
             return response()->json([
                 'message' => 'Gagal logout karena token tidak valid atau sudah kadaluwarsa.',
             ], 401);
         } catch (\Throwable $e) {
-            Log::error('Logout exception', ['error' => $e->getMessage()]);
+            \Log::error('Logout exception', ['error' => $e->getMessage()]);
             return response()->json([
                 'message' => 'Terjadi kesalahan saat logout.',
             ], 500);
         }
     }
 
-
-
-
-
-
-
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
-
-        return response()->json([]);
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-
-        return response()->json([]);
-    }
-
-    /**
-     * Show the specified resource.
-     */
-    public function show($id)
-    {
-        //
-
-        return response()->json([]);
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, $id)
-    {
-        //
-
-        return response()->json([]);
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy($id)
-    {
-        //
-
-        return response()->json([]);
-    }
 }
