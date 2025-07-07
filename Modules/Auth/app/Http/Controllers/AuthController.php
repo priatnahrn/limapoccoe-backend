@@ -308,7 +308,6 @@ class AuthController extends Controller
         $validated = $request->validated();
         $rateKey = 'login:masyarakat:' . $validated['nik'];
 
-        // ✅ ASVS 7.5.1 – Rate limiting untuk brute-force login
         if (RateLimiter::tooManyAttempts($rateKey, 5)) {
             $seconds = RateLimiter::availableIn($rateKey);
             return response()->json([
@@ -320,19 +319,18 @@ class AuthController extends Controller
             ->whereHas('roles', fn($q) => $q->where('name', 'masyarakat'))
             ->first();
 
-        // ✅ ASVS 2.1.4 – Password hash check
         if (!$user || !Hash::check($validated['password'], $user->password)) {
-            RateLimiter::hit($rateKey, 60); // Hit limit untuk brute-force protection
+            RateLimiter::hit($rateKey, 60);
             return response()->json([
                 'message' => 'NIK atau password salah. Silakan coba lagi.',
             ], 401);
         }
 
-        RateLimiter::clear($rateKey); // Clear jika login sukses
+        RateLimiter::clear($rateKey);
 
         $token = JWTAuth::fromUser($user);
+        $roles = $user->roles->pluck('name');
 
-        // ✅ ASVS 7.1.3 – Logging aktivitas keamanan
         LogActivity::create([
             'id' => Str::uuid(),
             'user_id' => $user->id,
@@ -343,19 +341,26 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Berhasil melakukan login.',
-            'user' => $user->only(['id', 'name', 'nik', 'no_whatsapp']),
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'nik' => $user->nik,
+                'no_whatsapp' => $user->no_whatsapp,
+                'roles' => $roles,
+            ],
             'access_token' => $token,
             'token_type' => 'Bearer',
             'expires_in' => JWTAuth::factory()->getTTL() * 60,
         ]);
     }
 
+
     public function loginInternal(LoginAdminRequest $request)
     {
         $validated = $request->validated();
         $rateKey = 'login:internal:' . $validated['username'];
 
-        // ✅ ASVS 7.5.1 – Rate limiting untuk brute-force login
+        // ✅ ASVS 7.5.1 – Proteksi brute-force
         if (RateLimiter::tooManyAttempts($rateKey, 5)) {
             $seconds = RateLimiter::availableIn($rateKey);
             return response()->json([
@@ -366,44 +371,50 @@ class AuthController extends Controller
         $user = AuthUser::where('username', $validated['username'])->first();
 
         if (!$user || !Hash::check($validated['password'], $user->password)) {
-            RateLimiter::hit($rateKey, 60); // Delay brute-force
+            RateLimiter::hit($rateKey, 60);
             return response()->json([
                 'message' => 'Username atau password salah.',
             ], 401);
         }
 
-        // ✅ ASVS 5.1.6 – Cek role apakah diizinkan
+        // ✅ Cek role apakah diizinkan
         $allowedRoles = ['staff-desa', 'kepala-desa'];
-        $role = $user->roles->pluck('name')->first();
+        $roles = $user->roles->pluck('name');
 
-        if (!in_array($role, $allowedRoles)) {
+        if (!$roles->intersect($allowedRoles)->count()) {
             return response()->json([
                 'message' => 'Role tidak diizinkan untuk login di sini.',
             ], 403);
         }
 
-        RateLimiter::clear($rateKey); // Login sukses → bersihkan limit
+        RateLimiter::clear($rateKey);
 
         $token = JWTAuth::fromUser($user);
 
-        // ✅ Logging login internal
+        // ✅ Logging aktivitas login
         LogActivity::create([
             'id' => Str::uuid(),
             'user_id' => $user->id,
             'activity_type' => 'login',
-            'description' => 'User internal berhasil login sebagai ' . $role . '.',
+            'description' => 'User internal berhasil login sebagai ' . $roles->implode(', '),
             'ip_address' => $request->ip(),
         ]);
 
         return response()->json([
-            'message' => 'Login berhasil sebagai ' . $role,
-            'user' => $user->only(['id', 'name', 'username', 'email']),
-            'role' => $role,
+            'message' => 'Login berhasil sebagai ' . $roles->implode(', '),
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'username' => $user->username,
+                'email' => $user->email,
+                'roles' => $roles, 
+            ],
             'access_token' => $token,
             'token_type' => 'Bearer',
             'expires_in' => JWTAuth::factory()->getTTL() * 60,
         ]);
     }
+
 
     public function me()
     {
