@@ -29,7 +29,7 @@ class PengaduanRequest extends FormRequest
                     'Ekonomi & Pekerjaan',
                     'Teknologi',
                     'Lainnya',
-                ])
+                ]),
             ],
             'evidence' => 'nullable|file|mimes:jpg,jpeg,png|max:2048',
         ];

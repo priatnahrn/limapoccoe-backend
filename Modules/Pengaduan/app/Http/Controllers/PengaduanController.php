@@ -10,6 +10,7 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 use App\Models\LogActivity;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Modules\Pengaduan\Http\Requests\PengaduanRequest;
 use Illuminate\Support\Facades\Storage;
 use Modules\Pengaduan\Http\Requests\ProcessedAduanRequest;
@@ -77,7 +78,7 @@ class PengaduanController extends Controller
             DB::rollBack();
 
             // ✅ SCP #107 – Log detail error internal (tanpa expose ke client)
-            \Log::error('Gagal membuat pengaduan', [
+            Log::error('Gagal membuat pengaduan', [
                 'user_id' => $user->id ?? null,
                 'error' => $e->getMessage()
             ]);
@@ -145,8 +146,8 @@ class PengaduanController extends Controller
 
         } catch (\Throwable $e) {
             // ✅ SCP #107 – Log error internal
-            \Log::error('Gagal mengambil data aduan', [
-                'user_id' => auth()->id(),
+            Log::error('Gagal mengambil data aduan', [
+                'user_id' => $user->id,
                 'error' => $e->getMessage()
             ]);
 
@@ -206,8 +207,8 @@ class PengaduanController extends Controller
 
         } catch (\Throwable $e) {
             // ✅ SCP #107 – Log detail error internal (tanpa bocorkan ke client)
-            \Log::error('Gagal mengambil detail aduan', [
-                'user_id' => auth()->id(),
+            Log::error('Gagal mengambil detail aduan', [
+                'user_id' => $user->id,
                 'aduan_id' => $aduan_id,
                 'error' => $e->getMessage(),
             ]);
@@ -264,7 +265,7 @@ class PengaduanController extends Controller
             ]);
 
         } catch (\Throwable $e) {
-            \Log::error('Processed Aduan Error', [
+            Log::error('Processed Aduan Error', [
                 'aduan_id' => $aduan_id,
                 'error' => $e->getMessage(),
             ]);
@@ -320,8 +321,8 @@ class PengaduanController extends Controller
 
         } catch (\Throwable $e) {
             // ✅ SCP #107 – Jangan bocorkan error detail ke client
-            \Log::error('Gagal menyetujui aduan', [
-                'user_id' => auth()->id(),
+            Log::error('Gagal menyetujui aduan', [
+                'user_id' => $admin->id,
                 'aduan_id' => $aduan_id,
                 'error' => $e->getMessage(),
             ]);

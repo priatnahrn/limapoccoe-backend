@@ -11,7 +11,8 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 use Modules\Profile\Http\Requests\ProfileMasyarakatRequest;
 use App\Models\LogActivity;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\DB; 
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 
@@ -65,7 +66,7 @@ class ProfileController extends Controller
 
         } catch (\Throwable $e) {
             DB::rollBack();
-            \Log::error('Gagal menyimpan profil', ['error' => $e->getMessage()]);
+            Log::error('Gagal menyimpan profil', ['error' => $e->getMessage()]);
             return response()->json(['message' => 'Terjadi kesalahan saat menyimpan profil.'], 500);
         }
     }
@@ -103,7 +104,7 @@ class ProfileController extends Controller
                 'user' => $user->only(['id', 'name', 'nik', 'no_whatsapp', 'roles']),
             ]);
         } catch (\Throwable $e) {
-            \Log::error('Gagal mengambil data profil', ['error' => $e->getMessage()]);
+            Log::error('Gagal mengambil data profil', ['error' => $e->getMessage()]);
             return response()->json(['message' => 'Terjadi kesalahan saat mengambil data.'], 500);
         }
     }
@@ -163,7 +164,7 @@ class ProfileController extends Controller
 
         } catch (\Throwable $e) {
             DB::rollBack();
-            \Log::error('Gagal memperbarui profil', ['user_id' => $user->id ?? null, 'error' => $e->getMessage()]);
+            Log::error('Gagal memperbarui profil', ['user_id' => $user->id ?? null, 'error' => $e->getMessage()]);
             return response()->json(['message' => 'Terjadi kesalahan saat memperbarui profil.'], 500);
         }
     }

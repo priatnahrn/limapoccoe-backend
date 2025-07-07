@@ -34,6 +34,6 @@ class PengaduanResource extends JsonResource
                     'name' => optional($this->responseBy)->name,
                 ];
             }),
-        ]
+        ];
     }
 }

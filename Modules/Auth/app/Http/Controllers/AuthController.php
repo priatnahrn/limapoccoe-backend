@@ -24,7 +24,9 @@ use Illuminate\Support\Facades\Log;
 use Modules\Auth\Http\Requests\VerifyRequest;
 use Modules\Auth\Http\Requests\ResendOtpRequest;
 use Exception;
-use JWTAuth\Exceptions\JWTException;
+use Tymon\JWTAuth\Exceptions\JWTException;
+use Throwable;
+
 
 class AuthController extends Controller
 {
@@ -486,12 +488,12 @@ class AuthController extends Controller
             ], 200);
 
         } catch (JWTException $e) {
-            \Log::warning('Logout JWTException', ['error' => $e->getMessage()]);
+            Log::warning('Logout JWTException', ['error' => $e->getMessage()]);
             return response()->json([
                 'message' => 'Gagal logout karena token tidak valid atau sudah kadaluwarsa.',
             ], 401);
         } catch (\Throwable $e) {
-            \Log::error('Logout exception', ['error' => $e->getMessage()]);
+            Log::error('Logout exception', ['error' => $e->getMessage()]);
             return response()->json([
                 'message' => 'Terjadi kesalahan saat logout.',
             ], 500);
