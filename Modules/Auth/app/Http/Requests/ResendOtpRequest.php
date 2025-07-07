@@ -11,7 +11,9 @@ class ResendOtpRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [];
+        return [
+            'registration_token' => 'required|string',
+        ];
     }
 
     /**
@@ -20,5 +22,12 @@ class ResendOtpRequest extends FormRequest
     public function authorize(): bool
     {
         return true;
+    }
+
+    public function messages(): array
+    {
+        return [
+            'registration_token.required' => 'Token pendaftaran harus diisi. Pastikan Anda memasukkan token yang benar.',
+        ];
     }
 }
