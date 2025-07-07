@@ -4,12 +4,13 @@ namespace Modules\Pengaduan\Transformers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 class PengaduanResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
-     */
+    */
     public function toArray(Request $request): array
     {
         return [
@@ -20,7 +21,7 @@ class PengaduanResource extends JsonResource
             'category' => $this->category,
             'status' => $this->status,
             'evidence_url' => $this->evidence 
-                ? asset('storage/' . $this->evidence)
+                ? Storage::url($this->evidence)
                 : null,
             'created_at' => $this->created_at->toDateTimeString(),
             'user' => [
