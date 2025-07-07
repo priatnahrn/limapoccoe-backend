@@ -9,6 +9,11 @@ use Modules\Profile\Models\ProfileMasyarakat;
 use Modules\Auth\Http\Resources\AuthUserResource;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Modules\Profile\Http\Requests\ProfileMasyarakatRequest;
+use App\Models\LogActivity;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB; 
+use Illuminate\Support\Facades\Storage;
+
 
 class ProfileController extends Controller
 {
