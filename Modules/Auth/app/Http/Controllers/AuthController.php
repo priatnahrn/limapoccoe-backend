@@ -302,18 +302,8 @@ class AuthController extends Controller
         }
     }
 
-    public function login(Request $request)
-    {
-        if ($request->has('nik') && $request->has('password')) {
-            return $this->loginMasyarakat($request);
-        }
-
-        if ($request->has('username') && $request->has('password')) {
-            return $this->loginInternal($request);
-        }
-    }
-
-    private function loginMasyarakat(LoginMasyarakatRequest $request)
+   
+    public function loginMasyarakat(LoginMasyarakatRequest $request)
     {
         $validated = $request->validated();
         $rateKey = 'login:masyarakat:' . $validated['nik'];
@@ -360,7 +350,7 @@ class AuthController extends Controller
         ]);
     }
 
-    private function loginInternal(LoginAdminRequest $request)
+    public function loginInternal(LoginAdminRequest $request)
     {
         $validated = $request->validated();
         $rateKey = 'login:internal:' . $validated['username'];
