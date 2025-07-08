@@ -16,15 +16,35 @@
             {{ $message }}
         </div>
 
-        @if ($valid && isset($data))
+        @if ($valid && isset($ajuan))
             <table class="table-auto w-full text-left text-sm border border-gray-300 rounded-lg overflow-hidden">
                 <tbody>
-                    <tr class="border-b"><th class="p-3 bg-gray-50 w-1/3">Ajuan ID</th><td class="p-3">{{ $data['ajuan_id'] }}</td></tr>
-                    <tr class="border-b"><th class="p-3 bg-gray-50">Nama Pemohon</th><td class="p-3">{{ $profile->nama_lengkap ?? 'Tidak diketahui' }}</td></tr>
-                    <tr class="border-b"><th class="p-3 bg-gray-50">Jenis Surat</th><td class="p-3">{{ $ajuan->surat->nama_surat ?? '-' }}</td></tr>
-                    <tr class="border-b"><th class="p-3 bg-gray-50">Tanggal Pengajuan</th><td class="p-3">{{ \Carbon\Carbon::parse($data['tanggal_pengajuan'])->translatedFormat('d F Y H:i:s') }}</td></tr>
-                    <tr class="border-b"><th class="p-3 bg-gray-50">Nomor Surat</th><td class="p-3">{{ $data['nomor_surat'] ?? '-' }}</td></tr>
-                    <tr><th class="p-3 bg-gray-50">Waktu TTD</th><td class="p-3">{{ \Carbon\Carbon::parse($data['timestamp'])->translatedFormat('d F Y H:i:s') }}</td></tr>
+                    <tr class="border-b">
+                        <th class="p-3 bg-gray-50 w-1/3">Ajuan ID</th>
+                        <td class="p-3">{{ $ajuan->id }}</td>
+                    </tr>
+                    <tr class="border-b">
+                        <th class="p-3 bg-gray-50">Nama Pemohon</th>
+                        <td class="p-3">{{ optional($ajuan->user)->nama_lengkap ?? 'Tidak diketahui' }}</td>
+                    </tr>
+                    <tr class="border-b">
+                        <th class="p-3 bg-gray-50">Jenis Surat</th>
+                        <td class="p-3">{{ optional($ajuan->surat)->nama_surat ?? '-' }}</td>
+                    </tr>
+                    <tr class="border-b">
+                        <th class="p-3 bg-gray-50">Tanggal Pengajuan</th>
+                        <td class="p-3">{{ optional($ajuan->created_at)->translatedFormat('d F Y H:i:s') ?? '-' }}</td>
+                    </tr>
+                    <tr class="border-b">
+                        <th class="p-3 bg-gray-50">Nomor Surat</th>
+                        <td class="p-3">{{ $ajuan->nomor_surat ?? '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th class="p-3 bg-gray-50">Waktu TTD</th>
+                        <td class="p-3">
+                            {{ optional($ajuan->tandaTangan)->signed_at ? \Carbon\Carbon::parse($ajuan->tandaTangan->signed_at)->translatedFormat('d F Y H:i:s') : '-' }}
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         @endif
