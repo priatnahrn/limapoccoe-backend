@@ -10,15 +10,9 @@ use Modules\PengajuanSurat\Models\Surat;
 use App\Models\LogActivity;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\View;
-use Modules\Auth\Models\AuthUser;
 use Modules\PengajuanSurat\Models\TandaTangan;
 use Barryvdh\DomPDF\Facade\Pdf;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
-
-
-
 
 class PengajuanSuratController extends Controller
 {
