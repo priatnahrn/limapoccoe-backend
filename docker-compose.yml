@@ -51,14 +51,12 @@ services:
     container_name: limapoccoe-backend-phpmyadmin
     environment:
       PMA_HOST: mysql
-    ports:
-      - "8080:80"
     depends_on:
       - mysql
     restart: always
     networks:
       - limapoccoe-backend-network
-
+      
   redis:
     image: redis:latest
     container_name: limapoccoe-backend-redis
