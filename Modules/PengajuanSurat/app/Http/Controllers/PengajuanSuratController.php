@@ -299,7 +299,9 @@ class PengajuanSuratController extends Controller
             'data' => $dataSurat,
             'qrCodeSvg' => $qrCodeSvg,
             'downloaded_at' => $downloadedAt,
+            'isPreview' => true, // ✅ penting
         ])->render();
+
 
         return response($html, 200)->header('Content-Type', 'text/html');
     }
@@ -598,7 +600,9 @@ public function downloadSurat($slug, $ajuanId)
             'data' => $dataSurat,
             'qrCodePath' => $qrCodePath,
             'downloaded_at' => $downloadedAt,
+            'isPreview' => false, // ✅ Tambahan ini wajib
         ])->render();
+
 
         // ✅ Convert HTML ke PDF
         $nomorSurat = preg_replace('/[\/\\\\]/', '-', $ajuanSurat->nomor_surat ?? 'tanpa-nomor');
