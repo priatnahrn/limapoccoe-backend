@@ -52,12 +52,18 @@ services:
     environment:
       PMA_HOST: mysql
       PMA_ABSOLUTE_URI: https://db.limapoccoedigital.id/
+      PMA_FORCE_SSL: 1
+      HTTPS: 1
+      PMA_PORT: 3306
+      # Tambahan untuk mengatasi session cookie issue
+      APACHE_HTTPS_PORT_NUMBER: 443
+      APACHE_HTTP_PORT_NUMBER: 80
     depends_on:
       - mysql
     restart: always
     networks:
       - limapoccoe-backend-network
-      
+        
   redis:
     image: redis:latest
     container_name: limapoccoe-backend-redis
