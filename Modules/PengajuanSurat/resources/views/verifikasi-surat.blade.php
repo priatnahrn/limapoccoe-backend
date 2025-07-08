@@ -19,13 +19,10 @@
         @if ($valid && isset($ajuan))
             <table class="table-auto w-full text-left text-sm border border-gray-300 rounded-lg overflow-hidden">
                 <tbody>
-                    <tr class="border-b">
-                        <th class="p-3 bg-gray-50 w-1/3">Ajuan ID</th>
-                        <td class="p-3">{{ $ajuan->id }}</td>
-                    </tr>
+                    
                     <tr class="border-b">
                         <th class="p-3 bg-gray-50">Nama Pemohon</th>
-                        <td class="p-3">{{ optional($ajuan->user)->nama_lengkap ?? 'Tidak diketahui' }}</td>
+                        <td class="p-3">{{ optional($ajuan->user)->name ?? 'Tidak diketahui' }}</td>
                     </tr>
                     <tr class="border-b">
                         <th class="p-3 bg-gray-50">Jenis Surat</th>
