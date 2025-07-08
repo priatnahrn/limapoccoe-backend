@@ -5,7 +5,7 @@
     <title>Verifikasi Dokumen Surat Desa Limapoccoe</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center py-12 px-4">
+<body class="bg-gray-100 min-h-screen flex justify-center pt-8 sm:pt-16 px-4">
     <div class="bg-white shadow-lg rounded-xl w-full px-4 py-6 sm:px-8 sm:py-8 text-center">
         <img src="{{ asset('logo-limapoccoe.png') }}" class="mx-auto h-16 sm:h-20 mb-4" alt="Logo">
 
