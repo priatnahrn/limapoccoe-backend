@@ -55,8 +55,6 @@ services:
       PMA_ABSOLUTE_URI: https://api.limapoccoedigital.id/database/
       PMA_FORCE_SSL: 1
       HTTPS: 1 
-    ports:
-      - "8080:80"  # Tambahkan ini untuk debug
     depends_on:
       - mysql
     restart: always
