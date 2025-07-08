@@ -25,7 +25,7 @@
     <table width="100%">
         <tr>
             <td width="100">
-                <img src="{{ public_path('logo-limapoccoe.png') }}" alt="Logo Desa" style="height: 90px;">
+                <img src="file://{{ public_path('logo-limapoccoe.png') }}" alt="Logo Desa" style="height: 90px;">
             </td>
             <td class="center">
                 <div class="bold">PEMERINTAH DESA LIMAPOCCOE</div>
@@ -85,7 +85,7 @@
         {{-- QR Code --}}
         <div style="width: 100px;">
             @if($ajuan->status === 'approved' && isset($qrCodePath) && file_exists($qrCodePath))
-                <img src="{{ $qrCodePath }}" alt="QR Code" style="width: 50px;">
+                <img src="file://{{ $qrCodePath }}" alt="QR Code" style="width: 50px;">
                 @if(isset($downloaded_at))
                     <div style="font-size: 10px;">Verifikasi: {{ $downloaded_at }}</div>
                 @endif
