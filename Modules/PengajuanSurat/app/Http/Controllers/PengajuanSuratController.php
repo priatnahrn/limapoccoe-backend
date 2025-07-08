@@ -13,6 +13,9 @@ use Carbon\Carbon;
 use Modules\PengajuanSurat\Models\TandaTangan;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Barryvdh\DomPDF\PDF as DomPDFPDF;
+use FontLib\WOFF\File;
+use Illuminate\Support\Facades\Facade;
+use Illuminate\Support\Facades\File as FacadesFile;
 use Illuminate\Support\Facades\Log;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
@@ -489,22 +492,17 @@ class PengajuanSuratController extends Controller
     ]);
 }
 
-
-
-
 public function downloadSurat($slug, $ajuanId)
 {
     Carbon::setLocale('id');
     ini_set('memory_limit', '-1');
 
     try {
-        // ✅ Autentikasi user
         $user = JWTAuth::parseToken()->authenticate();
         if (!$user->hasAnyRole(['masyarakat', 'staff-desa', 'kepala-desa', 'super-admin'])) {
             return response()->json(['error' => 'Akses ditolak.'], 403);
         }
 
-        // ✅ Ambil data pengajuan beserta relasi
         $ajuanSurat = Ajuan::with([
             'user.profileMasyarakat',
             'surat',
@@ -521,12 +519,10 @@ public function downloadSurat($slug, $ajuanId)
             return response()->json(['error' => 'Surat tidak valid atau belum disetujui.'], 400);
         }
 
-        // ✅ Decode data surat
         $dataSurat = is_array($ajuanSurat->data_surat)
             ? $ajuanSurat->data_surat
             : json_decode($ajuanSurat->data_surat, true);
 
-        // ✅ Tentukan template surat
         $kodeSurat = strtolower(optional($ajuanSurat->surat)->kode_surat ?? 'default');
         $template = 'surat.templates.' . $kodeSurat;
 
@@ -535,34 +531,45 @@ public function downloadSurat($slug, $ajuanId)
             return response("Template surat tidak ditemukan", 500);
         }
 
-        // ✅ Buat QR Code
+        // ✅ Buat QR code sebagai file sementara
         $verificationUrl = url("/verifikasi-surat/{$ajuanSurat->id}");
-        $qrCodeSvg = QrCode::format('svg')->size(150)->generate($verificationUrl);
+        $qrFilename = 'qr-' . Str::uuid() . '.png';
+        $qrPath = public_path("storage/qrcodes/{$qrFilename}");
+
+        if (!FacadesFile::exists(dirname($qrPath))) {
+            FacadesFile::makeDirectory(dirname($qrPath), 0755, true);
+        }
+
+        QrCode::format('png')->size(200)->generate($verificationUrl, $qrPath);
+
         $downloadedAt = Carbon::now()->translatedFormat('l, d F Y H:i');
 
-        // ✅ Render view sebagai HTML
         $html = view($template, [
             'ajuan' => $ajuanSurat,
             'user' => $ajuanSurat->user,
             'profile' => $ajuanSurat->user->profileMasyarakat,
             'data' => $dataSurat,
-            'qrCodeSvg' => $qrCodeSvg,
+            'qrCodePath' => $qrPath,
             'downloaded_at' => $downloadedAt,
         ])->render();
 
-        // (Opsional) Debug jika perlu
-        // file_put_contents(storage_path('debug-surat.html'), $html);
-
-        // ✅ Generate dan download PDF
         $nomorSurat = preg_replace('/[\/\\\\]/', '-', $ajuanSurat->nomor_surat ?? 'tanpa-nomor');
         $pdf = PDF::loadHTML($html);
-        return $pdf->download("surat-{$nomorSurat}.pdf");
+
+        // Simpan PDF ke browser
+        $response = $pdf->download("surat-{$nomorSurat}.pdf");
+
+        // Hapus QR code setelah selesai
+        if (file_exists($qrPath)) {
+            unlink($qrPath);
+        }
+
+        return $response;
     } catch (\Throwable $e) {
         Log::error("Download surat gagal: " . $e->getMessage());
         return response()->json(['error' => 'Terjadi kesalahan saat memproses surat.'], 500);
     }
 }
-
 
 public function verifikasiSurat($ajuanId)
 {

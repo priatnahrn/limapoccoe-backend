@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <title>Surat Keterangan Tidak Mampu</title>
@@ -8,6 +8,7 @@
             font-family: 'Times New Roman', Times, serif;
             line-height: 1.6;
             margin: 30px;
+            font-size: 14px;
         }
         .center { text-align: center; }
         .bold { font-weight: bold; }
@@ -16,14 +17,15 @@
         .text-right { text-align: right; }
         .indent { text-indent: 2em; }
         table { page-break-inside: avoid; }
+        hr { margin: 20px 0; }
     </style>
 </head>
 <body>
 
     <table width="100%">
         <tr>
-            <td style="width: 100px;">
-              <img src="{{ asset('storage/logo-limapoccoe.png') }}" alt="Logo Desa" style="height: 90px;">
+            <td width="100">
+                <img src="{{ public_path('logo-limapoccoe.png') }}" alt="Logo Desa" style="height: 90px;">
             </td>
             <td class="center">
                 <div class="bold">PEMERINTAH DESA LIMAPOCCOE</div>
@@ -45,17 +47,17 @@
     <p class="mt-3">Yang bertanda tangan di bawah ini:</p>
     <table>
         <tr><td>Nama</td><td>: {{ $ajuan->tandaTangan->user->name ?? 'MARLINA' }}</td></tr>
-        <tr><td>Jabatan</td><td>: {{ 'KEPALA DESA LIMAPOCCOE' }}</td></tr>
+        <tr><td>Jabatan</td><td>: Kepala Desa Limapoccoe</td></tr>
     </table>
 
     <p class="mt-3">Menerangkan bahwa:</p>
     <table>
         <tr><td>Nama</td><td>: {{ $user->name ?? $data['nama'] ?? '-' }}</td></tr>
         <tr><td>NIK</td><td>: {{ $user->nik ?? $data['nik'] ?? '-' }}</td></tr>
-        <tr><td>Tempat/Tanggal Lahir</td>
+        <tr>
+            <td>Tempat/Tanggal Lahir</td>
             <td>: {{ optional($profile)->tempat_lahir ?? $data['tempat_lahir'] ?? '-' }},
-                 {{ \Carbon\Carbon::parse(optional($profile)->tanggal_lahir ?? $data['tanggal_lahir'] ?? now())->format('d-m-Y') }}
-            </td>
+                 {{ \Carbon\Carbon::parse(optional($profile)->tanggal_lahir ?? $data['tanggal_lahir'] ?? now())->format('d-m-Y') }}</td>
         </tr>
         <tr><td>Jenis Kelamin</td><td>: {{ optional($profile)->jenis_kelamin ?? $data['jenis_kelamin'] ?? '-' }}</td></tr>
         <tr><td>Pekerjaan</td><td>: {{ optional($profile)->pekerjaan ?? $data['pekerjaan'] ?? '-' }}</td></tr>
@@ -79,51 +81,49 @@
         Demikian surat keterangan ini kami buat dengan sebenarnya untuk digunakan seperlunya.
     </p>
 
-    <div class="mt-5" style="display: flex; justify-content: space-between; align-items: flex-start;">
-    {{-- QR Code di kiri --}}
-    @if ($ajuan->status === 'approved')
-    <div style="width: 80px; text-align: center;">
-        {!! $qrCodeSvg ?? '' !!}
-        @if(isset($downloaded_at))
-            <div style="font-size: 10px;">Verifikasi: {{ $downloaded_at }}</div>
-        @endif
-    </div>
-        @else
-            <div style="width: 130px;"></div> {{-- Placeholder kosong biar layout tetap rapi --}}
-        @endif
-
-    {{-- Tanda tangan di kanan --}}
-    <div style="text-align: center; width: 50%;">
-        <div>Limapoccoe, {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d F Y') }}</div>
-        <div>KEPALA DESA LIMAPOCCOE</div>
-        <div>KEPALA DESA</div>
-
-        <div style="margin-top: 20px;">
-            @php
-                $ttdPath = storage_path('app/private/tanda-tangan-digital.png');
-                $ttdBase64 = file_exists($ttdPath) ? base64_encode(file_get_contents($ttdPath)) : null;
-            @endphp
-
-            @if ($ajuan->status === 'approved' && $ttdBase64)
-                <img src="data:image/png;base64,{{ $ttdBase64 }}" alt="Tanda Tangan" style="height: 120px;"><br>
-                <strong>{{ $ajuan->tandaTangan->user->name ?? 'H ANDI ABU BAKRI' }}</strong>
-            @else
-                <div style="height: 100px;"></div>
-                <strong style="color: grey">Belum ditandatangani</strong>
+    <div class="mt-5" style="display: flex; justify-content: space-between;">
+        {{-- QR Code --}}
+        <div style="width: 100px;">
+            @if($ajuan->status === 'approved' && isset($qrCodePath) && file_exists($qrCodePath))
+                <img src="{{ $qrCodePath }}" alt="QR Code" style="width: 50px;">
+                @if(isset($downloaded_at))
+                    <div style="font-size: 10px;">Verifikasi: {{ $downloaded_at }}</div>
+                @endif
             @endif
         </div>
+
+        {{-- Tanda Tangan --}}
+        <div style="text-align: center; width: 50%;">
+            <div>Limapoccoe, {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d F Y') }}</div>
+            <div>KEPALA DESA LIMAPOCCOE</div>
+            <div>KEPALA DESA</div>
+
+            <div style="margin-top: 20px;">
+                @php
+                    $ttdPath = storage_path('app/private/tanda-tangan-digital.png');
+                    $ttdBase64 = file_exists($ttdPath) ? base64_encode(file_get_contents($ttdPath)) : null;
+                @endphp
+
+                @if ($ajuan->status === 'approved' && $ttdBase64)
+                    <img src="data:image/png;base64,{{ $ttdBase64 }}" alt="Tanda Tangan" style="height: 120px;"><br>
+                    <strong>{{ $ajuan->tandaTangan->user->name ?? 'H ANDI ABU BAKRI' }}</strong>
+                @else
+                    <div style="height: 100px;"></div>
+                    <strong style="color: grey">Belum ditandatangani</strong>
+                @endif
+            </div>
+        </div>
     </div>
-</div>
 
-<div class="text-right mt-3">
-    <p><em>Catatan:</em> Surat ini berlaku selama 6 bulan sejak tanggal terbit.</p>
-</div>
+    <div class="text-right mt-3">
+        <p><em>Catatan:</em> Surat ini berlaku selama 6 bulan sejak tanggal terbit.</p>
+    </div>
 
-<hr>
+    <hr>
 
-<div class="text-right">
-    <p><small>Dicetak pada: {{ now()->translatedFormat('d F Y H:i') }}</small></p>
-</div>
+    <div class="text-right">
+        <p><small>Dicetak pada: {{ now()->translatedFormat('d F Y H:i') }}</small></p>
+    </div>
 
 </body>
 </html>

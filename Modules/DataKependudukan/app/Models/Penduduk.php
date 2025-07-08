@@ -5,8 +5,6 @@ namespace Modules\DataKependudukan\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Modules\DataKependudukan\Models\Penduduk;
-use Modules\DataKependudukan\Models\Rumah;
 
 class Penduduk extends Model
 {

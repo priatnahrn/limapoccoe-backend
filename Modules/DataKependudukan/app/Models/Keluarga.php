@@ -40,7 +40,7 @@ class Keluarga extends Model
      */
     public function penduduks()
     {
-        return $this->hasMany(Penduduk::class); // pastikan namespace Penduduk benar
+        return $this->hasMany(Penduduk::class, 'keluarga_id'); // pastikan namespace Penduduk benar
     }
 
     /**
