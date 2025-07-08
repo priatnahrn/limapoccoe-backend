@@ -68,7 +68,7 @@ services:
 
 volumes:
   mysql_data:
-    external: true
+    driver: local
 
 networks:
   limapoccoe-backend-network:
