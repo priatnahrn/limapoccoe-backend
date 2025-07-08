@@ -51,7 +51,7 @@ services:
     container_name: limapoccoe-backend-phpmyadmin
     environment:
       PMA_HOST: mysql
-      PMA_ABSOLUTE_URI: https://api.limapoccoedigital.id/database/
+      PMA_ABSOLUTE_URI: https://db.limapoccoedigital.id/
     depends_on:
       - mysql
     restart: always
