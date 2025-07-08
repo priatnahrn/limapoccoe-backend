@@ -488,8 +488,6 @@ class PengajuanSuratController extends Controller
 }
 
 
-
-
 public function downloadSurat($slug, $ajuanId)
 {
     Carbon::setLocale('id');
