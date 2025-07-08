@@ -543,7 +543,7 @@ public function downloadSurat($slug, $ajuanId)
 
 public function verifikasiSurat($ajuanId)
 {
-    $ajuan = Ajuan::with('tandaTangan')->find($ajuanId);
+    $ajuan = Ajuan::with(['user', 'surat', 'tandaTangan'])->find($ajuanId);
 
     if (!$ajuan || !$ajuan->tandaTangan) {
         return view('pengajuan-surat::verifikasi-surat', [
@@ -573,13 +573,9 @@ public function verifikasiSurat($ajuanId)
         'message' => $verified === 1
             ? '✅ Dokumen ASLI dan belum dimodifikasi.'
             : '❌ Dokumen tidak valid atau telah dimodifikasi.',
-        'data' => json_decode($signatureData, true)
+        'data' => json_decode($signatureData, true),
+        'ajuan' => $ajuan, // ⬅ DITAMBAHKAN!
     ]);
 }
-
-
-
-
-
     
 }
