@@ -17,6 +17,8 @@ class AjuanResource extends JsonResource
             'id' => $this->id,
             'surat_id' => $this->surat_id,
             'user' => new AuthResource($this->user),
+            'nomor_surat' => $this->nomor_surat,
+            'nomor_surat_tersimpan' => $this->nomor_surat_tersimpan,
             'data_surat' => is_string($this->data_surat)
                 ? json_decode($this->data_surat, true)
                 : $this->data_surat,
