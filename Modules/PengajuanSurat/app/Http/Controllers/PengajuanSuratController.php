@@ -11,7 +11,7 @@ use App\Models\LogActivity;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Carbon\Carbon;
 use Modules\PengajuanSurat\Models\TandaTangan;
-use PDF;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Modules\PengajuanSurat\Http\Requests\AjuanRequest;
@@ -741,8 +741,9 @@ class PengajuanSuratController extends Controller
 
             // ✅ Buat PDF
             $nomorSurat = preg_replace('/[\/\\\\]/', '-', $ajuanSurat->nomor_surat ?? 'tanpa-nomor');
-            $pdf = PDF::loadHTML($html)->setOption('enable-local-file-access', true);
-return $pdf->download("surat-{$nomorSurat}.pdf");
+            $pdf = PDF::loadHTML($html)->setPaper('a4', 'landscape')
+            ->setOption('enable-local-file-access', true);
+            return $pdf->download("surat-{$nomorSurat}.pdf");
 
             // ✅ Hapus file QR sementara
             if (file_exists($qrCodePath)) {
