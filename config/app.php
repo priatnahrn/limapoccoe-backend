@@ -122,5 +122,18 @@ return [
         'driver' => env('APP_MAINTENANCE_DRIVER', 'file'),
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
+    
+    'providers' => [
+    // ...
+    Barryvdh\Snappy\ServiceProvider::class,
+],
+
+'aliases' => [
+    // ...
+    'PDF' => Barryvdh\Snappy\Facades\SnappyPdf::class,
+// You can add more aliases here if needed
+],
+
+
 
 ];
