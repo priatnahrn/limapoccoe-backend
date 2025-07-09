@@ -692,7 +692,7 @@ class PengajuanSuratController extends Controller
                 'user',
                 'user.profileMasyarakat',
                 'surat',
-                'tandaTangan.user'
+                'tandaTangan.signedBy'
             ])
             ->where('id', $ajuanId)
             ->whereHas('surat', fn($q) => $q->where('slug', $slug))
