@@ -34,7 +34,7 @@
                     </tr>
                     <tr class="border-b">
                         <th class="p-3 bg-gray-50">Nomor Surat</th>
-                        <td class="p-3">{{ $ajuan->nomor_surat ?? '-' }}</td>
+                        <td class="p-3">{{ $ajuan->nomor_surat_tersimpan ?? '-' }}</td>
                     </tr>
                     <tr>
                         <th class="p-3 bg-gray-50">Waktu TTD</th>

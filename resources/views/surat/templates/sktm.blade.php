@@ -86,7 +86,7 @@
                 @if($isPreview)
                     {!! $qrCodeSvg ?? '' !!}
                 @elseif(isset($qrCodePath) && file_exists($qrCodePath))
-                    <img src="file://{{ $qrCodePath }}" style="width: 60px;" alt="QR Code">
+                    <img src="file://{{ $qrCodePath }}" style="width: 30px;" alt="QR Code">
                 @endif
 
                 @if(isset($downloaded_at))
@@ -108,7 +108,7 @@
                 @endphp
 
                 @if ($ajuan->status === 'approved' && $ttdBase64)
-                    <img src="data:image/png;base64,{{ $ttdBase64 }}" style="height: 120px;" alt="Tanda Tangan"><br>
+                    <img src="data:image/png;base64,{{ $ttdBase64 }}" style="height: 200px;" alt="Tanda Tangan"><br>
                     <strong>{{ $ajuan->tandaTangan->user->name ?? 'H ANDI ABU BAKRI' }}</strong>
                 @else
                     <div style="height: 100px;"></div>
