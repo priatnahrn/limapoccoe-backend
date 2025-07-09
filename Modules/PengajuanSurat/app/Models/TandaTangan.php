@@ -62,7 +62,7 @@ class TandaTangan extends Model
         return $this->belongsTo(Ajuan::class, 'ajuan_id');
     }
 
-    public function user()
+    public function signedBy()
     {
         return $this->belongsTo(AuthUser::class, 'signed_by');
     }

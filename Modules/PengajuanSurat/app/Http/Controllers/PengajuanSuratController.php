@@ -14,137 +14,240 @@ use Modules\PengajuanSurat\Models\TandaTangan;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
+use Modules\PengajuanSurat\Http\Requests\AjuanRequest;
+use Modules\PengajuanSurat\Http\Requests\FillNumberRequest;
+use Modules\PengajuanSurat\Transformers\AjuanResource;
+use Modules\PengajuanSurat\Transformers\TandaTanganResource;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class PengajuanSuratController extends Controller
 {
     
-    public function ajukanSurat(Request $request, $slug)
+    // public function ajukanSurat(Request $request, $slug)
+    // {
+    //     $authUser = JWTAuth::parseToken()->authenticate();
+    //     if (!$authUser) {
+    //         return response()->json(['error' => 'User belum login. Silakan login terlebih dahulu'], 401);
+    //     }
+
+    //     if (!$authUser->hasRole('masyarakat') && !$authUser->hasRole('staff-desa')) {
+    //         return response()->json(['error' => 'Akses ditolak. Anda tidak memiliki izin untuk mengajukan surat'], 403);
+    //     }
+
+    //     if ($authUser->hasRole('masyarakat') && !$authUser->is_profile_complete) {
+    //         return response()->json([
+    //             'error' => 'Profil Anda belum lengkap. Harap lengkapi profil terlebih dahulu sebelum mengajukan surat.'
+    //         ], 422);
+    //     }
+
+    //     $surat = Surat::where('slug', $slug)->first();
+    //     if (!$surat) {
+    //         return response()->json(['error' => 'Surat tidak ditemukan'], 404);
+    //     }
+
+    //     $validatedData = $request->validate([
+    //         'data_surat' => 'required|array',
+    //         'lampiran' => 'nullable|array',
+    //         'lampiran.*' => 'file|mimes:jpg,jpeg,png,pdf|max:5120',
+    //     ]);
+
+    //     $ajuan = Ajuan::create([
+    //         'user_id' => $authUser->id, // pencatat pengaju, bukan yang diajukan
+    //         'surat_id' => $surat->id,
+    //         'data_surat' => json_encode($validatedData['data_surat']),
+    //         'status' => 'processed',
+    //     ]);
+
+    //     // Simpan lampiran jika ada
+    //     if (isset($validatedData['lampiran'])) {
+    //         foreach ($validatedData['lampiran'] as $file) {
+    //             $path = $file->store('lampiran', 'public');
+    //             $ajuan->lampiran()->create([
+    //                 'file_path' => $path,
+    //             ]);
+    //         }
+    //     }
+
+    //     // Ambil nama dari data_surat untuk keperluan log
+    //     $namaPemohon = $validatedData['data_surat']['nama_lengkap'] ?? 'tidak diketahui';
+
+    //     // Log aktivitas
+    //     LogActivity::create([
+    //         'id' => Str::uuid(),
+    //         'user_id' => $authUser->id,
+    //         'activity_type' => 'ajuan_surat',
+    //         'description' => 'Surat "' . $surat->nama_surat . '" diajukan untuk ' . $namaPemohon,
+    //         'ip_address' => $request->ip(),
+    //     ]);
+
+    //     return response()->json([
+    //         'message' => 'Surat berhasil diajukan.',
+    //         'ajuan_surat' => $ajuan,
+    //     ], 200);
+    // }
+
+
+    public function ajukanSurat(AjuanRequest $request, $slug)
     {
-        $authUser = JWTAuth::parseToken()->authenticate();
-        if (!$authUser) {
-            return response()->json(['error' => 'User belum login. Silakan login terlebih dahulu'], 401);
-        }
-
-        if (!$authUser->hasRole('masyarakat') && !$authUser->hasRole('staff-desa')) {
-            return response()->json(['error' => 'Akses ditolak. Anda tidak memiliki izin untuk mengajukan surat'], 403);
-        }
-
-        if ($authUser->hasRole('masyarakat') && !$authUser->is_profile_complete) {
-            return response()->json([
-                'error' => 'Profil Anda belum lengkap. Harap lengkapi profil terlebih dahulu sebelum mengajukan surat.'
-            ], 422);
-        }
-
-        $surat = Surat::where('slug', $slug)->first();
-        if (!$surat) {
-            return response()->json(['error' => 'Surat tidak ditemukan'], 404);
-        }
-
-        $validatedData = $request->validate([
-            'data_surat' => 'required|array',
-            'lampiran' => 'nullable|array',
-            'lampiran.*' => 'file|mimes:jpg,jpeg,png,pdf|max:5120',
-        ]);
-
-        $ajuan = Ajuan::create([
-            'user_id' => $authUser->id, // pencatat pengaju, bukan yang diajukan
-            'surat_id' => $surat->id,
-            'data_surat' => json_encode($validatedData['data_surat']),
-            'status' => 'processed',
-        ]);
-
-        // Simpan lampiran jika ada
-        if (isset($validatedData['lampiran'])) {
-            foreach ($validatedData['lampiran'] as $file) {
-                $path = $file->store('lampiran', 'public');
-                $ajuan->lampiran()->create([
-                    'file_path' => $path,
-                ]);
+        try {
+            // ✅ [ASVS V2.1] [SCP #23] Autentikasi di awal proses
+            $authUser = JWTAuth::parseToken()->authenticate();
+            if (!$authUser) {
+                return response()->json(['error' => 'Anda belum login. Silakan login terlebih dahulu'], 401);
             }
+
+            // ✅ [ASVS V4.1] [SCP #77, #84] Kontrol akses berbasis peran
+            if (!$authUser->hasRole('masyarakat') && !$authUser->hasRole('staff-desa')) {
+                return response()->json(['error' => 'Anda tidak memiliki izin untuk mengajukan surat.'], 403);
+            }
+
+            // ✅ [ASVS V2.1.1] Validasi status profil pengguna
+            if ($authUser->hasRole('masyarakat') && !$authUser->is_profile_complete) {
+                return response()->json([
+                    'error' => 'Profil belum lengkap. Lengkapi sebelum mengajukan surat.'
+                ], 422);
+            }
+
+            // ✅ [SCP #2] Validasi entitas dari input (slug → surat)
+            $surat = Surat::where('slug', $slug)->first();
+            if (!$surat) {
+                return response()->json(['error' => 'Surat tidak ditemukan.'], 404);
+            }
+
+            // ✅ [ASVS V5.1] [SCP #11, #13, #14] Validasi input eksplisit & whitelist karakter
+            $validatedData = $request->validate();
+
+            // ✅ [ASVS V4.1.3] Simpan data dengan pembatasan hak akses minimal
+            $ajuan = Ajuan::create([
+                'user_id' => $authUser->id,
+                'surat_id' => $surat->id,
+                'data_surat' => json_encode($validatedData['data_surat']), // [SCP #1, #12]
+                'status' => 'processed',
+            ]);
+
+            // ✅ [ASVS V5.1.4] [SCP #185, #186, #192] Penanganan aman file upload
+            if (!empty($validatedData['lampiran'])) {
+                foreach ($validatedData['lampiran'] as $file) {
+                    $filename = (string) Str::uuid() . '.' . $file->getClientOriginalExtension(); // [SCP #104]
+                    $path = $file->storeAs('lampiran/' . $ajuan->id, $filename, 'private'); // Direktori privat & aman
+
+                    $ajuan->lampiran()->create([
+                        'file_path' => $path,
+                    ]);
+                }
+            }
+
+            // ✅ [ASVS V8.3] [SCP #127, #114, #113] Logging aman (tidak menyimpan data sensitif)
+            LogActivity::create([
+                'id' => Str::uuid(),
+                'user_id' => $authUser->id,
+                'activity_type' => 'ajuan_surat',
+                'description' => 'Surat "' . $surat->nama_surat . '" diajukan.', // hindari log PII
+                'ip_address' => $request->ip(),
+            ]);
+
+            // ✅ [ASVS V9.1] Response aman, tidak bocorkan info sensitif
+            return response()->json([
+                'message' => 'Surat berhasil diajukan.',
+                'ajuan_surat' => new AjuanResource($ajuan),
+            ], 200);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // ✅ [ASVS V9.2] Penanganan validasi input yang aman
+            return response()->json([
+                'error' => 'Validasi gagal.',
+                'details' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            // ✅ [SCP #108] Jangan tampilkan detail error ke client
+            Log::error('Kesalahan saat ajukanSurat: ' . $e->getMessage());
+            return response()->json(['error' => 'Terjadi kesalahan internal. Coba beberapa saat lagi'], 500); // [SCP #112]
         }
-
-        // Ambil nama dari data_surat untuk keperluan log
-        $namaPemohon = $validatedData['data_surat']['nama_lengkap'] ?? 'tidak diketahui';
-
-        // Log aktivitas
-        LogActivity::create([
-            'id' => Str::uuid(),
-            'user_id' => $authUser->id,
-            'activity_type' => 'ajuan_surat',
-            'description' => 'Surat "' . $surat->nama_surat . '" diajukan untuk ' . $namaPemohon,
-            'ip_address' => $request->ip(),
-        ]);
-
-        return response()->json([
-            'message' => 'Surat berhasil diajukan.',
-            'ajuan_surat' => $ajuan,
-        ], 200);
     }
 
 
     public function getPengajuanSurat($slug)
     {
-        $user = JWTAuth::parseToken()->authenticate();
+        try {
+            // ✅ [ASVS V2.1] [SCP #23] Autentikasi di awal proses
+            $user = JWTAuth::parseToken()->authenticate();
 
-        if (!$user) {
-            return response()->json(['error' => 'User belum login. Silakan login terlebih dahulu'], 401);
-        }
+            if (!$user) {
+                return response()->json(['error' => 'Anda belum login. Silakan login terlebih dahulu'], 401);
+            }
 
-        $baseQuery = Ajuan::with([
-            'user',
-            'user.profileMasyarakat',
-            'surat'
-        ])->whereHas('surat', function ($query) use ($slug) {
-            $query->where('slug', $slug);
-        });
+            // ✅ [ASVS V5.1.2] Validasi slug agar sesuai format yang diharapkan (jika belum di route-level)
+            if (!preg_match('/^[a-z0-9-]+$/', $slug)) {
+                return response()->json(['error' => 'Format slug tidak valid.'], 400);
+            }
 
-        if ($user->hasRole('masyarakat')) {
-            $pengajuanSurat = $baseQuery->where('user_id', $user->id)->get();
-        } elseif ($user->hasRole('staff-desa')) {
-            $pengajuanSurat = $baseQuery->get();
-        } elseif ($user->hasRole('kepala-desa')) {
-            $pengajuanSurat = $baseQuery
-                ->whereIn('status', ['confirmed', 'approved'])
-                ->get();
-        } else {
+            // ✅ [ASVS V4.1] Inisialisasi query dasar
+            $baseQuery = Ajuan::with([
+                'user',
+                'user.profileMasyarakat',
+                'surat'
+            ])->whereHas('surat', function ($query) use ($slug) {
+                $query->where('slug', $slug);
+            });
+
+            // ✅ [ASVS V4.2] Kontrol akses berbasis peran
+            if ($user->hasRole('masyarakat')) {
+                $pengajuanSurat = $baseQuery->where('user_id', $user->id)->get();
+            } elseif ($user->hasRole('staff-desa')) {
+                $pengajuanSurat = $baseQuery->get();
+            } elseif ($user->hasRole('kepala-desa')) {
+                $pengajuanSurat = $baseQuery->whereIn('status', ['confirmed', 'approved'])->get();
+            } else {
+                return response()->json([
+                    'error' => 'Akses ditolak. Anda tidak memiliki izin untuk mengakses daftar pengajuan surat ini.',
+                ], 403); // [SCP #79] Fail securely pada akses
+            }
+
+            // ✅ [ASVS V9.1] Feedback aman ketika tidak ditemukan data
+            if ($pengajuanSurat->isEmpty()) {
+                return response()->json(['message' => 'Tidak ada pengajuan surat yang ditemukan'], 200);
+            }
+
+            // ✅ [SCP #113–127] Logging aktivitas pengguna tanpa data sensitif
+            LogActivity::create([
+                'id' => Str::uuid(),
+                'user_id' => $user->id,
+                'activity_type' => 'get_pengajuan_surat',
+                'description' => 'Akses daftar pengajuan surat untuk slug "' . $slug . '".',
+                'ip_address' => request()->ip(),
+                'created_at' => now(),
+            ]);
+
+            // ✅ [ASVS V9.2] Response terstruktur tanpa bocoran sensitif
             return response()->json([
-                'error' => 'Akses ditolak. Anda tidak memiliki izin untuk mengakses pengajuan surat ini'
-            ], 403);
+                'message' => 'Berhasil mendapatkan daftar pengajuan surat.',
+                'pengajuan_surat' => AjuanResource::collection($pengajuanSurat),
+            ], 200);
+
+        } catch (\Exception $e) {
+            // ✅ [SCP #108, #112] Error tidak mengekspos informasi sistem
+            Log::error('Gagal mendapatkan pengajuan surat: ' . $e->getMessage());
+            return response()->json(['error' => 'Terjadi kesalahan internal.'], 500);
         }
-
-        if ($pengajuanSurat->isEmpty()) {
-            return response()->json(['message' => 'Tidak ada pengajuan surat yang ditemukan'], 200);
-        }
-
-        LogActivity::create([
-            'id' => Str::uuid(),
-            'user_id' => $user->id,
-            'activity_type' => 'get_pengajuan_surat',
-            'description' => 'Daftar pengajuan surat dengan slug ' . $slug . ' telah diakses.',
-            'ip_address' => request()->ip(),
-            'created_at' => now(), // tambahkan ini jika kolom `created_at` tidak auto
-        ]);
-
-        return response()->json([
-            'message' => 'Berhasil mendapatkan daftar pengajuan surat.',
-            'pengajuan_surat' => $pengajuanSurat,
-        ], 200);
     }
+
 
 
 
     public function getDetailPengajuanSurat($slug, $ajuanId)
     {
+        // ✅ [ASVS V2.1] [SCP #23] Autentikasi wajib sebelum proses dilakukan
         $user = JWTAuth::parseToken()->authenticate();
         if (!$user) {
             return response()->json(['error' => 'User belum login. Silakan login terlebih dahulu'], 401);
         }
 
-        if (!$user->hasRole('masyarakat') && !$user->hasAnyRole(['staff-desa', 'admin'])) {
+        // ✅ [ASVS V4.1] [SCP #77, #84] Kontrol akses berbasis peran (Role-Based Access Control)
+        if (!$user->hasRole('masyarakat') && !$user->hasAnyRole(['staff-desa', 'super-admin'])) {
             return response()->json(['error' => 'Akses ditolak. Anda tidak memiliki izin untuk mengakses detail pengajuan surat ini'], 403);
         }
 
+        // ✅ [ASVS V4.1.3] [SCP #81, #84] Pastikan akses data hanya untuk entitas yang berwenang
         $pengajuanSurat = Ajuan::with(['user', 'user.profileMasyarakat', 'surat'])
             ->where('id', $ajuanId)
             ->whereHas('surat', function ($query) use ($slug) {
@@ -153,35 +256,37 @@ class PengajuanSuratController extends Controller
             ->first();
 
         if (!$pengajuanSurat) {
+            // ✅ [ASVS V9.2] [SCP #109] Penanganan kesalahan aman tanpa membocorkan detail sistem
             return response()->json(['error' => 'Pengajuan surat tidak ditemukan'], 404);
         }
 
+        // ✅ [ASVS V8.3] [SCP #114, #127] Logging aman (tanpa data sensitif) untuk audit dan monitoring
         LogActivity::create([
             'id' => Str::uuid(),
             'user_id' => $user->id,
             'activity_type' => 'detail_pengajuan_surat',
-            'description' => 'Detail pengajuan surat dengan ID ' . $pengajuanSurat->id . ' telah diakses.',
+            'description' => 'Detail pengajuan surat dengan ID ' . $pengajuanSurat->id . ' telah diakses.', // Hindari log PII
             'ip_address' => request()->ip(),
         ]);
 
+        // ✅ [ASVS V9.1] [SCP #107, #119] Respon aman, tidak mengembalikan data sensitif secara langsung
         return response()->json([
             'message' => 'Berhasil mendapatkan detail pengajuan surat.',
-            'pengajuan_surat' => $pengajuanSurat,
+            'pengajuan_surat' => new AjuanResource($pengajuanSurat), 
         ], 200);
     }
 
 
+
    
-    public function fillNumber(Request $request, $slug, $ajuanId){
+    public function fillNumber(FillNumberRequest $request, $slug, $ajuanId){
         $user = JWTAuth::parseToken()->authenticate();
 
         if (!$user->hasRole('staff-desa')) {
             return response()->json(['error' => 'Akses ditolak. Anda tidak memiliki izin untuk mengisi nomor pengajuan surat ini'], 403);
         }
 
-        $validated = $request->validate([
-            'nomor_surat' => 'required|string|max:255',
-        ]);
+        $validated = $request->validate();
 
         $pengajuanSurat = Ajuan::with(['user', 'surat'])
             ->where('id', $ajuanId)
@@ -204,7 +309,7 @@ class PengajuanSuratController extends Controller
 
         $nomorSurat = $nomorUrutManual . '/' . $kodeSurat . '/' . $kodeWilayah . '/' . $bulanRomawi . '/' . $tahun;
 
-        $pengajuanSurat->nomor_surat = $nomorSurat;
+        $pengajuanSurat->nomor_surat_tersimpan = $nomorSurat;
         $pengajuanSurat->save();
 
         LogActivity::create([
@@ -217,7 +322,7 @@ class PengajuanSuratController extends Controller
 
         return response()->json([
             'message' => 'Nomor surat berhasil diisi.',
-            'pengajuan_surat' => $pengajuanSurat,
+            'pengajuan_surat' => new AjuanResource($pengajuanSurat),
         ], 200);
     }
 
@@ -242,8 +347,10 @@ class PengajuanSuratController extends Controller
 
     public function previewSurat($slug, $ajuan_id)
     {
+        // ✅ [SCP #23] Set locale (tidak berdampak keamanan langsung, tapi pastikan hanya bahasa yang diizinkan)
         Carbon::setLocale('id');
 
+        // ✅ [ASVS V2.1] Autentikasi menggunakan token dari query atau header
         $token = request()->query('token') ?? request()->bearerToken();
 
         if (!$token) {
@@ -253,17 +360,20 @@ class PengajuanSuratController extends Controller
         try {
             $admin = JWTAuth::setToken($token)->authenticate();
         } catch (\Exception $e) {
+            // ✅ [ASVS V9.2] Jangan bocorkan error detail
             return response()->json([
                 'message' => 'Unauthorized: token tidak valid atau telah kedaluwarsa'
             ], 401);
         }
 
+        // ✅ [ASVS V4.1] Role-based access control
         if (!$admin->hasAnyRole(['super-admin', 'staff-desa', 'kepala-desa'])) {
             return response()->json([
                 'message' => 'Akses ditolak. Anda tidak memiliki izin untuk mengakses preview surat ini'
             ], 403);
         }
 
+        // ✅ [ASVS V4.1.3] Cek akses dan entitas berdasarkan slug & id
         $ajuanSurat = Ajuan::with(['user.profileMasyarakat', 'surat'])
             ->where('id', $ajuan_id)
             ->whereHas('surat', function ($query) use ($slug) {
@@ -275,23 +385,27 @@ class PengajuanSuratController extends Controller
             return response('Not Found: data tidak ditemukan', 404);
         }
 
+        // ✅ [ASVS V5.1.4] Pastikan data surat didekode dengan aman
         $dataSurat = is_array($ajuanSurat->data_surat)
             ? $ajuanSurat->data_surat
             : json_decode($ajuanSurat->data_surat, true);
 
+        // ✅ [ASVS V10.2] Validasi template yang akan dipakai
         $kodeSurat = optional($ajuanSurat->surat)->kode_surat ?? 'default';
         $template = 'surat.templates.' . strtolower($kodeSurat);
 
         if (!view()->exists($template)) {
-            return response("Template surat tidak ditemukan", 500);
+            return response("Template surat tidak ditemukan", 500); // ⚠️ pertimbangkan ubah ke 404
         }
 
-        // ✅ Tambahkan QR Code dan timestamp untuk preview
+        // ✅ [SCP #192] Generate QR Code di server (trusted environment)
         $verificationUrl = url("/verifikasi-surat/{$ajuanSurat->id}");
         $qrCodeSvg = QrCode::format('svg')->size(150)->generate($verificationUrl);
 
+        // ✅ [SCP #115] Tambahkan metadata waktu
         $downloadedAt = now()->format('d F Y, H:i:s');
 
+        // ✅ [ASVS V5.1] Gunakan template view yang sudah dipastikan aman
         $html = view($template, [
             'ajuan' => $ajuanSurat,
             'user' => $ajuanSurat->user,
@@ -299,25 +413,32 @@ class PengajuanSuratController extends Controller
             'data' => $dataSurat,
             'qrCodeSvg' => $qrCodeSvg,
             'downloaded_at' => $downloadedAt,
-            'isPreview' => true, // ✅ penting
+            'isPreview' => true, // Penting: bisa dipakai di view untuk hide elemen sensitif
         ])->render();
 
-
+        // ✅ [ASVS V9.1] Response aman (text/html), tanpa bocoran sistem
         return response($html, 200)->header('Content-Type', 'text/html');
     }
 
 
-    public function rejectedStatusPengajuan($slug, $ajuanId){
+
+    public function rejectedStatusPengajuan($slug, $ajuanId)
+    {
+        // ✅ [ASVS V2.1] Autentikasi wajib
         $user = JWTAuth::parseToken()->authenticate();
 
         if (!$user) {
             return response()->json(['error' => 'User belum login. Silakan login terlebih dahulu'], 401);
         }
 
+        // ✅ [ASVS V4.1] Kontrol akses berbasis peran
         if (!$user->hasRole('staff-desa')) {
-            return response()->json(['error' => 'Akses ditolak. Anda tidak memiliki izin untuk menolak pengajuan surat ini'], 403);
+            return response()->json([
+                'error' => 'Akses ditolak. Anda tidak memiliki izin untuk menolak pengajuan surat ini.'
+            ], 403);
         }
 
+        // ✅ [ASVS V4.1.3] Validasi entitas dengan kombinasi slug + ID
         $pengajuanSurat = Ajuan::with(['user', 'surat'])
             ->where('id', $ajuanId)
             ->whereHas('surat', function ($query) use ($slug) {
@@ -326,42 +447,54 @@ class PengajuanSuratController extends Controller
             ->first();
 
         if (!$pengajuanSurat) {
-            return response()->json(['error' => 'Pengajuan surat tidak ditemukan'], 404);
+            return response()->json(['error' => 'Pengajuan surat tidak ditemukan.'], 404);
         }
 
+        // ✅ [ASVS V10.2] Validasi status yang dapat ditolak (hindari abuse logic)
         if ($pengajuanSurat->status !== 'processed') {
-            return response()->json(['error' => 'Pengajuan surat tidak dalam status yang dapat ditolak'], 400);
+            return response()->json([
+                'error' => 'Pengajuan surat tidak dalam status yang dapat ditolak.'
+            ], 400);
         }
 
+        // ✅ [ASVS V5.1] Update status secara eksplisit
         $pengajuanSurat->status = 'rejected';
         $pengajuanSurat->save();
 
+        // ✅ [ASVS V8.3] Logging aman tanpa PII
         LogActivity::create([
             'id' => Str::uuid(),
             'user_id' => $user->id,
             'activity_type' => 'tolak_pengajuan_surat',
-            'description' => 'Pengajuan surat dengan ID ' . $pengajuanSurat->id . ' telah ditolak.',
+            'description' => 'Pengajuan surat ID ' . $pengajuanSurat->id . ' telah ditolak.',
             'ip_address' => request()->ip(),
         ]);
 
+        // ✅ [ASVS V9.1] Response aman dan terstruktur, gunakan Resource jika diperlukan
         return response()->json([
             'message' => 'Pengajuan surat berhasil ditolak.',
-            'pengajuan_surat' => $pengajuanSurat,
-        ], 200);    
+            'pengajuan_surat' => new AjuanResource($pengajuanSurat),
+        ], 200);
     }
 
 
-   public function confirmedStatusPengajuan($slug, $ajuanId){
+    public function confirmedStatusPengajuan($slug, $ajuanId)
+    {
+        // ✅ [ASVS V2.1] Autentikasi token
         $user = JWTAuth::parseToken()->authenticate();
 
         if (!$user) {
-            return response()->json(['error' => 'User belum login. Silakan login terlebih dahulu'], 401);
+            return response()->json(['error' => 'User belum login. Silakan login terlebih dahulu.'], 401);
         }
 
+        // ✅ [ASVS V4.1] Kontrol akses berbasis peran (RBAC)
         if (!$user->hasRole('staff-desa')) {
-            return response()->json(['error' => 'Akses ditolak. Anda tidak memiliki izin untuk mengonfirmasi pengajuan surat ini'], 403);
+            return response()->json([
+                'error' => 'Akses ditolak. Anda tidak memiliki izin untuk mengonfirmasi pengajuan surat ini.'
+            ], 403);
         }
 
+        // ✅ [ASVS V4.1.3] Validasi kombinasi ID dan slug untuk mencegah akses tidak sah
         $pengajuanSurat = Ajuan::with(['user', 'surat'])
             ->where('id', $ajuanId)
             ->whereHas('surat', function ($query) use ($slug) {
@@ -370,126 +503,128 @@ class PengajuanSuratController extends Controller
             ->first();
 
         if (!$pengajuanSurat) {
-            return response()->json(['error' => 'Pengajuan surat tidak ditemukan'], 404);
+            return response()->json(['error' => 'Pengajuan surat tidak ditemukan.'], 404);
         }
 
+        // ✅ [ASVS V10.2] Validasi status sebelum mengubahnya
         if ($pengajuanSurat->status !== 'processed') {
-            return response()->json(['error' => 'Pengajuan surat tidak dalam status yang dapat dikonfirmasi'], 400);
+            return response()->json([
+                'error' => 'Pengajuan surat tidak dalam status yang dapat dikonfirmasi.'
+            ], 400);
         }
 
+        // ✅ [ASVS V5.1] Update status eksplisit
         $pengajuanSurat->status = 'confirmed';
         $pengajuanSurat->save();
 
+        // ✅ [ASVS V8.3] Logging aktivitas (tanpa bocor data sensitif)
         LogActivity::create([
             'id' => Str::uuid(),
             'user_id' => $user->id,
             'activity_type' => 'konfirmasi_pengajuan_surat',
-            'description' => 'Pengajuan surat dengan ID ' . $pengajuanSurat->id . ' telah dikonfirmasi.',
+            'description' => 'Pengajuan surat ID ' . $pengajuanSurat->id . ' telah dikonfirmasi.',
             'ip_address' => request()->ip(),
         ]);
 
+        // ✅ [ASVS V9.1] Response aman dan gunakan resource untuk standarisasi
         return response()->json([
             'message' => 'Pengajuan surat berhasil dikonfirmasi.',
-            'pengajuan_surat' => $pengajuanSurat,
-        ], 200);    
-   }
-
- public function signedStatusPengajuan($slug, $ajuanId)
-{
-    $kepdes = JWTAuth::parseToken()->authenticate();
-
-    if (!$kepdes) {
-        return response()->json(['error' => 'Kepala Desa belum login. Silakan login terlebih dahulu'], 401);
+            'pengajuan_surat' => new AjuanResource($pengajuanSurat),
+        ], 200);
     }
 
-    if (!$kepdes->hasRole('kepala-desa')) {
-        return response()->json(['error' => 'Akses ditolak. Anda bukan kepala desa.'], 403);
-    }
 
-    $ajuan = Ajuan::with(['user.profileMasyarakat', 'surat', 'tandaTangan'])
-        ->where('id', $ajuanId)
-        ->whereHas('surat', function ($query) use ($slug) {
-            $query->where('slug', $slug);
-        })
-        ->where('status', 'confirmed')
-        ->first();
+    public function signedStatusPengajuan($slug, $ajuanId)
+    {
+        // ✅ [ASVS V2.1] Autentikasi token JWT
+        $kepdes = JWTAuth::parseToken()->authenticate();
 
-    if (!$ajuan) {
-        return response()->json(['error' => 'Surat tidak ditemukan atau belum dikonfirmasi.'], 404);
-    }
+        if (!$kepdes) {
+            return response()->json(['error' => 'Kepala Desa belum login. Silakan login terlebih dahulu.'], 401);
+        }
 
-    if ($ajuan->tandaTangan) {
-        return response()->json(['error' => 'Surat sudah ditandatangani sebelumnya.'], 400);
-    }
+        // ✅ [ASVS V4.1] Kontrol akses berbasis peran
+        if (!$kepdes->hasRole('kepala-desa')) {
+            return response()->json(['error' => 'Akses ditolak. Anda bukan kepala desa.'], 403);
+        }
 
-    // Gunakan waktu konsisten
-    $signedAt = now();
+        // ✅ [ASVS V4.1.3] Validasi entitas + status 'confirmed'
+        $ajuan = Ajuan::with(['user.profileMasyarakat', 'surat', 'tandaTangan'])
+            ->where('id', $ajuanId)
+            ->whereHas('surat', fn($q) => $q->where('slug', $slug))
+            ->where('status', 'confirmed')
+            ->first();
 
-    // Path private key
-    $privateKeyPath = storage_path('app/keys/private.pem');
+        if (!$ajuan) {
+            return response()->json(['error' => 'Surat tidak ditemukan atau belum dikonfirmasi.'], 404);
+        }
 
-    // Debug jika gagal
-    if (!file_exists($privateKeyPath) || !is_readable($privateKeyPath)) {
+        // ✅ [ASVS V10.2] Cegah penandatanganan ulang
+        if ($ajuan->tandaTangan) {
+            return response()->json(['error' => 'Surat sudah ditandatangani sebelumnya.'], 400);
+        }
+
+        $signedAt = now();
+
+        // ✅ [SCP #192] Akses file private key dengan aman
+        $privateKeyPath = storage_path('app/keys/private.pem');
+
+        if (!file_exists($privateKeyPath) || !is_readable($privateKeyPath)) {
+            return response()->json(['error' => 'Private key tidak ditemukan atau tidak bisa dibaca.'], 500);
+        }
+
+        $privateKey = file_get_contents($privateKeyPath);
+        $privateKeyRes = openssl_pkey_get_private($privateKey);
+
+        if (!$privateKeyRes) {
+            return response()->json(['error' => 'Format private key tidak valid.'], 500);
+        }
+
+        // ✅ [ASVS V10.3.1] Tanda tangan digital SHA256
+        $signatureData = json_encode([
+            'ajuan_id' => $ajuan->id,
+            'nomor_surat' => $ajuan->nomor_surat,
+            'data_surat' => $ajuan->data_surat,
+            'user_id' => $ajuan->user_id,
+            'timestamp' => $signedAt->toIso8601String(),
+        ]);
+
+        openssl_sign($signatureData, $signature, $privateKeyRes, OPENSSL_ALGO_SHA256);
+        openssl_pkey_free($privateKeyRes); // ✅ [SCP #202]
+
+        $encodedSignature = base64_encode($signature);
+
+        // ✅ [ASVS V10.4] Simpan ke DB
+        $tandaTangan = TandaTangan::create([
+            'id' => Str::uuid(),
+            'ajuan_id' => $ajuan->id,
+            'signed_by' => $kepdes->id,
+            'signature' => $encodedSignature,
+            'signature_data' => $signatureData,
+            'signed_at' => $signedAt,
+        ]);
+
+        // ✅ Update status ajuan
+        $ajuan->update(['status' => 'approved']);
+
+        // ✅ Logging aktivitas
+        LogActivity::create([
+            'id' => Str::uuid(),
+            'user_id' => $kepdes->id,
+            'activity_type' => 'ttd_surat',
+            'description' => 'Surat ID ' . $ajuan->id . ' telah ditandatangani oleh Kepala Desa.',
+            'ip_address' => request()->ip(),
+        ]);
+
+        // ✅ Response pakai resource
         return response()->json([
-            'error' => 'Private key tidak ditemukan atau tidak bisa dibaca.',
-            'checked_path' => $privateKeyPath,
-            'file_exists' => file_exists($privateKeyPath),
-            'is_readable' => is_readable($privateKeyPath),
-            'base_path' => base_path()
-        ], 500);
+            'message' => 'Surat berhasil ditandatangani.',
+            'data' => new TandaTanganResource(
+                $tandaTangan->load(['ajuan', 'signedBy'])
+            ),
+        ], 200);
     }
 
-    // Baca key
-    $privateKey = file_get_contents($privateKeyPath);
-    $privateKeyRes = openssl_pkey_get_private($privateKey);
-
-    if (!$privateKeyRes) {
-        return response()->json(['error' => 'Format private key tidak valid.'], 500);
-    }
-
-    // Data yang akan ditandatangani
-    $signatureData = json_encode([
-        'ajuan_id' => $ajuan->id,
-        'nomor_surat' => $ajuan->nomor_surat,
-        'data_surat' => $ajuan->data_surat,
-        'user_id' => $ajuan->user_id,
-        'timestamp' => $signedAt->toIso8601String(),
-    ]);
-
-    // Proses tanda tangan
-    openssl_sign($signatureData, $signature, $privateKeyRes, OPENSSL_ALGO_SHA256);
-    $encodedSignature = base64_encode($signature);
-
-    // Simpan ke database
-    TandaTangan::create([
-        'id' => Str::uuid(),
-        'ajuan_id' => $ajuan->id,
-        'signed_by' => $kepdes->id,
-        'signature' => $encodedSignature,
-        'signature_data' => $signatureData,
-        'signed_at' => $signedAt,
-    ]);
-
-    $ajuan->update(['status' => 'approved']);
-
-    // Log aktivitas
-    LogActivity::create([
-        'id' => Str::uuid(),
-        'user_id' => $kepdes->id,
-        'activity_type' => 'ttd_surat',
-        'description' => 'Surat dengan ID ' . $ajuan->id . ' telah ditandatangani oleh Kepala Desa.',
-        'ip_address' => request()->ip(),
-    ]);
-
-    // Return berhasil
-    return response()->json([
-        'message' => 'Surat berhasil ditandatangani.',
-        'signed_at' => $signedAt->toIso8601String(),
-        'ajuan_id' => $ajuan->id,
-        'nomor_surat' => $ajuan->nomor_surat,
-        'signed_by' => $kepdes->name,
-    ]);
-}
 
 
 // public function downloadSurat($slug, $ajuanId)

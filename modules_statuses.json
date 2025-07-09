@@ -6,5 +6,6 @@
     "DataKependudukan": true,
     "Informasi": true,
     "TandaTangan": true,
-    "Ajuan": true
+    "Ajuan": true,
+    "AjuanRequest": true
 }

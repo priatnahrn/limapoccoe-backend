@@ -15,7 +15,8 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->foreignUuid('user_id')->constrained('auth_users')->onDelete('cascade');
             $table->foreignUuid('surat_id')->constrained('surats')->onDelete('cascade');
-            $table->string('nomor_surat')->nullable();
+            $table->integer('nomor_surat')->nullable()->unique();
+            $table->string('nomor_surat_tersimpan')->nullable()->unique();
             $table->json('data_surat')->nullable();
             $table->json('lampiran')->nullable();
             $table->string('file')->nullable();
