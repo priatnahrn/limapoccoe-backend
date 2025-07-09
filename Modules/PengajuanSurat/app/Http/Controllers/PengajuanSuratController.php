@@ -115,7 +115,7 @@ class PengajuanSuratController extends Controller
             }
 
             // ✅ [ASVS V5.1] [SCP #11, #13, #14] Validasi input eksplisit & whitelist karakter
-            $validatedData = $request->validate();
+            $validatedData = $request->validated();
 
             // ✅ [ASVS V4.1.3] Simpan data dengan pembatasan hak akses minimal
             $ajuan = Ajuan::create([
@@ -275,9 +275,6 @@ class PengajuanSuratController extends Controller
             'pengajuan_surat' => new AjuanResource($pengajuanSurat), 
         ], 200);
     }
-
-
-
    
     public function fillNumber(FillNumberRequest $request, $slug, $ajuanId){
         $user = JWTAuth::parseToken()->authenticate();
@@ -286,7 +283,7 @@ class PengajuanSuratController extends Controller
             return response()->json(['error' => 'Akses ditolak. Anda tidak memiliki izin untuk mengisi nomor pengajuan surat ini'], 403);
         }
 
-        $validated = $request->validate();
+        $validated = $request->validated();
 
         $pengajuanSurat = Ajuan::with(['user', 'surat'])
             ->where('id', $ajuanId)
