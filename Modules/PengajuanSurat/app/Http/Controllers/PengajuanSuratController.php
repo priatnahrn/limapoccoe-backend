@@ -306,6 +306,7 @@ class PengajuanSuratController extends Controller
 
         $nomorSurat = $nomorUrutManual . '/' . $kodeSurat . '/' . $kodeWilayah . '/' . $bulanRomawi . '/' . $tahun;
 
+        $pengajuanSurat->nomor_surat = $validated['nomor_surat'];
         $pengajuanSurat->nomor_surat_tersimpan = $nomorSurat;
         $pengajuanSurat->save();
 
