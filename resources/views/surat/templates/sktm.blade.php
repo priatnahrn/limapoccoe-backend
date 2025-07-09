@@ -117,15 +117,17 @@
             </div>
         </div>
     </div>
-<div class="text-right mt-3">
-    <p><em>Catatan:</em> Surat ini berlaku selama 6 bulan sejak tanggal terbit.</p>
-</div>
 
-<hr>
+    <div class="text-right mt-3">
+        <p><em>Catatan:</em> Surat ini berlaku selama 1 bulan sejak tanggal terbit.</p>
+    </div>
 
-<div class="text-right">
-    <p><small>Dicetak pada: {{ now()->translatedFormat('d F Y H:i') }}</small></p>
-</div>
+    @if($ajuan->status === 'approved')
+        <hr>    
+        <div class="text-right">
+            <p><small>Dicetak pada: {{ now()->translatedFormat('d F Y H:i') }}</small></p>
+        </div>
+    @endif
 
 </body>
 </html>
