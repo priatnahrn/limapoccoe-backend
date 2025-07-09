@@ -4,6 +4,7 @@ namespace Modules\PengajuanSurat\Transformers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Modules\Auth\Transformers\AuthResource;
 
 class AjuanResource extends JsonResource
 {
@@ -14,8 +15,8 @@ class AjuanResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'user_id' => $this->user_id,
             'surat_id' => $this->surat_id,
+            'user' => new AuthResource($this->user),
             'data_surat' => is_string($this->data_surat)
                 ? json_decode($this->data_surat, true)
                 : $this->data_surat,

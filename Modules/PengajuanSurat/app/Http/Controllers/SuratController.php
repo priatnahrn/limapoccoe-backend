@@ -3,6 +3,7 @@
 namespace Modules\PengajuanSurat\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\LogActivity;
 use Illuminate\Http\Request;
 use Modules\PengajuanSurat\Models\Surat;
 use Modules\PengajuanSurat\Models\ActivityLog;
