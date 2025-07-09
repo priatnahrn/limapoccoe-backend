@@ -12,7 +12,7 @@ class FillNumberRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nomor_surat' => 'required|integer|min:1|unique:ajuan,nomor_surat',
+            'nomor_surat' => 'required|integer|min:1|unique:ajuans,nomor_surat',
         ];
     }
 
