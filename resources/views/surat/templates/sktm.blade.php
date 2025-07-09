@@ -39,7 +39,7 @@
 
     <div class="center">
         <h2><u>SURAT KETERANGAN TIDAK MAMPU</u></h2>
-        <div>Nomor: {{ $ajuan->nomor_surat ?? '___/SKTM/___/__/____' }}</div>
+        <div>Nomor: {{ $ajuan->nomor_surat_tersimpan ?? '___/SKTM/___/__/____' }}</div>
     </div>
 
     <p class="mt-3">Yang bertanda tangan di bawah ini:</p>
