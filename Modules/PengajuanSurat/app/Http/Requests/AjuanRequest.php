@@ -15,7 +15,6 @@ class AjuanRequest extends FormRequest
             'data_surat' => 'required|array',
             'lampiran' => 'nullable|array',
             "lampiran.*" => 'nullable|file|mimes:jpg,jpeg,png|max:5120',
-
         ];
     }
 
