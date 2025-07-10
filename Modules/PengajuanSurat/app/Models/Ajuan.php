@@ -34,6 +34,7 @@ class Ajuan extends Model
         'lampiran',
         'file',
         'data_surat',
+        'qr_code_path',
         'status',
     ];
 
