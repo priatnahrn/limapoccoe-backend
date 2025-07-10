@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('ajuans', function (Blueprint $table) {
-            
+            $table->string('qr_code_path')->nullable()->after('data_surat');
         });
     }
 
