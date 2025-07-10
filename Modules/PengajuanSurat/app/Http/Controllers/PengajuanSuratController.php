@@ -743,7 +743,7 @@ public function downloadSurat($slug, $ajuanId)
             'profile' => $ajuanSurat->user->profileMasyarakat,
             'data' => $dataSurat,
             'downloaded_at' => now()->translatedFormat('l, d F Y H:i'),
-        ])->setPaper('a4', 'landscape');
+        ])->setPaper('a4', 'portrait');
 
         return $pdf->download("surat-{$slug}.pdf");
 

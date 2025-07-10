@@ -23,7 +23,11 @@
     <table width="100%">
         <tr>
             <td style="width: 100px;">
-              <img src="{{ asset('logo-limapoccoe.png') }}" alt="Logo Desa" style="height: 90px;">
+              <img
+                    src="{{ $isPreview ? asset('logo-limapoccoe.png') : public_path('logo-limapoccoe.png') }}"
+                    alt="Logo Desa"
+                    style="height: 90px;">
+
             </td>
             <td class="center">
                 <div class="bold">PEMERINTAH DESA LIMAPOCCOE</div>
