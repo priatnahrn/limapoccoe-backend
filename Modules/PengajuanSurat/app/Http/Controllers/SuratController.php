@@ -7,6 +7,7 @@ use App\Models\LogActivity;
 use Illuminate\Http\Request;
 use Modules\PengajuanSurat\Models\Surat;
 use Modules\PengajuanSurat\Models\ActivityLog;
+use Modules\PengajuanSurat\Transformers\SuratResource;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 
@@ -23,11 +24,11 @@ class SuratController extends Controller
 
         return response()->json([
             'message' => "Berhasil mendapatkan semua data jenis surat.",
-            'jenis_surat' => $surat,
+            'jenis_surat' => SuratResource::collection($surat),
         ], 200);
     }
 
-    public function getDetailSurat($surat_id)
+    public function getDetailSurat($slug)
     {
 
         $user = JWTAuth::parseToken()->authenticate();
@@ -35,11 +36,14 @@ class SuratController extends Controller
             return response()->json(['error' => 'User belum login. Silakan login terlebih dahulu'], 401);
         }
 
-        $surat = Surat::where('id', $surat_id)->first();
+        $surat = Surat::where('slug', $slug)->first();
+        if (!$surat) {
+            return response()->json(['error' => 'Jenis surat tidak ditemukan'], 404);
+        }
 
         return response()->json([
             'message' => "Berhasil mendapatkan detail data jenis surat.",
-            'jenis_surat' => $surat,
+            'jenis_surat' => new SuratResource($surat),
         ], 200);
     }
 
