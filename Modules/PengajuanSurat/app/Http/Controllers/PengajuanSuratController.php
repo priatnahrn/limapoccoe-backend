@@ -19,6 +19,7 @@ use Modules\PengajuanSurat\Http\Requests\FillNumberRequest;
 use Modules\PengajuanSurat\Transformers\AjuanResource;
 use Modules\PengajuanSurat\Transformers\TandaTanganResource;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Throwable;
 
 class PengajuanSuratController extends Controller
 {
@@ -714,8 +715,24 @@ public function downloadSurat($slug, $ajuanId)
         Log::error("Gagal download surat: " . $e->getMessage());
         return response()->json(['error' => 'Gagal download surat.'], 500);
     }
+
 }
 
+public function testDownloadPdf()
+{
+    try {
+        $pdf = Pdf::loadHTML('
+            <h1>Halo Dunia!</h1>
+            <p>Ini adalah tes PDF sederhana tanpa imagick.</p>
+        ');
+
+        return $pdf->download('test-pdf.pdf');
+
+    } catch (Throwable $e) {
+        Log::error('Gagal generate PDF: ' . $e->getMessage());
+        return response()->json(['error' => 'Gagal generate PDF'], 500);
+    }
+}
 
 
 public function verifikasiSurat($ajuanId)

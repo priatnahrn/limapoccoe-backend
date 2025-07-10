@@ -20,7 +20,9 @@ Route::middleware(['auth:api'])->group(function () {
             Route::put('/{id}/signed', [PengajuanSuratController::class, 'signedStatusPengajuan']);  
             Route::get('/{id}/download', [PengajuanSuratController::class, 'downloadSurat']);
 
+
         });
+        Route::get('test-pdf', [PengajuanSuratController::class, 'testDownloadPdf']);
 
         // Rute yang tidak tergantung slug
         Route::put('/pengajuan/{id}', [PengajuanSuratController::class, 'updatePengajuan']);
