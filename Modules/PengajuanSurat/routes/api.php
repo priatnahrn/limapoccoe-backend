@@ -22,10 +22,10 @@ Route::middleware(['auth:api'])->group(function () {
 
 
         });
-        Route::get('test-pdf', [PengajuanSuratController::class, 'testDownloadPdf']);
-
+        
         // Rute yang tidak tergantung slug
         Route::put('/pengajuan/{id}', [PengajuanSuratController::class, 'updatePengajuan']);
         Route::delete('/pengajuan/{id}', [PengajuanSuratController::class, 'deletePengajuan']);
     });
+    Route::get('test-pdf', [PengajuanSuratController::class, 'testDownloadPdf']);
 });
