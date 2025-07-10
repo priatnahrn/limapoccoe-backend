@@ -23,20 +23,34 @@ class DataKeluargaRequest extends FormRequest
                 'max:20',
                 Rule::unique('keluargas', 'nomor_kk')->ignore($keluargaId),
             ],
-            'rumah_id' => [
-                'required',
-                'uuid',
-                'exists:rumahs,id',
-            ],
 
-            // Optional: validasi anggota penduduk jika dikirim sebagai nested array
+            // ✅ GANTI rumah_id → manual input rumah
+            'no_rumah' => ['nullable', 'string', 'max:10'],
+            'rt_rw' => ['nullable', 'string', 'max:7'],
+            'dusun' => ['required', Rule::in([
+                'WT.Bengo',
+                'Barua',
+                'Mappasaile',
+                'Kampala',
+                'Kaluku',
+                'Jambua',
+                'Bontopanno',
+                'Samata'
+            ])],
+
+            // ✅ Validasi anggota seperti sebelumnya
             'anggota' => ['nullable', 'array'],
-
             'anggota.*.nik' => ['required_with:anggota', 'string', 'max:20'],
             'anggota.*.no_urut' => ['nullable', 'string', 'max:10'],
             'anggota.*.nama_lengkap' => ['required_with:anggota', 'string', 'max:100'],
             'anggota.*.hubungan' => ['nullable', Rule::in([
-                'Kepala Keluarga', 'Istri', 'Anak', 'Cucu', 'Famili Lain', 'Saudara', 'Orang Tua'
+                'Kepala Keluarga',
+                'Istri',
+                'Anak',
+                'Cucu',
+                'Famili Lain',
+                'Saudara',
+                'Orang Tua'
             ])],
             'anggota.*.tempat_lahir' => ['nullable', 'string', 'max:50'],
             'anggota.*.tgl_lahir' => ['nullable', 'date'],
@@ -62,6 +76,7 @@ class DataKeluargaRequest extends FormRequest
         ];
     }
 
+
     public function messages(): array
     {
         return [
@@ -70,9 +85,14 @@ class DataKeluargaRequest extends FormRequest
             'nomor_kk.max' => 'Nomor KK maksimal 20 karakter.',
             'nomor_kk.unique' => 'Nomor KK sudah digunakan.',
 
-            'rumah_id.required' => 'ID rumah wajib diisi.',
-            'rumah_id.uuid' => 'ID rumah harus berupa UUID.',
-            'rumah_id.exists' => 'ID rumah tidak ditemukan.',
+            'no_rumah.string' => 'Nomor rumah harus berupa teks.',
+            'no_rumah.max' => 'Nomor rumah maksimal 10 karakter.',
+            'rt_rw.string' => 'RT/RW harus berupa teks.',
+            'rt_rw.max' => 'RT/RW maksimal 7 karakter.',            
+            'dusun.required' => 'Dusun wajib diisi.',
+            'dusun.in' => 'Dusun tidak valid.',
+
+            'anggota.required' => 'Data anggota wajib diisi.',
 
             'anggota.array' => 'Data anggota harus berupa array.',
 
