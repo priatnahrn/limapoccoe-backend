@@ -54,8 +54,16 @@ class DataKependudukanController extends Controller
                     'no_urut' => $anggota['no_urut'] ?? str_pad($index + 1, 2, '0', STR_PAD_LEFT),
                     'nama_lengkap' => $anggota['nama_lengkap'],
                     'hubungan' => $anggota['hubungan'] ?? null,
+                    'tempat_lahir' => $anggota['tempat_lahir'] ?? null,
+                    'tgl_lahir' => $anggota['tgl_lahir'] ?? null,
                     'jenis_kelamin' => $anggota['jenis_kelamin'] ?? null,
-                    // ...lanjutkan semua field lain seperti biasa
+                    'status_perkawinan' => $anggota['status_perkawinan'] ?? null,
+                    'agama' => $anggota['agama'] ?? null,
+                    'pendidikan' => $anggota['pendidikan'] ?? null,
+                    'pekerjaan' => $anggota['pekerjaan'] ?? null,
+                    'no_bpjs' => $anggota['no_bpjs'] ?? null,
+                    'nama_ayah' => $anggota['nama_ayah'] ?? null,
+                    'nama_ibu' => $anggota['nama_ibu'] ?? null,
                 ]);
             }
 
