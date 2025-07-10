@@ -14,7 +14,8 @@ class DataKeluargaRequest extends FormRequest
 
     public function rules(): array
     {
-        $keluargaId = $this->route('keluarga');
+        $keluargaId = $this->route('id') ?? $this->route('keluarga');
+
 
         return [
             'nomor_kk' => [

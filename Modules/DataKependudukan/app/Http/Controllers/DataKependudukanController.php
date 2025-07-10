@@ -183,6 +183,9 @@ class DataKependudukanController extends Controller
         DB::beginTransaction();
 
         try {
+
+            
+            // Update data keluarga
             $keluarga = Keluarga::findOrFail($id);
             $keluarga->update([
                 'nomor_kk' => $request->nomor_kk,
