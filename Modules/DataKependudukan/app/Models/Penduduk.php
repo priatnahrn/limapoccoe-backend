@@ -14,9 +14,6 @@ class Penduduk extends Model
     protected $primaryKey = 'id';
     public $incrementing = false;
 
-    /**
-     * Kolom-kolom yang boleh diisi dengan mass-assignment
-     */
     protected $fillable = [
         'keluarga_id',
         'nik',

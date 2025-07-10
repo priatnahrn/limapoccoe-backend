@@ -676,6 +676,7 @@ class PengajuanSuratController extends Controller
 //     return $pdf->download("surat-{$nomorSurat}.pdf");
 // }
 
+
 public function downloadSurat($slug, $ajuanId)
 {
     Carbon::setLocale('id');
@@ -712,7 +713,7 @@ public function downloadSurat($slug, $ajuanId)
             return response()->json(['error' => 'Template surat tidak ditemukan.'], 404);
         }
 
-        // ✅ Generate QR Code sementara (PNG)
+        // Generate QR Code
         $verificationUrl = url("/verifikasi-surat/{$ajuanSurat->id}");
         $qrFilename = 'qr-' . Str::uuid() . '.png';
         $qrRelativePath = "qrcodes/{$qrFilename}";
@@ -727,8 +728,9 @@ public function downloadSurat($slug, $ajuanId)
 
         $downloadedAt = Carbon::now()->translatedFormat('l, d F Y H:i');
 
-        // ✅ Render HTML dari template
-        $html = view($template, [
+        // Render view untuk PDF
+        $nomorSurat = preg_replace('/[\/\\\\]/', '-', $ajuanSurat->nomor_surat ?? 'tanpa-nomor');
+        $pdf = Pdf::loadView($template, [
             'ajuan' => $ajuanSurat,
             'user' => $ajuanSurat->user,
             'profile' => $ajuanSurat->user->profileMasyarakat,
@@ -736,13 +738,7 @@ public function downloadSurat($slug, $ajuanId)
             'qrCodePath' => $qrCodePath,
             'downloaded_at' => $downloadedAt,
             'isPreview' => false,
-        ])->render();
-
-        // ✅ Buat PDF dan simpan sementara
-        $nomorSurat = preg_replace('/[\/\\\\]/', '-', $ajuanSurat->nomor_surat ?? 'tanpa-nomor');
-        $pdf = PDF::loadHTML($html)
-            ->setPaper('a4', 'landscape')
-            ->setOption('enable-local-file-access', true);
+        ])->setPaper('a4', 'landscape');
 
         $tempPdfPath = storage_path("app/temp/surat-{$nomorSurat}.pdf");
 
@@ -752,7 +748,7 @@ public function downloadSurat($slug, $ajuanId)
 
         $pdf->save($tempPdfPath);
 
-        // ✅ Hapus QR Code setelah selesai digunakan
+        // Hapus QR code setelah generate
         if (file_exists($qrCodePath)) {
             try {
                 unlink($qrCodePath);
@@ -761,7 +757,6 @@ public function downloadSurat($slug, $ajuanId)
             }
         }
 
-        // ✅ Unduh PDF dan hapus setelah dikirim
         return response()->download($tempPdfPath)->deleteFileAfterSend(true);
 
     } catch (\Throwable $e) {
@@ -769,6 +764,7 @@ public function downloadSurat($slug, $ajuanId)
         return response()->json(['error' => 'Terjadi kesalahan saat memproses surat.'], 500);
     }
 }
+
 
 
 public function verifikasiSurat($ajuanId)
