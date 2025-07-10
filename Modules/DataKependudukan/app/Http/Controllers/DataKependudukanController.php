@@ -3,6 +3,7 @@
 namespace Modules\DataKependudukan\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\LogActivity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -12,11 +13,12 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 use Modules\DataKependudukan\Models\Keluarga;
 use Modules\DataKependudukan\Models\Penduduk;
 use Illuminate\Support\Str;
+use Modules\DataKependudukan\Transformers\DataKependudukanResource;
 
 class DataKependudukanController extends Controller
 {
-    
-   public function create(DataKeluargaRequest $request)
+
+    public function create(DataKeluargaRequest $request)
     {
         $admin = JWTAuth::parseToken()->authenticate();
 
@@ -66,8 +68,15 @@ class DataKependudukanController extends Controller
                     'nama_ibu' => $anggota['nama_ibu'] ?? null,
                 ]);
             }
+            
 
             DB::commit();
+
+            LogActivity::create([
+                'user_id' => $admin->id,
+                'activity' => 'create',
+                'description' => 'Membuat data keluarga dan rumah baru.',
+            ]);
 
             return response()->json([
                 'message' => 'Data keluarga dan rumah berhasil disimpan.',
@@ -76,10 +85,15 @@ class DataKependudukanController extends Controller
                     'rumah' => $rumah,
                 ]
             ], 201);
-
         } catch (\Throwable $e) {
             DB::rollBack();
             Log::error('Gagal menyimpan: ' . $e->getMessage());
+
+            LogActivity::create([
+                'user_id' => $admin->id,
+                'activity' => 'create',
+                'description' => 'Gagal membuat data keluarga dan rumah.',
+            ]);
 
             return response()->json([
                 'error' => 'Terjadi kesalahan saat menyimpan data.',
@@ -88,6 +102,172 @@ class DataKependudukanController extends Controller
         }
     }
 
+    public function getAllDataKependudukan(Request $request)
+    {
+        $admin = JWTAuth::parseToken()->authenticate();
 
-    
+        if (!$admin) {
+            return response()->json(['error' => 'User belum login.'], 401);
+        }
+
+        if (!$admin->hasAnyRole(['super-admin', 'staff-desa'])) {
+            return response()->json(['error' => 'Tidak memiliki akses.'], 403);
+        }
+
+        // ✅ Load rumah dan penduduks
+        $dataKependudukan = Keluarga::with(['rumah', 'penduduks'])->get();
+
+        if ($dataKependudukan->isEmpty()) {
+            return response()->json(['message' => 'Tidak ada data kependudukan ditemukan.'], 404);
+        }
+
+        // ✅ Transformasi data menggunakan resource
+        LogActivity::create([
+            'user_id' => $admin->id,
+            'activity' => 'read',
+            'description' => 'Mengambil semua data kependudukan.',
+        ]);
+
+        return response()->json([
+            'message' => 'Data kependudukan berhasil diambil.',
+            'data' => DataKependudukanResource::collection($dataKependudukan),
+        ], 200);
+    }
+
+    public function getDetailDataKependudukan($id)
+    {
+        $admin = JWTAuth::parseToken()->authenticate();
+
+        if (!$admin) {
+            return response()->json(['error' => 'User belum login.'], 401);
+        }
+
+        if (!$admin->hasAnyRole(['super-admin', 'staff-desa'])) {
+            return response()->json(['error' => 'Tidak memiliki akses.'], 403);
+        }
+
+        $keluarga = Keluarga::with(['rumah', 'penduduks'])->find($id);
+
+        if (!$keluarga) {
+            return response()->json(['error' => 'Data keluarga tidak ditemukan.'], 404);
+        }
+
+        return response()->json([
+            'message' => 'Detail data keluarga berhasil diambil.',
+            'data' => new DataKependudukanResource($keluarga),
+        ], 200);
+    }
+
+    public function updateDataKependudukan(DataKeluargaRequest $request, $id)
+    {
+        $admin = JWTAuth::parseToken()->authenticate();
+
+        if (!$admin) {
+            return response()->json(['error' => 'User belum login.'], 401);
+        }
+
+        if (!$admin->hasAnyRole(['super-admin', 'staff-desa'])) {
+            return response()->json(['error' => 'Tidak memiliki akses.'], 403);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $keluarga = Keluarga::findOrFail($id);
+            $keluarga->update([
+                'nomor_kk' => $request->nomor_kk,
+                'rumah_id' => $keluarga->rumah_id, // Tetap menggunakan rumah yang sudah ada
+            ]);
+
+            // Update anggota keluarga
+            foreach ($request->input('anggota', []) as $anggota) {
+                Penduduk::updateOrCreate(
+                    ['id' => $anggota['id'] ?? null, 'keluarga_id' => $keluarga->id],
+                    [
+                        'nik' => $anggota['nik'],
+                        'no_urut' => $anggota['no_urut'] ?? null,
+                        'nama_lengkap' => $anggota['nama_lengkap'],
+                        'hubungan' => $anggota['hubungan'] ?? null,
+                        'tempat_lahir' => $anggota['tempat_lahir'] ?? null,
+                        'tgl_lahir' => $anggota['tgl_lahir'] ?? null,
+                        'jenis_kelamin' => $anggota['jenis_kelamin'] ?? null,
+                        'status_perkawinan' => $anggota['status_perkawinan'] ?? null,
+                        'agama' => $anggota['agama'] ?? null,
+                        'pendidikan' => $anggota['pendidikan'] ?? null,
+                        'pekerjaan' => $anggota['pekerjaan'] ?? null,
+                        'no_bpjs' => $anggota['no_bpjs'] ?? null,
+                        'nama_ayah' => $anggota['nama_ayah'] ?? null,
+                        'nama_ibu' => $anggota['nama_ibu'] ?? null,
+                    ]
+                );
+            }
+
+            DB::commit();
+
+            LogActivity::create([
+                'user_id' => $admin->id,
+                'activity' => 'update',
+                'description' => 'Memperbarui data keluarga dan rumah.',
+            ]);
+            return response()->json([
+                'message' => 'Data keluarga berhasil diperbarui.',
+                'data' => new DataKependudukanResource($keluarga->load(['rumah', 'penduduks'])),
+            ], 200);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('Gagal memperbarui data: ' . $e->getMessage());
+            LogActivity::create([
+                'user_id' => $admin->id,
+                'activity' => 'update',
+                'description' => 'Gagal memperbarui data keluarga dan rumah.',
+            ]);
+            return response()->json([
+                'error' => 'Terjadi kesalahan saat memperbarui data.',
+                'detail' => $e->getMessage(),
+            ], 500);   
+        }
+    }
+
+    public function deleteDataKependudukan($id)
+    {
+        $admin = JWTAuth::parseToken()->authenticate();
+
+        if (!$admin) {
+            return response()->json(['error' => 'User belum login.'], 401);
+        }
+
+        if (!$admin->hasAnyRole(['super-admin', 'staff-desa'])) {
+            return response()->json(['error' => 'Tidak memiliki akses.'], 403);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $keluarga = Keluarga::findOrFail($id);
+            $keluarga->penduduks()->delete(); // Hapus semua penduduk terkait
+            $keluarga->delete(); // Hapus keluarga
+
+            DB::commit();
+
+            LogActivity::create([
+                'user_id' => $admin->id,
+                'activity' => 'delete',
+                'description' => 'Menghapus data keluarga dan rumah.',
+            ]);
+
+            return response()->json(['message' => 'Data keluarga berhasil dihapus.'], 200);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('Gagal menghapus data: ' . $e->getMessage());
+            LogActivity::create([
+                'user_id' => $admin->id,
+                'activity' => 'delete',
+                'description' => 'Gagal menghapus data keluarga dan rumah.',
+            ]);
+            return response()->json([
+                'error' => 'Terjadi kesalahan saat menghapus data.',
+                'detail' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }
