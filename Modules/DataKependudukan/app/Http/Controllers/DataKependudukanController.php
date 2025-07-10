@@ -68,7 +68,7 @@ class DataKependudukanController extends Controller
                     'nama_ibu' => $anggota['nama_ibu'] ?? null,
                 ]);
             }
-            
+
 
             DB::commit();
 
@@ -79,12 +79,9 @@ class DataKependudukanController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'Data keluarga dan rumah berhasil disimpan.',
-                'data' => [
-                    'keluarga' => $keluarga->load('penduduks'),
-                    'rumah' => $rumah,
-                ]
-            ], 201);
+                'message' => 'Data berhasil disimpan.',
+                'data' => new DataKependudukanResource($keluarga->load('rumah', 'penduduks'))
+            ], 200);
         } catch (\Throwable $e) {
             DB::rollBack();
             Log::error('Gagal menyimpan: ' . $e->getMessage());
@@ -224,7 +221,7 @@ class DataKependudukanController extends Controller
             return response()->json([
                 'error' => 'Terjadi kesalahan saat memperbarui data.',
                 'detail' => $e->getMessage(),
-            ], 500);   
+            ], 500);
         }
     }
 
