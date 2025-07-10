@@ -85,7 +85,7 @@
 
     <div class="mt-5" style="display: flex; justify-content: space-between; align-items: flex-start;">
         {{-- QR Code --}}
-       {{-- <div style="width: 50px;">
+       <div style="width: 50px;">
             @if($ajuan->status === 'approved')
                 <img src="{{ $qrCodePath }}" style="width: 30px;" alt="QR Code">
 
@@ -93,7 +93,7 @@
                     <div style="font-size: 10px;">Verifikasi: {{ $downloaded_at }}</div>
                 @endif
             @endif
-        </div> --}}
+        </div>
 
 
         {{-- Tanda Tangan --}}

@@ -344,80 +344,161 @@ class PengajuanSuratController extends Controller
         return $map[$number-1] ?? $number;
     }
 
+    // public function previewSurat($slug, $ajuan_id)
+    // {
+    //     // ✅ [SCP #23] Set locale (tidak berdampak keamanan langsung, tapi pastikan hanya bahasa yang diizinkan)
+    //     Carbon::setLocale('id');
+
+    //     // ✅ [ASVS V2.1] Autentikasi menggunakan token dari query atau header
+    //     $token = request()->query('token') ?? request()->bearerToken();
+
+    //     if (!$token) {
+    //         return response('Unauthorized: token tidak ditemukan', 401);
+    //     }
+
+    //     try {
+    //         $admin = JWTAuth::setToken($token)->authenticate();
+    //     } catch (\Exception $e) {
+    //         // ✅ [ASVS V9.2] Jangan bocorkan error detail
+    //         return response()->json([
+    //             'message' => 'Unauthorized: token tidak valid atau telah kedaluwarsa'
+    //         ], 401);
+    //     }
+
+    //     // ✅ [ASVS V4.1] Role-based access control
+    //     if (!$admin->hasAnyRole(['super-admin', 'staff-desa', 'kepala-desa'])) {
+    //         return response()->json([
+    //             'message' => 'Akses ditolak. Anda tidak memiliki izin untuk mengakses preview surat ini'
+    //         ], 403);
+    //     }
+
+    //     // ✅ [ASVS V4.1.3] Cek akses dan entitas berdasarkan slug & id
+    //     $ajuanSurat = Ajuan::with(['user.profileMasyarakat', 'surat'])
+    //         ->where('id', $ajuan_id)
+    //         ->whereHas('surat', function ($query) use ($slug) {
+    //             $query->where('slug', $slug);
+    //         })
+    //         ->first();
+
+    //     if (!$ajuanSurat) {
+    //         return response('Not Found: data tidak ditemukan', 404);
+    //     }
+
+    //     // ✅ [ASVS V5.1.4] Pastikan data surat didekode dengan aman
+    //     $dataSurat = is_array($ajuanSurat->data_surat)
+    //         ? $ajuanSurat->data_surat
+    //         : json_decode($ajuanSurat->data_surat, true);
+
+    //     // ✅ [ASVS V10.2] Validasi template yang akan dipakai
+    //     $kodeSurat = optional($ajuanSurat->surat)->kode_surat ?? 'default';
+    //     $template = 'surat.templates.' . strtolower($kodeSurat);
+
+    //     if (!view()->exists($template)) {
+    //         return response("Template surat tidak ditemukan", 500); // ⚠️ pertimbangkan ubah ke 404
+    //     }
+
+    //     // ✅ [SCP #192] Generate QR Code di server (trusted environment)
+    //     $verificationUrl = url("/verifikasi-surat/{$ajuanSurat->id}");
+    //     $qrCodeSvg = QrCode::format('svg')->size(150)->generate($verificationUrl);
+
+    //     // ✅ [SCP #115] Tambahkan metadata waktu
+    //     $downloadedAt = now()->format('d F Y, H:i:s');
+
+    //     // ✅ [ASVS V5.1] Gunakan template view yang sudah dipastikan aman
+    //     $html = view($template, [
+    //         'ajuan' => $ajuanSurat,
+    //         'user' => $ajuanSurat->user,
+    //         'profile' => $ajuanSurat->user->profileMasyarakat,
+    //         'data' => $dataSurat,
+    //         'qrCodeSvg' => $qrCodeSvg,
+    //         'downloaded_at' => $downloadedAt,
+    //         'isPreview' => true, // Penting: bisa dipakai di view untuk hide elemen sensitif
+    //     ])->render();
+
+    //     // ✅ [ASVS V9.1] Response aman (text/html), tanpa bocoran sistem
+    //     return response($html, 200)->header('Content-Type', 'text/html');
+    // }
+
     public function previewSurat($slug, $ajuan_id)
-    {
-        // ✅ [SCP #23] Set locale (tidak berdampak keamanan langsung, tapi pastikan hanya bahasa yang diizinkan)
-        Carbon::setLocale('id');
+{
+    Carbon::setLocale('id');
 
-        // ✅ [ASVS V2.1] Autentikasi menggunakan token dari query atau header
-        $token = request()->query('token') ?? request()->bearerToken();
+    $token = request()->query('token') ?? request()->bearerToken();
 
-        if (!$token) {
-            return response('Unauthorized: token tidak ditemukan', 401);
-        }
-
-        try {
-            $admin = JWTAuth::setToken($token)->authenticate();
-        } catch (\Exception $e) {
-            // ✅ [ASVS V9.2] Jangan bocorkan error detail
-            return response()->json([
-                'message' => 'Unauthorized: token tidak valid atau telah kedaluwarsa'
-            ], 401);
-        }
-
-        // ✅ [ASVS V4.1] Role-based access control
-        if (!$admin->hasAnyRole(['super-admin', 'staff-desa', 'kepala-desa'])) {
-            return response()->json([
-                'message' => 'Akses ditolak. Anda tidak memiliki izin untuk mengakses preview surat ini'
-            ], 403);
-        }
-
-        // ✅ [ASVS V4.1.3] Cek akses dan entitas berdasarkan slug & id
-        $ajuanSurat = Ajuan::with(['user.profileMasyarakat', 'surat'])
-            ->where('id', $ajuan_id)
-            ->whereHas('surat', function ($query) use ($slug) {
-                $query->where('slug', $slug);
-            })
-            ->first();
-
-        if (!$ajuanSurat) {
-            return response('Not Found: data tidak ditemukan', 404);
-        }
-
-        // ✅ [ASVS V5.1.4] Pastikan data surat didekode dengan aman
-        $dataSurat = is_array($ajuanSurat->data_surat)
-            ? $ajuanSurat->data_surat
-            : json_decode($ajuanSurat->data_surat, true);
-
-        // ✅ [ASVS V10.2] Validasi template yang akan dipakai
-        $kodeSurat = optional($ajuanSurat->surat)->kode_surat ?? 'default';
-        $template = 'surat.templates.' . strtolower($kodeSurat);
-
-        if (!view()->exists($template)) {
-            return response("Template surat tidak ditemukan", 500); // ⚠️ pertimbangkan ubah ke 404
-        }
-
-        // ✅ [SCP #192] Generate QR Code di server (trusted environment)
-        $verificationUrl = url("/verifikasi-surat/{$ajuanSurat->id}");
-        $qrCodeSvg = QrCode::format('svg')->size(150)->generate($verificationUrl);
-
-        // ✅ [SCP #115] Tambahkan metadata waktu
-        $downloadedAt = now()->format('d F Y, H:i:s');
-
-        // ✅ [ASVS V5.1] Gunakan template view yang sudah dipastikan aman
-        $html = view($template, [
-            'ajuan' => $ajuanSurat,
-            'user' => $ajuanSurat->user,
-            'profile' => $ajuanSurat->user->profileMasyarakat,
-            'data' => $dataSurat,
-            'qrCodeSvg' => $qrCodeSvg,
-            'downloaded_at' => $downloadedAt,
-            'isPreview' => true, // Penting: bisa dipakai di view untuk hide elemen sensitif
-        ])->render();
-
-        // ✅ [ASVS V9.1] Response aman (text/html), tanpa bocoran sistem
-        return response($html, 200)->header('Content-Type', 'text/html');
+    if (!$token) {
+        return response('Unauthorized: token tidak ditemukan', 401);
     }
+
+    try {
+        $admin = JWTAuth::setToken($token)->authenticate();
+    } catch (\Exception $e) {
+        return response()->json([
+            'message' => 'Unauthorized: token tidak valid atau telah kedaluwarsa'
+        ], 401);
+    }
+
+    if (!$admin->hasAnyRole(['super-admin', 'staff-desa', 'kepala-desa'])) {
+        return response()->json([
+            'message' => 'Akses ditolak. Anda tidak memiliki izin untuk mengakses preview surat ini'
+        ], 403);
+    }
+
+    $ajuanSurat = Ajuan::with(['user.profileMasyarakat', 'surat'])
+        ->where('id', $ajuan_id)
+        ->whereHas('surat', function ($query) use ($slug) {
+            $query->where('slug', $slug);
+        })
+        ->first();
+
+    if (!$ajuanSurat) {
+        return response('Not Found: data tidak ditemukan', 404);
+    }
+
+    $dataSurat = is_array($ajuanSurat->data_surat)
+        ? $ajuanSurat->data_surat
+        : json_decode($ajuanSurat->data_surat, true);
+
+    $kodeSurat = optional($ajuanSurat->surat)->kode_surat ?? 'default';
+    $template = 'surat.templates.' . strtolower($kodeSurat);
+
+    if (!view()->exists($template)) {
+        return response("Template surat tidak ditemukan", 404);
+    }
+
+    // ✅ Generate QR code PNG dan simpan ke storage
+    $verificationUrl = url("/verifikasi-surat/{$ajuanSurat->id}");
+
+    $qrFileName = 'qr-' . \Illuminate\Support\Str::uuid() . '.png';
+    $qrRelativePath = "private/qrcodes/{$qrFileName}";
+    $qrStoragePath = storage_path("app/{$qrRelativePath}");
+
+    // Buat folder kalau belum ada
+    if (!File::exists(dirname($qrStoragePath))) {
+        File::makeDirectory(dirname($qrStoragePath), 0755, true);
+    }
+
+    // Simpan QR code PNG
+    QrCode::format('png')->size(150)->generate($verificationUrl, $qrStoragePath);
+
+    // Simpan path ke database
+    $ajuanSurat->qr_code_path = $qrRelativePath;
+    $ajuanSurat->save();
+
+    $downloadedAt = now()->format('d F Y, H:i:s');
+
+    // ✅ Kirim view sebagai HTML untuk preview
+    $html = view($template, [
+        'ajuan' => $ajuanSurat,
+        'user' => $ajuanSurat->user,
+        'profile' => $ajuanSurat->user->profileMasyarakat,
+        'data' => $dataSurat,
+        'downloaded_at' => $downloadedAt,
+        'isPreview' => true,
+    ])->render();
+
+    return response($html, 200)->header('Content-Type', 'text/html');
+}
+
 
 
 
@@ -742,7 +823,7 @@ public function downloadSurat($slug, $ajuanId)
             'data' => $dataSurat,
             'downloaded_at' => now()->translatedFormat('l, d F Y H:i'),
             'isPreview' => false, // 🟢 Ini penting!
-        ])->setPaper('a4', 'portrait');
+        ])->setPaper('f4', 'portrait');
 
         return $pdf->download("surat-{$slug}.pdf");
 
