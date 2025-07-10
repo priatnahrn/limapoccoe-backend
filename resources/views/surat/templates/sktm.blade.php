@@ -81,19 +81,16 @@
 
     <div class="mt-5" style="display: flex; justify-content: space-between; align-items: flex-start;">
         {{-- QR Code --}}
-        <div style="width: 100px;">
+       <div style="width: 50px;">
             @if($ajuan->status === 'approved')
-                @if($isPreview)
-                    {!! $qrCodeSvg ?? '' !!}
-                @elseif(isset($qrCodePath) && file_exists($qrCodePath))
-                    <img src="file://{{ $qrCodePath }}" style="width: 60px;" alt="QR Code">
-                @endif
+                <img src="{{ $qrCodePath }}" style="width: 30px;" alt="QR Code">
 
                 @if(isset($downloaded_at))
                     <div style="font-size: 10px;">Verifikasi: {{ $downloaded_at }}</div>
                 @endif
             @endif
         </div>
+
 
         {{-- Tanda Tangan --}}
         <div style="text-align: right; width: 50%;">

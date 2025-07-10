@@ -677,91 +677,42 @@ class PengajuanSuratController extends Controller
 // }
 
 
+
 public function downloadSurat($slug, $ajuanId)
 {
-    Carbon::setLocale('id');
-    ini_set('memory_limit', '-1');
-
     try {
-        $user = JWTAuth::parseToken()->authenticate();
+        $ajuanSurat = Ajuan::with(['user', 'user.profileMasyarakat', 'surat'])
+            ->where('id', $ajuanId)
+            ->whereHas('surat', fn($q) => $q->where('slug', $slug))
+            ->firstOrFail();
 
-        if (!$user->hasAnyRole(['masyarakat', 'staff-desa', 'kepala-desa', 'super-admin'])) {
-            return response()->json(['error' => 'Akses ditolak.'], 403);
-        }
-
-        $ajuanSurat = Ajuan::with([
-            'user',
-            'user.profileMasyarakat',
-            'surat',
-            'tandaTangan.signedBy'
-        ])
-        ->where('id', $ajuanId)
-        ->whereHas('surat', fn($q) => $q->where('slug', $slug))
-        ->first();
-
-        if (!$ajuanSurat || $ajuanSurat->status !== 'approved' || !$ajuanSurat->tandaTangan) {
-            return response()->json(['error' => 'Surat tidak valid atau belum disetujui.'], 400);
-        }
-
+        // Buat data surat
         $dataSurat = is_array($ajuanSurat->data_surat)
             ? $ajuanSurat->data_surat
             : json_decode($ajuanSurat->data_surat, true);
 
-        $template = 'surat.templates.' . strtolower(optional($ajuanSurat->surat)->kode_surat ?? 'default');
-        if (!view()->exists($template)) {
-            Log::warning("Template surat tidak ditemukan: $template");
-            return response()->json(['error' => 'Template surat tidak ditemukan.'], 404);
-        }
-
-        // Generate QR Code
+        // Buat QR code langsung inline (tanpa simpan file PNG)
         $verificationUrl = url("/verifikasi-surat/{$ajuanSurat->id}");
-        $qrFilename = 'qr-' . Str::uuid() . '.png';
-        $qrRelativePath = "qrcodes/{$qrFilename}";
-        $qrStoragePath = storage_path("app/public/{$qrRelativePath}");
+        $qrCodeBase64 = base64_encode(QrCode::format('png')->size(150)->generate($verificationUrl));
+        $qrCodeDataUri = "data:image/png;base64,{$qrCodeBase64}";
 
-        if (!File::exists(dirname($qrStoragePath))) {
-            File::makeDirectory(dirname($qrStoragePath), 0755, true);
-        }
+        $template = 'surat.templates.' . strtolower($ajuanSurat->surat->kode_surat ?? 'default');
 
-        QrCode::format('png')->size(150)->generate($verificationUrl, $qrStoragePath);
-        $qrCodePath = public_path("storage/{$qrRelativePath}");
-
-        $downloadedAt = Carbon::now()->translatedFormat('l, d F Y H:i');
-
-        // Render view untuk PDF
-        $nomorSurat = preg_replace('/[\/\\\\]/', '-', $ajuanSurat->nomor_surat ?? 'tanpa-nomor');
+        // Generate PDF (langsung tampilkan tanpa simpan file)
         $pdf = Pdf::loadView($template, [
             'ajuan' => $ajuanSurat,
             'user' => $ajuanSurat->user,
             'profile' => $ajuanSurat->user->profileMasyarakat,
             'data' => $dataSurat,
-            'qrCodePath' => $qrCodePath,
-            'downloaded_at' => $downloadedAt,
-            'isPreview' => false,
+            'qrCodePath' => $qrCodeDataUri,
+            'downloaded_at' => now()->translatedFormat('l, d F Y H:i'),
         ])->setPaper('a4', 'landscape');
 
-        $tempPdfPath = storage_path("app/temp/surat-{$nomorSurat}.pdf");
-
-        if (!File::exists(dirname($tempPdfPath))) {
-            File::makeDirectory(dirname($tempPdfPath), 0755, true);
-        }
-
-        $pdf->save($tempPdfPath);
-
-        // Hapus QR code setelah generate
-        if (file_exists($qrCodePath)) {
-            try {
-                unlink($qrCodePath);
-            } catch (\Throwable $e) {
-                Log::warning("Gagal menghapus QR code: {$qrCodePath} - " . $e->getMessage());
-            }
-        }
-
-        return response()->download($tempPdfPath)->deleteFileAfterSend(true);
+        return $pdf->download("surat-{$slug}.pdf");
 
     } catch (\Throwable $e) {
-        Log::error("Gagal mendownload surat: " . $e->getMessage());
-        return response()->json(['error' => 'Terjadi kesalahan saat memproses surat.'], 500);
+        Log::error("Gagal download surat: " . $e->getMessage());
+        return response()->json(['error' => 'Gagal download surat.'], 500);
     }
 }
 
