@@ -24,7 +24,7 @@ class DataKependudukanController extends Controller
             return response()->json(['error' => 'User belum login.'], 401);
         }
 
-        if (!$admin->hasAnyRole(['super_admin', 'staff_desa'])) {
+        if (!$admin->hasAnyRole(['super-admin', 'staff-desa'])) {
             return response()->json(['error' => 'Tidak memiliki akses.'], 403);
         }
 
