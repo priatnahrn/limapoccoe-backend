@@ -85,15 +85,14 @@
 
     <div class="mt-5" style="display: flex; justify-content: space-between; align-items: flex-start;">
         {{-- QR Code --}}
-       {{-- Tampilkan SVG di preview --}}
+       {{-- Tampilkan SVG di preview
+       {{-- Tampilkan QR Code --}}
         @if($isPreview)
-            {!! $qrCodeSvg !!}
-        @else
-            {{-- Render file SVG dari storage untuk PDF --}}
-            @if(isset($qrCodePath) && file_exists($qrCodePath))
-                <img src="{{ $qrCodePath }}" width="60" alt="QR Code">
-            @endif
+            {!! $qrCodeSvg ?? '' !!}
+        @elseif(isset($qrCodePath) && file_exists($qrCodePath))
+            <img src="file://{{ $qrCodePath }}" style="width: 60px;" alt="QR Code">
         @endif
+
 
 
 

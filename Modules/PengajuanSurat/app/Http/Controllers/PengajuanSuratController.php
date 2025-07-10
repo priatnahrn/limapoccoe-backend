@@ -798,13 +798,12 @@ public function previewSurat($slug, $ajuan_id)
 
 // }
 
-
 public function downloadSurat($slug, $ajuanId)
 {
     ini_set('memory_limit', '512M');
 
     try {
-        $ajuanSurat = Ajuan::with(['user', 'user.profileMasyarakat', 'surat'])
+        $ajuanSurat = Ajuan::with(['user', 'user.profileMasyarakat', 'surat', 'tandaTangan.user'])
             ->where('id', $ajuanId)
             ->whereHas('surat', fn($q) => $q->where('slug', $slug))
             ->firstOrFail();
@@ -815,13 +814,23 @@ public function downloadSurat($slug, $ajuanId)
 
         $template = 'surat.templates.' . strtolower($ajuanSurat->surat->kode_surat ?? 'default');
 
+        // ✅ Ambil QR code dari file jika tersedia
+        $qrCodePath = null;
+        if ($ajuanSurat->qr_code_path) {
+            $storedPath = storage_path('app/' . $ajuanSurat->qr_code_path);
+            if (file_exists($storedPath)) {
+                $qrCodePath = $storedPath;
+            }
+        }
+
         $pdf = Pdf::loadView($template, [
-            'ajuan' => $ajuanSurat,
-            'user' => $ajuanSurat->user,
-            'profile' => $ajuanSurat->user->profileMasyarakat,
-            'data' => $dataSurat,
+            'ajuan'         => $ajuanSurat,
+            'user'          => $ajuanSurat->user,
+            'profile'       => $ajuanSurat->user->profileMasyarakat,
+            'data'          => $dataSurat,
+            'qrCodePath'    => $qrCodePath,
             'downloaded_at' => now()->translatedFormat('l, d F Y H:i'),
-            'isPreview' => false, // 🟢 Ini penting!
+            'isPreview'     => false,
         ])->setPaper('f4', 'portrait');
 
         return $pdf->download("surat-{$slug}.pdf");
@@ -831,6 +840,39 @@ public function downloadSurat($slug, $ajuanId)
         return response()->json(['error' => 'Gagal download surat.'], 500);
     }
 }
+
+// public function downloadSurat($slug, $ajuanId)
+// {
+//     ini_set('memory_limit', '512M');
+
+//     try {
+//         $ajuanSurat = Ajuan::with(['user', 'user.profileMasyarakat', 'surat'])
+//             ->where('id', $ajuanId)
+//             ->whereHas('surat', fn($q) => $q->where('slug', $slug))
+//             ->firstOrFail();
+
+//         $dataSurat = is_array($ajuanSurat->data_surat)
+//             ? $ajuanSurat->data_surat
+//             : json_decode($ajuanSurat->data_surat, true);
+
+//         $template = 'surat.templates.' . strtolower($ajuanSurat->surat->kode_surat ?? 'default');
+
+//         $pdf = Pdf::loadView($template, [
+//             'ajuan' => $ajuanSurat,
+//             'user' => $ajuanSurat->user,
+//             'profile' => $ajuanSurat->user->profileMasyarakat,
+//             'data' => $dataSurat,
+//             'downloaded_at' => now()->translatedFormat('l, d F Y H:i'),
+//             'isPreview' => false, // 🟢 Ini penting!
+//         ])->setPaper('f4', 'portrait');
+
+//         return $pdf->download("surat-{$slug}.pdf");
+
+//     } catch (\Throwable $e) {
+//         Log::error("Gagal download surat: " . $e->getMessage());
+//         return response()->json(['error' => 'Gagal download surat.'], 500);
+//     }
+// }
 
 
 public function testDownloadPdf()
