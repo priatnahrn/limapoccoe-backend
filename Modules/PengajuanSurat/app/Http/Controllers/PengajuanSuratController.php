@@ -773,6 +773,16 @@ public function verifikasiSurat($ajuanId)
 }
 
 
+public function testPdfBlade()
+{
+    try {
+        $pdf = Pdf::loadView('test-pdf');
+        return $pdf->download('test-gambar.pdf');
+    } catch (Throwable $e) {
+        Log::error('Gagal render PDF dari blade: ' . $e->getMessage());
+        return response()->json(['error' => 'Gagal render PDF dari view.'], 500);
+    }
+}
 
     
 }

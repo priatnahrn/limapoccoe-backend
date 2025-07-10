@@ -28,4 +28,5 @@ Route::middleware(['auth:api'])->group(function () {
         Route::delete('/pengajuan/{id}', [PengajuanSuratController::class, 'deletePengajuan']);
     });
     Route::get('test-pdf', [PengajuanSuratController::class, 'testDownloadPdf']);
+    Route::get('test-pdf-blade', [PengajuanSuratController::class, 'testPdfBlade']);
 });
