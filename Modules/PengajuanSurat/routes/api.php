@@ -19,14 +19,11 @@ Route::middleware(['auth:api'])->group(function () {
             Route::put('/{id}/confirmed', [PengajuanSuratController::class, 'confirmedStatusPengajuan']);
             Route::put('/{id}/signed', [PengajuanSuratController::class, 'signedStatusPengajuan']);  
             Route::get('/{id}/download', [PengajuanSuratController::class, 'downloadSurat']);
-
-
         });
         
         // Rute yang tidak tergantung slug
         Route::put('/pengajuan/{id}', [PengajuanSuratController::class, 'updatePengajuan']);
         Route::delete('/pengajuan/{id}', [PengajuanSuratController::class, 'deletePengajuan']);
-        Route::get('test-pdf', [PengajuanSuratController::class, 'testDownloadPdf']);
-        Route::get('test-pdf-blade', [PengajuanSuratController::class, 'testPdfBlade']);
+        
     });
 });

@@ -5,8 +5,8 @@ namespace Modules\PengajuanSurat\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Modules\Auth\Models\AuthUser;
-use Modules\PengajuanSurat\Models\AjuanSurat;
+use Modules\PengajuanSurat\Models\Ajuan;
+use Illuminate\Support\Str;
 // use Modules\PengajuanSurat\Models\TandaTangan;
 // use Modules\PengajuanSurat\Database\Factories\SuratFactory;
 
@@ -32,7 +32,7 @@ class Surat extends Model
     
     public function ajuan_surat()
     {
-        return $this->hasMany(AjuanSurat::class, 'surat_id');
+        return $this->hasMany(Ajuan::class, 'surat_id');
     }
     public function getRouteKeyName()
     {
@@ -43,7 +43,7 @@ class Surat extends Model
     {
         static::creating(function ($surat) {
             if (empty($surat->slug)) {
-                $cleanedName = \Str::of($surat->nama_surat)
+                $cleanedName = Str::of($surat->nama_surat)
                     ->lower()
                     ->replaceFirst('surat ', '')
                     ->slug('-');

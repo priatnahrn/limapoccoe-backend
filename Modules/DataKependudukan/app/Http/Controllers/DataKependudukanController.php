@@ -245,7 +245,54 @@ class DataKependudukanController extends Controller
         }
     }
 
-    public function deleteDataKependudukan($id)
+    public function deleteAnggotaKeluarga($id){
+        $admin = JWTAuth::parseToken()->authenticate();
+
+        if (!$admin) {
+            return response()->json(['error' => 'User belum login.'], 401);
+        }
+
+        if (!$admin->hasAnyRole(['super-admin', 'staff-desa'])) {
+            return response()->json(['error' => 'Tidak memiliki akses.'], 403);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $penduduk = Penduduk::findOrFail($id);
+            $penduduk->delete(); // Hapus penduduk
+
+            DB::commit();
+
+            LogActivity::create([
+                'id' => Str::uuid(),
+                'user_id' => $admin->id,
+                'activity_type' => 'delete',
+                'description' => 'Menghapus data penduduk.',
+                'ip_address' => request()->ip(),
+            ]);
+
+            return response()->json(['message' => 'Data penduduk berhasil dihapus.'], 200);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('Gagal menghapus data: ' . $e->getMessage());
+           
+            LogActivity::create([
+                'id' => Str::uuid(),
+                'user_id' => $admin->id,
+                'activity_type' => 'delete',
+                'description' => 'Gagal menghapus data penduduk.',
+                'ip_address' => request()->ip(),
+            ]);
+
+            return response()->json([
+                'error' => 'Terjadi kesalahan saat menghapus data.',
+                'detail' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function deleteDataKeluarga($id)
     {
         $admin = JWTAuth::parseToken()->authenticate();
 

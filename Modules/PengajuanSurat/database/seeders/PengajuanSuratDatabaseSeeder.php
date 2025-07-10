@@ -6,14 +6,9 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use Modules\PengajuanSurat\Models\Surat;
-use Illuminate\Support\Facades\DB;
-
 
 class PengajuanSuratDatabaseSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         $now = Carbon::now();
@@ -22,59 +17,73 @@ class PengajuanSuratDatabaseSeeder extends Seeder
             [
                 'kode_surat' => 'SKTM',
                 'nama_surat' => 'Surat Keterangan Tidak Mampu',
-                'deskripsi' => 'Untuk keperluan bantuan pendidikan, kesehatan, atau sosial.',
-                'syarat_ketentuan' => 'Fotokopi KTP, Fotokopi KK, Surat pengantar RT/RW',
-            ],
-            [
-                'kode_surat' => 'SKD',
-                'nama_surat' => 'Surat Keterangan Domisili',
-                'deskripsi' => 'Digunakan sebagai bukti tempat tinggal resmi.',
-                'syarat_ketentuan' => 'Fotokopi KTP, Surat pengantar RT/RW',
+                'deskripsi' => 'Surat resmi dari desa yang menyatakan seseorang berasal dari keluarga kurang mampu untuk keperluan bantuan sosial, pendidikan, kesehatan, dan administratif lainnya.',
+                'syarat_ketentuan' => 'Fotokopi KK, Fotokopi KTP Pemohon/Orang Tua, Surat Pengantar RT/RW, Tujuan pembuatan SKTM, Mengisi formulir permohonan',
             ],
             [
                 'kode_surat' => 'SKU',
                 'nama_surat' => 'Surat Keterangan Usaha',
-                'deskripsi' => 'Untuk keperluan legalitas usaha warga.',
-                'syarat_ketentuan' => 'Fotokopi KTP, Foto tempat usaha, Surat pengantar RT/RW',
+                'deskripsi' => 'Surat keterangan legalitas usaha warga untuk pengajuan kredit, perizinan, atau bantuan usaha mikro.',
+                'syarat_ketentuan' => 'Fotokopi KTP, Fotokopi KK, Surat Pengantar RT/RW, Bukti keberadaan usaha, Mengisi formulir permohonan',
             ],
             [
-                'kode_surat' => 'SPKK',
-                'nama_surat' => 'Surat Pengantar KK',
-                'deskripsi' => 'Surat pengantar untuk pengurusan KK baru atau perubahan.',
-                'syarat_ketentuan' => 'Fotokopi KTP, Surat pengantar RT/RW, Bukti perubahan data',
+                'kode_surat' => 'SKCK',
+                'nama_surat' => 'Surat Pengantar SKCK',
+                'deskripsi' => 'Surat pengantar dari desa untuk pengurusan SKCK di kepolisian.',
+                'syarat_ketentuan' => 'Fotokopi KTP, Fotokopi KK, Surat Pengantar RT/RW, Pas foto terbaru',
             ],
             [
-                'kode_surat' => 'SPKTP',
-                'nama_surat' => 'Surat Pengantar KTP',
-                'deskripsi' => 'Untuk keperluan pembuatan atau pembaruan KTP.',
-                'syarat_ketentuan' => 'Fotokopi KK, Surat pengantar RT/RW',
+                'kode_surat' => 'SKD',
+                'nama_surat' => 'Surat Keterangan Domisili',
+                'deskripsi' => 'Surat keterangan domisili resmi untuk keperluan administratif seperti sekolah, rekening bank, BPJS.',
+                'syarat_ketentuan' => 'Fotokopi KTP, Fotokopi KK, Surat Pengantar RT/RW, Bukti tempat tinggal',
+            ],
+            [
+                'kode_surat' => 'SKPH',
+                'nama_surat' => 'Surat Keterangan Penghasilan',
+                'deskripsi' => 'Surat keterangan penghasilan untuk keperluan beasiswa, bantuan sosial, atau perbankan.',
+                'syarat_ketentuan' => 'Fotokopi KTP, Fotokopi KK, Surat Pengantar RT/RW, Keterangan pekerjaan, Mengisi formulir permohonan',
+            ],
+            [
+                'kode_surat' => 'SKH',
+                'nama_surat' => 'Surat Keterangan Kehilangan Dokumen',
+                'deskripsi' => 'Surat pernyataan kehilangan dokumen penting untuk dasar laporan polisi atau pengurusan ulang.',
+                'syarat_ketentuan' => 'Fotokopi KTP, Surat Pengantar RT/RW, Kronologi kehilangan, Jenis dokumen hilang, Mengisi formulir permohonan',
+            ],
+            [
+                'kode_surat' => 'SKBN',
+                'nama_surat' => 'Surat Keterangan Belum Nikah',
+                'deskripsi' => 'Surat pernyataan belum menikah, digunakan untuk CPNS, beasiswa, atau persyaratan administratif lain.',
+                'syarat_ketentuan' => 'Fotokopi KTP, Fotokopi KK, Surat Pengantar RT/RW, Pernyataan belum menikah, Mengisi formulir permohonan',
+            ],
+            [
+                'kode_surat' => 'SKN',
+                'nama_surat' => 'Surat Keterangan Nikah',
+                'deskripsi' => 'Surat yang menyatakan pasangan telah menikah secara agama tapi belum tercatat di instansi pemerintah.',
+                'syarat_ketentuan' => 'Fotokopi KTP suami & istri, Fotokopi KK, Surat nikah dari tokoh agama, Surat Pengantar RT/RW, Mengisi formulir permohonan',
             ],
             [
                 'kode_surat' => 'SKL',
-                'nama_surat' => 'Surat Keterangan Lahir',
-                'deskripsi' => 'Untuk pengurusan akta kelahiran.',
-                'syarat_ketentuan' => 'Fotokopi KK, Surat dari bidan/rumah sakit, Fotokopi KTP orang tua',
+                'nama_surat' => 'Surat Keterangan Kelahiran',
+                'deskripsi' => 'Surat keterangan kelahiran bayi sebagai syarat pembuatan akta kelahiran dan dokumen kependudukan lainnya.',
+                'syarat_ketentuan' => 'Fotokopi KTP orang tua, Fotokopi KK, Surat dari bidan/rumah sakit, Surat Pengantar RT/RW, Mengisi formulir permohonan',
             ],
             [
-                'kode_surat' => 'SKM',
-                'nama_surat' => 'Surat Keterangan Kematian',
-                'deskripsi' => 'Untuk pengurusan akta kematian atau administrasi lainnya.',
-                'syarat_ketentuan' => 'Fotokopi KK, Surat dari rumah sakit, Fotokopi KTP ahli waris',
+                'kode_surat' => 'SKBR',
+                'nama_surat' => 'Surat Keterangan Belum Memiliki Rumah',
+                'deskripsi' => 'Surat pernyataan belum memiliki rumah untuk program bantuan rumah atau subsidi.',
+                'syarat_ketentuan' => 'Fotokopi KTP, Fotokopi KK, Surat Pengantar RT/RW, Pernyataan belum memiliki rumah, Mengisi formulir permohonan',
             ],
             [
-                'kode_surat' => 'SPPD',
-                'nama_surat' => 'Surat Pengantar Pindah Domisili',
-                'deskripsi' => 'Untuk pindah keluar desa atau kecamatan.',
-                'syarat_ketentuan' => 'Fotokopi KK, Fotokopi KTP, Surat pengantar RT/RW',
+                'kode_surat' => 'SKBBM',
+                'nama_surat' => 'Surat Rekomendasi Pembelian BBM Bersubsidi',
+                'deskripsi' => 'Surat rekomendasi dari desa untuk pembelian bahan bakar bersubsidi untuk usaha atau pertanian.',
+                'syarat_ketentuan' => 'Fotokopi KTP, Fotokopi KK, Surat Pengantar RT/RW, Data kendaraan/alat usaha, Tujuan pembelian, Mengisi formulir permohonan',
             ],
         ];
 
         foreach ($surats as $item) {
-            // Generate slug manually
-            $slug = 'surat-' . Str::of($item['nama_surat'])
-                ->lower()
-                ->replaceFirst('surat ', '')
-                ->slug('-');
+            $slug = 'surat-' . Str::of($item['nama_surat'])->lower()->replaceFirst('surat ', '')->slug('-');
 
             Surat::create([
                 'id' => Str::uuid(),
