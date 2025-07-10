@@ -679,6 +679,46 @@ class PengajuanSuratController extends Controller
 
 
 
+// public function downloadSurat($slug, $ajuanId)
+// {
+//     try {
+//         $ajuanSurat = Ajuan::with(['user', 'user.profileMasyarakat', 'surat'])
+//             ->where('id', $ajuanId)
+//             ->whereHas('surat', fn($q) => $q->where('slug', $slug))
+//             ->firstOrFail();
+
+//         // Buat data surat
+//         $dataSurat = is_array($ajuanSurat->data_surat)
+//             ? $ajuanSurat->data_surat
+//             : json_decode($ajuanSurat->data_surat, true);
+
+//         // Buat QR code langsung inline (tanpa simpan file PNG)
+//         $verificationUrl = url("/verifikasi-surat/{$ajuanSurat->id}");
+//         $qrCodeBase64 = base64_encode(QrCode::format('png')->size(150)->generate($verificationUrl));
+//         $qrCodeDataUri = "data:image/png;base64,{$qrCodeBase64}";
+
+//         $template = 'surat.templates.' . strtolower($ajuanSurat->surat->kode_surat ?? 'default');
+
+//         // Generate PDF (langsung tampilkan tanpa simpan file)
+//         $pdf = Pdf::loadView($template, [
+//             'ajuan' => $ajuanSurat,
+//             'user' => $ajuanSurat->user,
+//             'profile' => $ajuanSurat->user->profileMasyarakat,
+//             'data' => $dataSurat,
+//             'qrCodePath' => $qrCodeDataUri,
+//             'downloaded_at' => now()->translatedFormat('l, d F Y H:i'),
+//         ])->setPaper('a4', 'landscape');
+
+//         return $pdf->download("surat-{$slug}.pdf");
+
+//     } catch (\Throwable $e) {
+//         Log::error("Gagal download surat: " . $e->getMessage());
+//         return response()->json(['error' => 'Gagal download surat.'], 500);
+//     }
+
+// }
+
+
 public function downloadSurat($slug, $ajuanId)
 {
     try {
@@ -687,25 +727,19 @@ public function downloadSurat($slug, $ajuanId)
             ->whereHas('surat', fn($q) => $q->where('slug', $slug))
             ->firstOrFail();
 
-        // Buat data surat
+        // Ambil data surat
         $dataSurat = is_array($ajuanSurat->data_surat)
             ? $ajuanSurat->data_surat
             : json_decode($ajuanSurat->data_surat, true);
 
-        // Buat QR code langsung inline (tanpa simpan file PNG)
-        $verificationUrl = url("/verifikasi-surat/{$ajuanSurat->id}");
-        $qrCodeBase64 = base64_encode(QrCode::format('png')->size(150)->generate($verificationUrl));
-        $qrCodeDataUri = "data:image/png;base64,{$qrCodeBase64}";
-
         $template = 'surat.templates.' . strtolower($ajuanSurat->surat->kode_surat ?? 'default');
 
-        // Generate PDF (langsung tampilkan tanpa simpan file)
+        // Generate PDF dari blade view
         $pdf = Pdf::loadView($template, [
             'ajuan' => $ajuanSurat,
             'user' => $ajuanSurat->user,
             'profile' => $ajuanSurat->user->profileMasyarakat,
             'data' => $dataSurat,
-            'qrCodePath' => $qrCodeDataUri,
             'downloaded_at' => now()->translatedFormat('l, d F Y H:i'),
         ])->setPaper('a4', 'landscape');
 
@@ -715,7 +749,6 @@ public function downloadSurat($slug, $ajuanId)
         Log::error("Gagal download surat: " . $e->getMessage());
         return response()->json(['error' => 'Gagal download surat.'], 500);
     }
-
 }
 
 public function testDownloadPdf()
