@@ -73,9 +73,11 @@ class DataKependudukanController extends Controller
             DB::commit();
 
             LogActivity::create([
+                'id' => Str::uuid(),
                 'user_id' => $admin->id,
-                'activity' => 'create',
+                'activity_type' => 'create',
                 'description' => 'Membuat data keluarga dan rumah baru.',
+                'ip_address' => $request->ip(),
             ]);
 
             return response()->json([
@@ -87,9 +89,11 @@ class DataKependudukanController extends Controller
             Log::error('Gagal menyimpan: ' . $e->getMessage());
 
             LogActivity::create([
+                'id' => Str::uuid(),
                 'user_id' => $admin->id,
-                'activity' => 'create',
-                'description' => 'Gagal membuat data keluarga dan rumah.',
+                'activity_type' => 'create',
+                'description' => 'Gagal menyimpan data keluarga dan rumah.',
+                'ip_address' => $request->ip(),
             ]);
 
             return response()->json([
@@ -120,9 +124,11 @@ class DataKependudukanController extends Controller
 
         // ✅ Transformasi data menggunakan resource
         LogActivity::create([
+            'id' => Str::uuid(),
             'user_id' => $admin->id,
-            'activity' => 'read',
+            'activity_type' => 'read',
             'description' => 'Mengambil semua data kependudukan.',
+            'ip_address' => $request->ip(),
         ]);
 
         return response()->json([
@@ -148,6 +154,13 @@ class DataKependudukanController extends Controller
         if (!$keluarga) {
             return response()->json(['error' => 'Data keluarga tidak ditemukan.'], 404);
         }
+        LogActivity::create([
+            'id' => Str::uuid(),
+            'user_id' => $admin->id,
+            'activity_type' => 'read',
+            'description' => 'Mengambil detail data keluarga.',
+            'ip_address' => request()->ip(),
+        ]);
 
         return response()->json([
             'message' => 'Detail data keluarga berhasil diambil.',
@@ -202,9 +215,11 @@ class DataKependudukanController extends Controller
             DB::commit();
 
             LogActivity::create([
+                'id' => Str::uuid(),
                 'user_id' => $admin->id,
-                'activity' => 'update',
+                'activity_type' => 'update',
                 'description' => 'Memperbarui data keluarga dan rumah.',
+                'ip_address' => $request->ip(),
             ]);
             return response()->json([
                 'message' => 'Data keluarga berhasil diperbarui.',
@@ -214,9 +229,11 @@ class DataKependudukanController extends Controller
             DB::rollBack();
             Log::error('Gagal memperbarui data: ' . $e->getMessage());
             LogActivity::create([
+                'id' => Str::uuid(),
                 'user_id' => $admin->id,
-                'activity' => 'update',
+                'activity_type' => 'update',
                 'description' => 'Gagal memperbarui data keluarga dan rumah.',
+                'ip_address' => $request->ip(),
             ]);
             return response()->json([
                 'error' => 'Terjadi kesalahan saat memperbarui data.',
@@ -247,20 +264,26 @@ class DataKependudukanController extends Controller
             DB::commit();
 
             LogActivity::create([
+                'id' => Str::uuid(),
                 'user_id' => $admin->id,
-                'activity' => 'delete',
+                'activity_type' => 'delete',
                 'description' => 'Menghapus data keluarga dan rumah.',
+                'ip_address' => request()->ip(),
             ]);
 
             return response()->json(['message' => 'Data keluarga berhasil dihapus.'], 200);
         } catch (\Throwable $e) {
             DB::rollBack();
             Log::error('Gagal menghapus data: ' . $e->getMessage());
+           
             LogActivity::create([
+                'id' => Str::uuid(),
                 'user_id' => $admin->id,
-                'activity' => 'delete',
+                'activity_type' => 'delete',
                 'description' => 'Gagal menghapus data keluarga dan rumah.',
+                'ip_address' => request()->ip(),
             ]);
+
             return response()->json([
                 'error' => 'Terjadi kesalahan saat menghapus data.',
                 'detail' => $e->getMessage(),
