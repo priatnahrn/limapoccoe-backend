@@ -419,7 +419,10 @@ class PengajuanSuratController extends Controller
     //     return response($html, 200)->header('Content-Type', 'text/html');
     // }
 
-    public function previewSurat($slug, $ajuan_id)
+   
+
+
+public function previewSurat($slug, $ajuan_id)
 {
     Carbon::setLocale('id');
 
@@ -445,9 +448,7 @@ class PengajuanSuratController extends Controller
 
     $ajuanSurat = Ajuan::with(['user.profileMasyarakat', 'surat'])
         ->where('id', $ajuan_id)
-        ->whereHas('surat', function ($query) use ($slug) {
-            $query->where('slug', $slug);
-        })
+        ->whereHas('surat', fn($q) => $q->where('slug', $slug))
         ->first();
 
     if (!$ajuanSurat) {
@@ -465,42 +466,40 @@ class PengajuanSuratController extends Controller
         return response("Template surat tidak ditemukan", 404);
     }
 
-    // ✅ Generate QR code PNG dan simpan ke storage
+    // ✅ Generate QR code as SVG
     $verificationUrl = url("/verifikasi-surat/{$ajuanSurat->id}");
+    $qrCodeSvg = QrCode::format('svg')->size(150)->generate($verificationUrl);
 
-    $qrFileName = 'qr-' . \Illuminate\Support\Str::uuid() . '.png';
-    $qrRelativePath = "private/qrcodes/{$qrFileName}";
-    $qrStoragePath = storage_path("app/{$qrRelativePath}");
+    // ✅ Simpan QR sebagai file SVG
+    $qrFilename = "qr-{$ajuanSurat->id}.svg";
+    $qrPath = "private/qrcodes/{$qrFilename}";
+    $qrStoragePath = storage_path("app/{$qrPath}");
 
-    // Buat folder kalau belum ada
-    if (!File::exists(dirname($qrStoragePath))) {
-        File::makeDirectory(dirname($qrStoragePath), 0755, true);
+    if (!file_exists(dirname($qrStoragePath))) {
+        mkdir(dirname($qrStoragePath), 0755, true);
     }
 
-    // Simpan QR code PNG
-    QrCode::format('png')->size(150)->generate($verificationUrl, $qrStoragePath);
+    file_put_contents($qrStoragePath, $qrCodeSvg);
 
-    // Simpan path ke database
-    $ajuanSurat->qr_code_path = $qrRelativePath;
+    // Simpan path-nya ke DB (jika ingin digunakan di PDF)
+    $ajuanSurat->qr_code_path = $qrPath;
     $ajuanSurat->save();
 
     $downloadedAt = now()->format('d F Y, H:i:s');
 
-    // ✅ Kirim view sebagai HTML untuk preview
     $html = view($template, [
         'ajuan' => $ajuanSurat,
         'user' => $ajuanSurat->user,
         'profile' => $ajuanSurat->user->profileMasyarakat,
         'data' => $dataSurat,
+        'qrCodeSvg' => $qrCodeSvg,
+        'qrCodePath' => $qrStoragePath, // untuk PDF nanti
         'downloaded_at' => $downloadedAt,
         'isPreview' => true,
     ])->render();
 
     return response($html, 200)->header('Content-Type', 'text/html');
 }
-
-
-
 
     public function rejectedStatusPengajuan($slug, $ajuanId)
     {

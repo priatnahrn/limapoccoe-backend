@@ -85,15 +85,16 @@
 
     <div class="mt-5" style="display: flex; justify-content: space-between; align-items: flex-start;">
         {{-- QR Code --}}
-       <div style="width: 50px;">
-            @if($ajuan->status === 'approved')
-                <img src="{{ $qrCodePath }}" style="width: 30px;" alt="QR Code">
-
-                @if(isset($downloaded_at))
-                    <div style="font-size: 10px;">Verifikasi: {{ $downloaded_at }}</div>
-                @endif
+       {{-- Tampilkan SVG di preview --}}
+        @if($isPreview)
+            {!! $qrCodeSvg !!}
+        @else
+            {{-- Render file SVG dari storage untuk PDF --}}
+            @if(isset($qrCodePath) && file_exists($qrCodePath))
+                <img src="{{ $qrCodePath }}" width="60" alt="QR Code">
             @endif
-        </div>
+        @endif
+
 
 
         {{-- Tanda Tangan --}}
