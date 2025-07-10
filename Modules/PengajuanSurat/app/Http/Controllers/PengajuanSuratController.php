@@ -720,7 +720,9 @@ class PengajuanSuratController extends Controller
 
 
 public function downloadSurat($slug, $ajuanId)
+
 {
+    ini_set('memory_limit', '512M');
     try {
         $ajuanSurat = Ajuan::with(['user', 'user.profileMasyarakat', 'surat'])
             ->where('id', $ajuanId)
