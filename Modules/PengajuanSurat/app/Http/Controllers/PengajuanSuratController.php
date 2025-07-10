@@ -720,29 +720,28 @@ class PengajuanSuratController extends Controller
 
 
 public function downloadSurat($slug, $ajuanId)
-
 {
     ini_set('memory_limit', '512M');
+
     try {
         $ajuanSurat = Ajuan::with(['user', 'user.profileMasyarakat', 'surat'])
             ->where('id', $ajuanId)
             ->whereHas('surat', fn($q) => $q->where('slug', $slug))
             ->firstOrFail();
 
-        // Ambil data surat
         $dataSurat = is_array($ajuanSurat->data_surat)
             ? $ajuanSurat->data_surat
             : json_decode($ajuanSurat->data_surat, true);
 
         $template = 'surat.templates.' . strtolower($ajuanSurat->surat->kode_surat ?? 'default');
 
-        // Generate PDF dari blade view
         $pdf = Pdf::loadView($template, [
             'ajuan' => $ajuanSurat,
             'user' => $ajuanSurat->user,
             'profile' => $ajuanSurat->user->profileMasyarakat,
             'data' => $dataSurat,
             'downloaded_at' => now()->translatedFormat('l, d F Y H:i'),
+            'isPreview' => false, // 🟢 Ini penting!
         ])->setPaper('a4', 'portrait');
 
         return $pdf->download("surat-{$slug}.pdf");
@@ -752,6 +751,7 @@ public function downloadSurat($slug, $ajuanId)
         return response()->json(['error' => 'Gagal download surat.'], 500);
     }
 }
+
 
 public function testDownloadPdf()
 {
