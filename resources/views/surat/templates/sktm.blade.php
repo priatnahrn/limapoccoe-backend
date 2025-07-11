@@ -8,7 +8,10 @@
             font-family: 'Times New Roman', Times, serif;
             line-height: 1.5;
             margin: 30px;
+            position: relative;
+            max-width: 210mm; /* agar tidak melebihi F4 (215mm x 330mm) */
         }
+
         .center { text-align: center; }
         .bold { font-weight: bold; }
         .mt-3 { margin-top: 1rem; }
@@ -17,6 +20,17 @@
         .indent { text-indent: 2em; }
         table { width: 100%; page-break-inside: avoid; }
         td { vertical-align: top; }
+
+        .qr-bottom-left {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+        }
+
+        .signature-block {
+            text-align: center;
+            width: 45%;
+        }
     </style>
 </head>
 <body>
@@ -56,7 +70,7 @@
         <tr>
             <td>Tempat/Tanggal Lahir</td>
             <td>: {{ optional($profile)->tempat_lahir ?? $data['tempat_lahir'] ?? '-' }},
-                 {{ \Carbon\Carbon::parse(optional($profile)->tanggal_lahir ?? $data['tanggal_lahir'] ?? now())->format('d-m-Y') }}
+                {{ \Carbon\Carbon::parse(optional($profile)->tanggal_lahir ?? $data['tanggal_lahir'] ?? now())->format('d-m-Y') }}
             </td>
         </tr>
         <tr><td>Jenis Kelamin</td><td>: {{ optional($profile)->jenis_kelamin ?? $data['jenis_kelamin'] ?? '-' }}</td></tr>
@@ -82,16 +96,8 @@
     </p>
 
     <div class="mt-4" style="display: flex; justify-content: space-between;">
-        @if(isPreview)
-            <div>
-            </div>
-        @elseif(isset($qrCodePath) && file_exists($qrCodePath))
-            <div>
-                <img src="file://{{ $qrCodePath }}" style="width: 50px;" alt="QR Code">
-            </div>
-        @endif
-
-        <div style="text-align: center; width: 45%;">
+        <div style="flex: 1;"></div>
+        <div class="signature-block">
             <div>Limapoccoe, {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d F Y') }}</div>
             <div class="bold mt-1">KEPALA DESA LIMAPOCCOE</div>
 
@@ -115,6 +121,12 @@
     <div class="text-right mt-3">
         <p><em>Catatan:</em> Surat ini berlaku selama 1 bulan sejak tanggal terbit.</p>
     </div>
+
+    @if($ajuan->status === 'approved' && !$isPreview && isset($qrCodePath) && file_exists($qrCodePath))
+        <div class="qr-bottom-left">
+            <img src="file://{{ $qrCodePath }}" style="width: 50px;" alt="QR Code">
+        </div>
+    @endif
 
     @if($ajuan->status === 'approved')
         <hr>
