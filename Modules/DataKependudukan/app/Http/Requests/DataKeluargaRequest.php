@@ -12,37 +12,30 @@ class DataKeluargaRequest extends FormRequest
         return true;
     }
 
-  public function rules(): array
+    public function rules(): array
     {
-        $keluarga = $this->route('keluarga'); // atau 'id' tergantung route
-        $keluargaId = $keluarga?->id ?? $this->route('id') ?? null;
         $isUpdate = in_array($this->method(), ['PUT', 'PATCH']);
+        $keluargaId = $this->route('id');
 
         return [
-            'nomor_kk' => array_filter([
-                $isUpdate ? 'sometimes' : 'required',
-                'string',
-                'max:20',
-                Rule::unique('keluargas', 'nomor_kk')->ignore($keluargaId),
-            ]),
+            // Keluarga
+            'nomor_kk' => $isUpdate
+                ? ['sometimes', 'string', 'max:20', Rule::unique('keluargas', 'nomor_kk')->ignore($keluargaId)]
+                : ['required', 'string', 'max:20', Rule::unique('keluargas', 'nomor_kk')],
 
-            'no_rumah' => ['nullable', 'string', 'max:10'],
-            'rt_rw' => ['nullable', 'string', 'max:7'],
+            // Rumah
+            'no_rumah' => $isUpdate ? ['sometimes', 'string', 'max:10'] : ['required', 'string', 'max:10'],
+            'rt_rw' => $isUpdate ? ['sometimes', 'string', 'max:7'] : ['required', 'string', 'max:7'],
             'dusun' => [$isUpdate ? 'sometimes' : 'required', Rule::in([
-                'WT.Bengo',
-                'Barua',
-                'Mappasaile',
-                'Kampala',
-                'Kaluku',
-                'Jambua',
-                'Bontopanno',
-                'Samata'
+                'WT.Bengo', 'Barua', 'Mappasaile', 'Kampala', 'Kaluku', 'Jambua', 'Bontopanno', 'Samata'
             ])],
 
+            // Anggota
             'anggota' => ['nullable', 'array'],
-
-            // Anggota only validated if present
-            'anggota.*.nik' => ['required_with:anggota', 'string', 'max:20'],
+            'anggota.*.id' => ['sometimes', 'uuid'], // saat update
+            'anggota.*.nik' => $isUpdate
+                ? ['sometimes', 'string', 'max:20']
+                : ['required_with:anggota', 'string', 'max:20'],
             'anggota.*.no_urut' => ['nullable', 'string', 'max:10'],
             'anggota.*.nama_lengkap' => ['required_with:anggota', 'string', 'max:100'],
             'anggota.*.hubungan' => ['nullable', Rule::in([

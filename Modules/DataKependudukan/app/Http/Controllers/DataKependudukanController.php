@@ -183,37 +183,34 @@ class DataKependudukanController extends Controller
         DB::beginTransaction();
 
         try {
-            // Ambil data keluarga
+            // Ambil data keluarga & rumah
             $keluarga = Keluarga::findOrFail($id);
+            $rumah = Rumah::findOrFail($keluarga->rumah_id);
 
-            // Siapkan data yang mau diupdate
-            $dataUpdate = [];
-            if ($request->filled('nomor_kk')) {
-                $dataUpdate['nomor_kk'] = $request->nomor_kk;
-            }
-            // Tetap gunakan rumah_id yang lama
-            $dataUpdate['rumah_id'] = $keluarga->rumah_id;
+            // Update keluarga (hanya field yang dikirim)
+            $keluarga->update(array_filter([
+                'nomor_kk' => $request->input('nomor_kk'),
+            ]));
 
-            $keluarga->update($dataUpdate);
+            // Update rumah
+            $rumah->update(array_filter([
+                'no_rumah' => $request->input('no_rumah'),
+                'rt_rw' => $request->input('rt_rw'),
+                'dusun' => $request->input('dusun'),
+            ]));
 
-            // Update / Tambah anggota keluarga
-            foreach ($request->input('anggota', []) as $anggota) {
-                // Skip jika data inti kosong
-                if (empty($anggota['nik']) || empty($anggota['nama_lengkap'])) {
-                    continue;
-                }
+            // Update anggota keluarga (bulk add/update)
+            $anggotaInput = collect($request->input('anggota', []));
+            $updatedIds = [];
 
+            foreach ($anggotaInput as $anggota) {
                 if (!empty($anggota['id'])) {
-                    // Cari penduduk berdasarkan ID dan keluarga_id
-                    $penduduk = Penduduk::where('id', $anggota['id'])
-                        ->where('keluarga_id', $keluarga->id)
-                        ->first();
-
+                    $penduduk = Penduduk::where('id', $anggota['id'])->where('keluarga_id', $keluarga->id)->first();
                     if ($penduduk) {
-                        $penduduk->update([
-                            'nik' => $anggota['nik'],
+                        $penduduk->update(array_filter([
+                            'nik' => $anggota['nik'] ?? null,
                             'no_urut' => $anggota['no_urut'] ?? null,
-                            'nama_lengkap' => $anggota['nama_lengkap'],
+                            'nama_lengkap' => $anggota['nama_lengkap'] ?? null,
                             'hubungan' => $anggota['hubungan'] ?? null,
                             'tempat_lahir' => $anggota['tempat_lahir'] ?? null,
                             'tgl_lahir' => $anggota['tgl_lahir'] ?? null,
@@ -225,30 +222,35 @@ class DataKependudukanController extends Controller
                             'no_bpjs' => $anggota['no_bpjs'] ?? null,
                             'nama_ayah' => $anggota['nama_ayah'] ?? null,
                             'nama_ibu' => $anggota['nama_ibu'] ?? null,
-                        ]);
-                        continue;
+                        ]));
+                        $updatedIds[] = $penduduk->id;
                     }
+                } else {
+                    $new = Penduduk::create([
+                        'keluarga_id' => $keluarga->id,
+                        'nik' => $anggota['nik'],
+                        'no_urut' => $anggota['no_urut'] ?? null,
+                        'nama_lengkap' => $anggota['nama_lengkap'],
+                        'hubungan' => $anggota['hubungan'] ?? null,
+                        'tempat_lahir' => $anggota['tempat_lahir'] ?? null,
+                        'tgl_lahir' => $anggota['tgl_lahir'] ?? null,
+                        'jenis_kelamin' => $anggota['jenis_kelamin'] ?? null,
+                        'status_perkawinan' => $anggota['status_perkawinan'] ?? null,
+                        'agama' => $anggota['agama'] ?? null,
+                        'pendidikan' => $anggota['pendidikan'] ?? null,
+                        'pekerjaan' => $anggota['pekerjaan'] ?? null,
+                        'no_bpjs' => $anggota['no_bpjs'] ?? null,
+                        'nama_ayah' => $anggota['nama_ayah'] ?? null,
+                        'nama_ibu' => $anggota['nama_ibu'] ?? null,
+                    ]);
+                    $updatedIds[] = $new->id;
                 }
-
-                // Tambah baru jika tidak ada ID valid
-                Penduduk::create([
-                    'keluarga_id' => $keluarga->id,
-                    'nik' => $anggota['nik'],
-                    'no_urut' => $anggota['no_urut'] ?? null,
-                    'nama_lengkap' => $anggota['nama_lengkap'],
-                    'hubungan' => $anggota['hubungan'] ?? null,
-                    'tempat_lahir' => $anggota['tempat_lahir'] ?? null,
-                    'tgl_lahir' => $anggota['tgl_lahir'] ?? null,
-                    'jenis_kelamin' => $anggota['jenis_kelamin'] ?? null,
-                    'status_perkawinan' => $anggota['status_perkawinan'] ?? null,
-                    'agama' => $anggota['agama'] ?? null,
-                    'pendidikan' => $anggota['pendidikan'] ?? null,
-                    'pekerjaan' => $anggota['pekerjaan'] ?? null,
-                    'no_bpjs' => $anggota['no_bpjs'] ?? null,
-                    'nama_ayah' => $anggota['nama_ayah'] ?? null,
-                    'nama_ibu' => $anggota['nama_ibu'] ?? null,
-                ]);
             }
+
+            // [Opsional] Sinkronisasi: Hapus anggota yang tidak dikirim
+            // Penduduk::where('keluarga_id', $keluarga->id)
+            //     ->whereNotIn('id', $updatedIds)
+            //     ->delete();
 
             DB::commit();
 
@@ -256,25 +258,24 @@ class DataKependudukanController extends Controller
                 'id' => Str::uuid(),
                 'user_id' => $admin->id,
                 'activity_type' => 'update',
-                'description' => 'Memperbarui data keluarga dan rumah.',
+                'description' => 'Memperbarui data keluarga, rumah, dan anggota.',
                 'ip_address' => $request->ip(),
             ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Data keluarga berhasil diperbarui.',
+                'message' => 'Data berhasil diperbarui.',
                 'data' => new DataKependudukanResource($keluarga->load(['rumah', 'penduduks'])),
-            ], 200);
+            ]);
         } catch (\Throwable $e) {
             DB::rollBack();
-
-            Log::error('Gagal memperbarui data: ' . $e->getMessage());
+            Log::error('Gagal update: ' . $e->getMessage());
 
             LogActivity::create([
                 'id' => Str::uuid(),
                 'user_id' => $admin->id,
                 'activity_type' => 'update',
-                'description' => 'Gagal memperbarui data keluarga dan rumah.',
+                'description' => 'Gagal update data keluarga.',
                 'ip_address' => $request->ip(),
             ]);
 
@@ -285,6 +286,7 @@ class DataKependudukanController extends Controller
             ], 500);
         }
     }
+
 
     public function deleteAnggotaKeluarga($id)
     {
