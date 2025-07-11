@@ -24,9 +24,9 @@ class DataKependudukanImport implements ToCollection, WithHeadingRow
                 $firstRow = $dataKeluarga->first();
 
                 // Validasi & normalisasi dusun
-                $validatedDusun = $this->formatDusun($firstRow['dusun']);
+                $validatedDusun = $this->formatDusun($firstRow['dusun'] ?? '');
                 if (!$validatedDusun) {
-                    throw new \Exception("Dusun tidak valid: " . $firstRow['dusun']);
+                    throw new \Exception("Dusun tidak valid: " . ($firstRow['dusun'] ?? '[KOSONG]'));
                 }
 
                 $rumah = Rumah::firstOrCreate([
@@ -76,8 +76,9 @@ class DataKependudukanImport implements ToCollection, WithHeadingRow
 
     private function formatDusun($val): ?string
     {
-        return match(str_replace([' ', '.', ','], '', strtolower($val))) {
-            'wtbengo', 'wt.bengo' => 'WT.Bengo',
+        $key = strtolower(trim(str_replace([' ', '.', ','], '', $val ?? '')));
+        return match($key) {
+            'wtbengo' => 'WT.Bengo',
             'barua' => 'Barua',
             'mappasaile' => 'Mappasaile',
             'samata' => 'Samata',
