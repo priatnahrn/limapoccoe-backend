@@ -5,12 +5,14 @@
     <title>Surat Keterangan Tidak Mampu</title>
     <style>
         body {
-            font-family: 'Times New Roman', Times, serif;
-            line-height: 1.15;
-            margin: 30px;
-            max-width: 210mm; /* A4-safe for F4 */
-        }
-
+    font-family: 'Times New Roman', Times, serif;
+    width: 2480px;
+    height: 3508px;
+    margin: 100px; /* jangan terlalu sempit biar elegan */
+    box-sizing: border-box;
+    line-height: 1.15;
+    font-size: 14px; /* besar agar terlihat jelas di A4 print */
+}
         .center { text-align: center; }
         .bold { font-weight: bold; }
         .mt-3 { margin-top: 1rem; }
@@ -127,7 +129,7 @@
         {{-- QR Code --}}
         <td style="width: 50%; vertical-align: top;">
             @if($isPreview && isset($qrCodeSvg))
-                <div style="width: 30px; height: 30px;">
+                <div style="width: 30px; height: 30px; ">
                     {!! $qrCodeSvg !!}
                 </div>
             @elseif($showQrFromFile)
