@@ -25,6 +25,13 @@
             position: absolute;
             bottom: 30px;
             left: 30px;
+            width: 60px; 
+            height: 60px;
+        }
+
+        .qr-bottom-left svg {
+            width: 100% !important;
+            height: 100% !important;
         }
 
         .signature-block {
@@ -135,12 +142,12 @@
         </div>
     @endif
 
-    @if($ajuan->status === 'approved')
+    {{-- @if($ajuan->status === 'approved')
         <hr>
         <div class="text-right">
-            <small>Dicetak pada: {{ now()->translatedFormat('d F Y H:i') }}</small>
+            <small>Ditandatangani pada: {{ now()->translatedFormat('d F Y H:i') }}</small>
         </div>
-    @endif
+    @endif --}}
 
 </body>
 </html>
