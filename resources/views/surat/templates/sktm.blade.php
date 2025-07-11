@@ -8,7 +8,7 @@
             font-family: 'Times New Roman', Times, serif;
             line-height: 1.15;
             margin: 30px;
-            max-width: 210mm;
+            max-width: 210mm; /* A4-safe for F4 */
         }
 
         .center { text-align: center; }
@@ -18,31 +18,23 @@
         .text-right { text-align: right; }
         .indent { text-indent: 2em; }
 
-        .indent-table {
-            margin-left: 2em; /* ✅ indent kiri tabel */
-        }
-
         table {
             width: 100%;
-            border-collapse: collapse;
             page-break-inside: avoid;
+            border-collapse: collapse;
         }
 
         td {
             vertical-align: top;
-            padding: 3px 0;
+            padding: 0;
         }
 
-        table tr td:nth-child(1) {
-            width: 35%;
+        table tr td:first-child {
+            width: 150px;
         }
 
         table tr td:nth-child(2) {
-            width: 1%;
-        }
-
-        table tr td:nth-child(3) {
-            padding-left: 10px; /* ✅ indent kanan nilai */
+            padding-left: 25px; /* ✅ Indentasi diperjelas */
         }
 
         .footer-note {
@@ -80,41 +72,40 @@
         <div>Nomor: {{ $ajuan->nomor_surat_tersimpan ?? '___/SKTM/___/__/____' }}</div>
     </div>
 
-    <p class="mt-3 indent">Yang bertanda tangan di bawah ini:</p>
-    <div class="indent-table">
+    <p class="mt-3">Yang bertanda tangan di bawah ini:</p>
+    <div class="indent">
         <table>
-            <tr><td>Nama</td><td>:</td><td>{{ $ajuan->tandaTangan->user->name ?? 'H ANDI ABU BAKRI' }}</td></tr>
-            <tr><td>Jabatan</td><td>:</td><td>Kepala Desa Limapoccoe</td></tr>
+            <tr><td>Nama</td><td>: {{ $ajuan->tandaTangan->user->name ?? 'H ANDI ABU BAKRI' }}</td></tr>
+            <tr><td>Jabatan</td><td>: Kepala Desa Limapoccoe</td></tr>
         </table>
     </div>
 
-    <p class="mt-3 indent">Menerangkan bahwa:</p>
-    <div class="indent-table">
+    <p class="mt-3">Menerangkan bahwa:</p>
+    <div class="indent">
         <table>
-            <tr><td>Nama</td><td>:</td><td>{{ $user->name ?? $data['nama'] ?? '-' }}</td></tr>
-            <tr><td>NIK</td><td>:</td><td>{{ $user->nik ?? $data['nik'] ?? '-' }}</td></tr>
-            <tr>
+            <tr  style="padding-left: 25px"><td>Nama</td><td>: {{ $user->name ?? $data['nama'] ?? '-' }}</td></tr>
+            <tr  style="padding-left: 25px"><td>NIK</td><td>: {{ $user->nik ?? $data['nik'] ?? '-' }}</td></tr>
+            <tr  style="padding-left: 25px">
                 <td>Tempat/Tanggal Lahir</td>
-                <td>:</td>
-                <td>
-                    {{ optional($profile)->tempat_lahir ?? $data['tempat_lahir'] ?? '-' }},
+                <td>: {{ optional($profile)->tempat_lahir ?? $data['tempat_lahir'] ?? '-' }},
                     {{ \Carbon\Carbon::parse(optional($profile)->tanggal_lahir ?? $data['tanggal_lahir'] ?? now())->format('d-m-Y') }}
                 </td>
             </tr>
-            <tr><td>Jenis Kelamin</td><td>:</td><td>{{ optional($profile)->jenis_kelamin ?? $data['jenis_kelamin'] ?? '-' }}</td></tr>
-            <tr><td>Pekerjaan</td><td>:</td><td>{{ optional($profile)->pekerjaan ?? $data['pekerjaan'] ?? '-' }}</td></tr>
-            <tr><td>Alamat</td><td>:</td><td>{{ optional($profile)->alamat ?? $data['alamat'] ?? '-' }}</td></tr>
+            <tr  style="padding-left: 25px"><td>Jenis Kelamin</td><td>: {{ optional($profile)->jenis_kelamin ?? $data['jenis_kelamin'] ?? '-' }}</td></tr>
+            <tr  style="padding-left: 25px"><td>Pekerjaan</td><td>: {{ optional($profile)->pekerjaan ?? $data['pekerjaan'] ?? '-' }}</td></tr>
+            <tr  style="padding-left: 25px"><td>Alamat</td><td>: {{ optional($profile)->alamat ?? $data['alamat'] ?? '-' }}</td></tr>
         </table>
     </div>
 
-    <p class="mt-3 indent">Anak dari Pasangan:</p>
-    <div class="indent-table">
+    <p class="mt-3">Anak dari Pasangan:</p>
+    <div class="indent">
         <table>
-            <tr><td>Nama Ayah</td><td>:</td><td>{{ $data['nama_ayah'] ?? '-' }}</td></tr>
-            <tr><td>Pekerjaan Ayah</td><td>:</td><td>{{ $data['pekerjaan_ayah'] ?? '-' }}</td></tr>
-            <tr><td>Nama Ibu</td><td>:</td><td>{{ $data['nama_ibu'] ?? '-' }}</td></tr>
-            <tr><td>Pekerjaan Ibu</td><td>:</td><td>{{ $data['pekerjaan_ibu'] ?? '-' }}</td></tr>
-            <tr><td>Jumlah Tanggungan</td><td>:</td><td>{{ $data['jumlah_tanggungan'] ?? '-' }}</td></tr>
+           
+            <tr style="padding-left: 25px"><td>Nama Ayah</td><td>: {{ $data['nama_ayah'] ?? '-' }}</td></tr>
+            <tr  style="padding-left: 25px"><td>Pekerjaan Ayah</td><td>: {{ $data['pekerjaan_ayah'] ?? '-' }}</td></tr>
+            <tr  style="padding-left: 25px"><td>Nama Ibu</td><td>: {{ $data['nama_ibu'] ?? '-' }}</td></tr>
+            <tr  style="padding-left: 25px"><td>Pekerjaan Ibu</td><td>: {{ $data['pekerjaan_ibu'] ?? '-' }}</td></tr>
+            <tr  style="padding-left: 25px"><td>Jumlah Tanggungan</td><td>: {{ $data['jumlah_tanggungan'] ?? '-' }}</td></tr>
         </table>
     </div>
 
@@ -133,6 +124,7 @@
 
     <table style="width: 100%; margin-top: 2rem;">
         <tr>
+            {{-- Kolom Kiri: QR --}}
             <td style="width: 60mm; vertical-align: bottom;">
                 @if($isPreview && isset($qrCodeSvg))
                     <div style="width: 50px; height: 50px;">
@@ -143,6 +135,7 @@
                 @endif
             </td>
 
+            {{-- Kolom Kanan: Tanda Tangan --}}
             <td style="text-align: center; padding-left: 50px;">
                 <div>Limapoccoe, {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d F Y') }}</div>
                 <div class="bold">KEPALA DESA LIMAPOCCOE</div>
@@ -164,6 +157,7 @@
         </tr>
     </table>
 
+    {{-- Catatan --}}
     @if(!$isPreview || $ajuan->status === 'approved')
         <div class="footer-note">
             <hr>
