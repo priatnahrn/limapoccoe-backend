@@ -102,9 +102,23 @@
         Demikian surat keterangan ini kami buat dengan sebenarnya untuk digunakan seperlunya.
     </p>
 
-    <div class="mt-4" style="display: flex; justify-content: space-between;">
-        <div style="flex: 1;"></div>
-        <div class="signature-block">
+    <div style="margin-top: 3rem; display: flex; justify-content: space-between; align-items: flex-end;">
+    
+        {{-- Kiri: QR Code --}}
+        <div style="width: 60px; height: 60px;">
+            @if($isPreview && isset($qrCodeSvg))
+                {{-- Mode Preview (HTML) --}}
+                <div style="width: 100%; height: 100%;">
+                    {!! $qrCodeSvg !!}
+                </div>
+            @elseif(!$isPreview && $ajuan->status === 'approved' && isset($qrCodePath) && file_exists($qrCodePath))
+                {{-- Mode PDF (Download) --}}
+                <img src="file://{{ $qrCodePath }}" style="width: 100%; height: auto;" alt="QR Code">
+            @endif
+        </div>
+
+        {{-- Kanan: Tanda Tangan --}}
+        <div style="text-align: center;">
             <div>Limapoccoe, {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d F Y') }}</div>
             <div class="bold mt-1">KEPALA DESA LIMAPOCCOE</div>
 
@@ -115,8 +129,8 @@
                 @endphp
 
                 @if ($ajuan->status === 'approved' && $ttdBase64)
-                    <img src="data:image/png;base64,{{ $ttdBase64 }}" style="height: 120px;" alt="Tanda Tangan"><br>
-                    <strong style="display: inline-block; margin-top: -10px;">{{ $ajuan->tandaTangan->user->name ?? 'H ANDI ABU BAKRI' }}</strong>
+                    <img src="data:image/png;base64,{{ $ttdBase64 }}" style="height: 100px;" alt="Tanda Tangan"><br>
+                    <strong>{{ $ajuan->tandaTangan->user->name ?? 'H ANDI ABU BAKRI' }}</strong>
                 @else
                     <div style="height: 100px;"></div>
                     <strong style="color: grey;">Belum ditandatangani</strong>
@@ -126,28 +140,9 @@
     </div>
 
     <div class="text-right mt-3">
+        <hr>
         <p><em>Catatan:</em> Surat ini berlaku selama 1 bulan sejak tanggal terbit.</p>
     </div>
-
-    @if(!$isPreview && $ajuan->status === 'approved' && isset($qrCodePath) && file_exists($qrCodePath))
-        <div class="qr-bottom-left">
-            <img src="file://{{ $qrCodePath }}" style="width: 50px;" alt="QR Code">
-        </div>
-    @endif
-
-    {{-- Untuk preview browser (opsional) --}}
-    @if($isPreview && isset($qrCodeSvg))
-        <div class="qr-bottom-left">
-            {!! $qrCodeSvg !!}
-        </div>
-    @endif
-
-    {{-- @if($ajuan->status === 'approved')
-        <hr>
-        <div class="text-right">
-            <small>Ditandatangani pada: {{ now()->translatedFormat('d F Y H:i') }}</small>
-        </div>
-    @endif --}}
 
 </body>
 </html>
