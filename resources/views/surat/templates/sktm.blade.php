@@ -84,41 +84,40 @@
         Demikian surat keterangan ini kami buat dengan sebenarnya untuk digunakan seperlunya.
     </p>
 
-   <div style="margin-top: 3rem; display: flex; justify-content: space-between; align-items: flex-end; min-height: 160px;">
-    
-    {{-- Kiri: QR Code --}}
-    <div style="width: 80px; height: 160px; display: flex; align-items: flex-end;">
-        @if($isPreview && isset($qrCodeSvg))
-            <div style="width: 100%; height: 80px;">
-                {!! $qrCodeSvg !!}
-            </div>
-        @elseif(!$isPreview && $ajuan->status === 'approved' && isset($qrCodePath) && file_exists($qrCodePath))
-            <img src="file://{{ $qrCodePath }}" style="width: 100%; height: auto;" alt="QR Code">
-        @endif
-    </div>
-
-    {{-- Kanan: Tanda Tangan --}}
-    <div style="text-align: center;">
-        <div>Limapoccoe, {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d F Y') }}</div>
-        <div class="bold mt-1">KEPALA DESA LIMAPOCCOE</div>
-
-        <div style="margin-top: 10px;">
-            @php
-                $ttdPath = storage_path('app/private/tanda-tangan-digital.png');
-                $ttdBase64 = file_exists($ttdPath) ? base64_encode(file_get_contents($ttdPath)) : null;
-            @endphp
-
-            @if ($ajuan->status === 'approved' && $ttdBase64)
-                <img src="data:image/png;base64,{{ $ttdBase64 }}" style="height: 100px;" alt="Tanda Tangan"><br>
-                <strong>{{ $ajuan->tandaTangan->user->name ?? 'H ANDI ABU BAKRI' }}</strong>
-            @else
-                <div style="height: 100px;"></div>
-                <strong style="color: grey;">Belum ditandatangani</strong>
+    <div style="margin-top: 3rem; display: flex; justify-content: space-between; align-items: flex-end; min-height: 160px;">
+        
+        {{-- Kiri: QR Code --}}
+        <div style="width: 80px; height: 160px; display: flex; align-items: flex-end;">
+            @if($isPreview && isset($qrCodeSvg))
+                <div style="width: 100%; height: 80px;">
+                    {!! $qrCodeSvg !!}
+                </div>
+            @elseif(!$isPreview && $ajuan->status === 'approved' && $qrAvailable)
+                <img src="file://{{ $qrCodePath }}" style="width: 100%; height: auto;" alt="QR Code">
             @endif
         </div>
-    </div>
-</div>
 
+        {{-- Kanan: Tanda Tangan --}}
+        <div style="text-align: center;">
+            <div>Limapoccoe, {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d F Y') }}</div>
+            <div class="bold mt-1">KEPALA DESA LIMAPOCCOE</div>
+
+            <div style="margin-top: 10px;">
+                @php
+                    $ttdPath = storage_path('app/private/tanda-tangan-digital.png');
+                    $ttdBase64 = file_exists($ttdPath) ? base64_encode(file_get_contents($ttdPath)) : null;
+                @endphp
+
+                @if ($ajuan->status === 'approved' && $ttdBase64)
+                    <img src="data:image/png;base64,{{ $ttdBase64 }}" style="height: 100px;" alt="Tanda Tangan"><br>
+                    <strong>{{ $ajuan->tandaTangan->user->name ?? 'H ANDI ABU BAKRI' }}</strong>
+                @else
+                    <div style="height: 100px;"></div>
+                    <strong style="color: grey;">Belum ditandatangani</strong>
+                @endif
+            </div>
+        </div>
+    </div>
 
     <div class="text-right mt-3">
         <hr>
