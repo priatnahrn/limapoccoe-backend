@@ -12,6 +12,5 @@ Route::middleware(['auth:api'])->group(function () {
         Route::delete('/anggota-keluarga/{id}', [DataKependudukanController::class, 'deleteAnggotaKeluarga']);
         Route::delete('/{id}', [DataKependudukanController::class, 'deleteDataKeluarga']);
         Route::post('/import', [DataKependudukanController::class, 'importExcel']);
-
     });
 });
