@@ -23,10 +23,16 @@ class DataKependudukanImport implements ToCollection, WithHeadingRow
             foreach ($grouped as $kk => $dataKeluarga) {
                 $firstRow = $dataKeluarga->first();
 
+                // Validasi & normalisasi dusun
+                $validatedDusun = $this->formatDusun($firstRow['dusun']);
+                if (!$validatedDusun) {
+                    throw new \Exception("Dusun tidak valid: " . $firstRow['dusun']);
+                }
+
                 $rumah = Rumah::firstOrCreate([
                     'no_rumah' => $firstRow['no_rumah'],
                     'rt_rw' => $firstRow['rt_rw'],
-                    'dusun' => $firstRow['dusun'],
+                    'dusun' => $validatedDusun,
                 ], [
                     'id' => Str::uuid(),
                 ]);
@@ -68,6 +74,21 @@ class DataKependudukanImport implements ToCollection, WithHeadingRow
         }
     }
 
+    private function formatDusun($val): ?string
+    {
+        return match(str_replace([' ', '.', ','], '', strtolower($val))) {
+            'wtbengo', 'wt.bengo' => 'WT.Bengo',
+            'barua' => 'Barua',
+            'mappasaile' => 'Mappasaile',
+            'samata' => 'Samata',
+            'kampala' => 'Kampala',
+            'kaluku' => 'Kaluku',
+            'jambua' => 'Jambua',
+            'bontopanno' => 'Bontopanno',
+            default => null,
+        };
+    }
+
     private function formatTanggal($thn, $bln, $tgl): ?string
     {
         if (!$thn || !$bln || !$tgl) return null;
@@ -81,7 +102,7 @@ class DataKependudukanImport implements ToCollection, WithHeadingRow
             'istri' => 'Istri',
             'anak' => 'Anak',
             'cucu' => 'Cucu',
-            'famili lain', 'famili' => 'Famili Lain',
+            'famili', 'famili lain' => 'Famili Lain',
             'saudara' => 'Saudara',
             'orang tua' => 'Orang Tua',
             default => null,
