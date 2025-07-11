@@ -38,13 +38,13 @@
         }
 
         .footer-note {
-            position: absolute;
-            bottom: 30px;
-            right: 30px;
+            margin-top: 2rem;
             font-size: 12px;
             text-align: right;
-            width: calc(100% - 60px);
+            border-top: 1px solid #000;
+            padding-top: 5px;
         }
+
     </style>
 </head>
 <body>
@@ -101,11 +101,11 @@
     <div class="indent">
         <table style="margin-left: 25px;">
            
-            <tr style="padding-left: 25px"><td>Nama Ayah</td><td>: {{ $data['nama_ayah'] ?? '-' }}</td></tr>
-            <tr  style="padding-left: 25px"><td>Pekerjaan Ayah</td><td>: {{ $data['pekerjaan_ayah'] ?? '-' }}</td></tr>
-            <tr  style="padding-left: 25px"><td>Nama Ibu</td><td>: {{ $data['nama_ibu'] ?? '-' }}</td></tr>
-            <tr  style="padding-left: 25px"><td>Pekerjaan Ibu</td><td>: {{ $data['pekerjaan_ibu'] ?? '-' }}</td></tr>
-            <tr  style="padding-left: 25px"><td>Jumlah Tanggungan</td><td>: {{ $data['jumlah_tanggungan'] ?? '-' }}</td></tr>
+            <tr><td>Nama Ayah</td><td>: {{ $data['nama_ayah'] ?? '-' }}</td></tr>
+            <tr ><td>Pekerjaan Ayah</td><td>: {{ $data['pekerjaan_ayah'] ?? '-' }}</td></tr>
+            <tr ><td>Nama Ibu</td><td>: {{ $data['nama_ibu'] ?? '-' }}</td></tr>
+            <tr ><td>Pekerjaan Ibu</td><td>: {{ $data['pekerjaan_ibu'] ?? '-' }}</td></tr>
+            <tr ><td>Jumlah Tanggungan</td><td>: {{ $data['jumlah_tanggungan'] ?? '-' }}</td></tr>
         </table>
     </div>
 
@@ -123,47 +123,47 @@
     @endphp
 
     <table style="width: 100%; margin-top: 2rem;">
-        <tr>
-            {{-- Kolom Kiri: QR --}}
-            <td style="width: 60mm; vertical-align: bottom;">
-                @if($isPreview && isset($qrCodeSvg))
-                    <div style="width: 50px; height: 50px;">
-                        {!! $qrCodeSvg !!}
-                    </div>
-                @elseif($showQrFromFile)
-                    <img src="file://{{ $qrCodePath }}" style="width: 50px; height: auto;" alt="QR Code">
-                @endif
-            </td>
-
-            {{-- Kolom Kanan: Tanda Tangan --}}
-            <td style="text-align: center; padding-left: 50px;">
-                <div>Limapoccoe, {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d F Y') }}</div>
-                <div class="bold">KEPALA DESA LIMAPOCCOE</div>
-                <div style="margin-top: 10px;">
-                    @php
-                        $ttdPath = storage_path('app/private/tanda-tangan-digital.png');
-                        $ttdBase64 = file_exists($ttdPath) ? base64_encode(file_get_contents($ttdPath)) : null;
-                    @endphp
-
-                    @if ($ajuan->status === 'approved' && $ttdBase64)
-                        <img src="data:image/png;base64,{{ $ttdBase64 }}" style="height: 150px;" alt="Tanda Tangan"><br>
-                        <strong>{{ $ajuan->tandaTangan->user->name ?? 'H ANDI ABU BAKRI' }}</strong>
-                    @else
-                        <div style="height: 100px;"></div>
-                        <strong style="color: grey;">Belum ditandatangani</strong>
-                    @endif
+    <tr>
+        {{-- QR Code --}}
+        <td style="width: 50%; vertical-align: top;">
+            @if($isPreview && isset($qrCodeSvg))
+                <div style="width: 50px; height: 50px;">
+                    {!! $qrCodeSvg !!}
                 </div>
-            </td>
-        </tr>
-    </table>
+            @elseif($showQrFromFile)
+                <img src="file://{{ $qrCodePath }}" style="width: 50px; height: auto;" alt="QR Code">
+            @endif
+        </td>
+
+        {{-- Tanda Tangan --}}
+        <td style="width: 50%; text-align: center;">
+            <div>Limapoccoe, {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d F Y') }}</div>
+            <div class="bold">KEPALA DESA LIMAPOCCOE</div>
+            <div style="margin-top: 10px;">
+                @php
+                    $ttdPath = storage_path('app/private/tanda-tangan-digital.png');
+                    $ttdBase64 = file_exists($ttdPath) ? base64_encode(file_get_contents($ttdPath)) : null;
+                @endphp
+
+                @if ($ajuan->status === 'approved' && $ttdBase64)
+                    <img src="data:image/png;base64,{{ $ttdBase64 }}" style="height: 100px;" alt="Tanda Tangan"><br>
+                    <strong>{{ $ajuan->tandaTangan->user->name ?? 'H ANDI ABU BAKRI' }}</strong>
+                @else
+                    <div style="height: 100px;"></div>
+                    <strong style="color: grey;">Belum ditandatangani</strong>
+                @endif
+            </div>
+        </td>
+    </tr>
+</table>
 
     {{-- Catatan --}}
-    @if(!$isPreview || $ajuan->status === 'approved')
+   @if(!$isPreview || $ajuan->status === 'approved')
         <div class="footer-note">
-            <hr>
             <p><em>Catatan:</em> Surat ini berlaku selama 1 bulan sejak tanggal terbit.</p>
         </div>
     @endif
+
 
 </body>
 </html>
