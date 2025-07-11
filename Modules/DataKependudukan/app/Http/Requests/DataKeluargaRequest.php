@@ -12,23 +12,22 @@ class DataKeluargaRequest extends FormRequest
         return true;
     }
 
-    public function rules(): array
+  public function rules(): array
     {
         $keluargaId = $this->route('id') ?? $this->route('keluarga');
-
+        $isUpdate = in_array($this->method(), ['PUT', 'PATCH']);
 
         return [
-            'nomor_kk' => [
-                'required',
+            'nomor_kk' => array_filter([
+                $isUpdate ? 'sometimes' : 'required',
                 'string',
                 'max:20',
                 Rule::unique('keluargas', 'nomor_kk')->ignore($keluargaId),
-            ],
+            ]),
 
-            // ✅ GANTI rumah_id → manual input rumah
             'no_rumah' => ['nullable', 'string', 'max:10'],
             'rt_rw' => ['nullable', 'string', 'max:7'],
-            'dusun' => ['required', Rule::in([
+            'dusun' => [$isUpdate ? 'sometimes' : 'required', Rule::in([
                 'WT.Bengo',
                 'Barua',
                 'Mappasaile',
@@ -39,19 +38,14 @@ class DataKeluargaRequest extends FormRequest
                 'Samata'
             ])],
 
-            // ✅ Validasi anggota seperti sebelumnya
             'anggota' => ['nullable', 'array'],
+
+            // Anggota only validated if present
             'anggota.*.nik' => ['required_with:anggota', 'string', 'max:20'],
             'anggota.*.no_urut' => ['nullable', 'string', 'max:10'],
             'anggota.*.nama_lengkap' => ['required_with:anggota', 'string', 'max:100'],
             'anggota.*.hubungan' => ['nullable', Rule::in([
-                'Kepala Keluarga',
-                'Istri',
-                'Anak',
-                'Cucu',
-                'Famili Lain',
-                'Saudara',
-                'Orang Tua'
+                'Kepala Keluarga', 'Istri', 'Anak', 'Cucu', 'Famili Lain', 'Saudara', 'Orang Tua'
             ])],
             'anggota.*.tempat_lahir' => ['nullable', 'string', 'max:50'],
             'anggota.*.tgl_lahir' => ['nullable', 'date'],
@@ -59,16 +53,8 @@ class DataKeluargaRequest extends FormRequest
             'anggota.*.status_perkawinan' => ['nullable', Rule::in(['Belum Kawin', 'Kawin', 'Cerai Hidup', 'Cerai Mati'])],
             'anggota.*.agama' => ['nullable', Rule::in(['Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Konghucu', 'Lainnya'])],
             'anggota.*.pendidikan' => ['nullable', Rule::in([
-                'Tidak/Belum Sekolah',
-                'Belum Tamat SD/Sederajat',
-                'Tamat SD/Sederajat',
-                'SLTP/Sederajat',
-                'SLTA/Sederajat',
-                'D-1/D-2',
-                'D-3',
-                'S-1',
-                'S-2',
-                'S-3'
+                'Tidak/Belum Sekolah', 'Belum Tamat SD/Sederajat', 'Tamat SD/Sederajat',
+                'SLTP/Sederajat', 'SLTA/Sederajat', 'D-1/D-2', 'D-3', 'S-1', 'S-2', 'S-3'
             ])],
             'anggota.*.pekerjaan' => ['nullable', 'string', 'max:50'],
             'anggota.*.no_bpjs' => ['nullable', 'string', 'max:20'],
@@ -76,6 +62,7 @@ class DataKeluargaRequest extends FormRequest
             'anggota.*.nama_ibu' => ['nullable', 'string', 'max:100'],
         ];
     }
+
 
 
     public function messages(): array
