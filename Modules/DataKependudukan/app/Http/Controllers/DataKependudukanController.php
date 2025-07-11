@@ -3,6 +3,7 @@
 namespace Modules\DataKependudukan\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Imports\DataKependudukanImport;
 use App\Models\LogActivity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -13,6 +14,7 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 use Modules\DataKependudukan\Models\Keluarga;
 use Modules\DataKependudukan\Models\Penduduk;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Facades\Excel;
 use Modules\DataKependudukan\Transformers\DataKependudukanResource;
 
 class DataKependudukanController extends Controller
@@ -69,7 +71,7 @@ class DataKependudukanController extends Controller
                 ]);
             }
 
-            
+
             DB::commit();
 
             LogActivity::create([
@@ -103,7 +105,7 @@ class DataKependudukanController extends Controller
         }
     }
 
-    public function getAllDataKependudukan(Request $request)
+    public function getAllDataKependudukan()
     {
         $admin = JWTAuth::parseToken()->authenticate();
 
@@ -127,8 +129,7 @@ class DataKependudukanController extends Controller
             'id' => Str::uuid(),
             'user_id' => $admin->id,
             'activity_type' => 'read',
-            'description' => 'Mengambil semua data kependudukan.',
-            'ip_address' => $request->ip(),
+            'description' => 'Mengambil semua data kependudukan.'
         ]);
 
         return response()->json([
@@ -381,6 +382,25 @@ class DataKependudukanController extends Controller
             return response()->json([
                 'error' => 'Terjadi kesalahan saat menghapus data.',
                 'detail' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
+
+    public function importExcel(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls',
+        ]);
+
+        try {
+            Excel::import(new DataKependudukanImport, $request->file('file'));
+            return response()->json(['message' => 'Import berhasil']);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'error' => 'Gagal import',
+                'detail' => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }
     }
