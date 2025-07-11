@@ -69,7 +69,7 @@ class DataKependudukanController extends Controller
                 ]);
             }
 
-
+            
             DB::commit();
 
             LogActivity::create([

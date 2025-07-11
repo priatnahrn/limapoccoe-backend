@@ -4,6 +4,7 @@ namespace Modules\DataKependudukan\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 
 class DataKeluargaRequest extends FormRequest
 {
@@ -25,7 +26,7 @@ class DataKeluargaRequest extends FormRequest
 
             // Rumah
             'no_rumah' => $isUpdate ? ['sometimes', 'string', 'max:10'] : ['required', 'string', 'max:10'],
-            'rt_rw' => $isUpdate ? ['sometimes', 'string', 'max:7'] : ['required', 'string', 'max:7'],
+            'rt_rw' => ['nullable', 'string', 'max:7'],
             'dusun' => [$isUpdate ? 'sometimes' : 'required', Rule::in([
                 'WT.Bengo', 'Barua', 'Mappasaile', 'Kampala', 'Kaluku', 'Jambua', 'Bontopanno', 'Samata'
             ])],
@@ -35,7 +36,7 @@ class DataKeluargaRequest extends FormRequest
             'anggota.*.id' => ['sometimes', 'uuid'], // saat update
             'anggota.*.nik' => $isUpdate
                 ? ['sometimes', 'string', 'max:20']
-                : ['required_with:anggota', 'string', 'max:20'],
+                : ['required_with:anggota', 'string', 'max:20', Rule::unique('penduduks', 'nik')],
             'anggota.*.no_urut' => ['nullable', 'string', 'max:10'],
             'anggota.*.nama_lengkap' => ['required_with:anggota', 'string', 'max:100'],
             'anggota.*.hubungan' => ['nullable', Rule::in([
@@ -57,8 +58,6 @@ class DataKeluargaRequest extends FormRequest
         ];
     }
 
-
-
     public function messages(): array
     {
         return [
@@ -70,16 +69,16 @@ class DataKeluargaRequest extends FormRequest
             'no_rumah.string' => 'Nomor rumah harus berupa teks.',
             'no_rumah.max' => 'Nomor rumah maksimal 10 karakter.',
             'rt_rw.string' => 'RT/RW harus berupa teks.',
-            'rt_rw.max' => 'RT/RW maksimal 7 karakter.',            
+            'rt_rw.max' => 'RT/RW maksimal 7 karakter.',
             'dusun.required' => 'Dusun wajib diisi.',
             'dusun.in' => 'Dusun tidak valid.',
 
             'anggota.required' => 'Data anggota wajib diisi.',
-
             'anggota.array' => 'Data anggota harus berupa array.',
 
             'anggota.*.nik.required_with' => 'NIK wajib diisi.',
             'anggota.*.nik.max' => 'NIK maksimal 20 karakter.',
+            'anggota.*.nik.unique' => 'NIK sudah digunakan.',
             'anggota.*.no_urut.max' => 'Nomor urut maksimal 10 karakter.',
             'anggota.*.nama_lengkap.required_with' => 'Nama lengkap wajib diisi.',
             'anggota.*.nama_lengkap.max' => 'Nama maksimal 100 karakter.',
@@ -95,5 +94,27 @@ class DataKeluargaRequest extends FormRequest
             'anggota.*.nama_ayah.max' => 'Nama ayah maksimal 100 karakter.',
             'anggota.*.nama_ibu.max' => 'Nama ibu maksimal 100 karakter.',
         ];
+    }
+
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            if ($this->isMethod('put') || $this->isMethod('patch')) {
+                $anggotaList = $this->input('anggota', []);
+
+                foreach ($anggotaList as $index => $anggota) {
+                    if (!empty($anggota['nik'])) {
+                        $exists = DB::table('penduduks')
+                            ->where('nik', $anggota['nik'])
+                            ->where('id', '!=', $anggota['id'] ?? '')
+                            ->exists();
+
+                        if ($exists) {
+                            $validator->errors()->add("anggota.$index.nik", 'NIK sudah digunakan.');
+                        }
+                    }
+                }
+            }
+        });
     }
 }
