@@ -24,9 +24,17 @@
             border-collapse: collapse;
         }
 
-        td {
-            vertical-align: top;
-            padding: 0;
+         td {
+        vertical-align: top;
+        padding: 0;
+    }
+
+        table tr td:first-child {
+            width: 150px;
+        }
+
+        table tr td:nth-child(2) {
+            padding-left: 10px; /* 👉 indentasi nilai */
         }
 
         .footer-note {
@@ -107,7 +115,7 @@
         $showQrFromFile = !$isPreview && $ajuan->status === 'approved' && isset($qrCodePath) && file_exists($qrCodePath);
     @endphp
 
-    <table style="margin-top: 2rem;">
+    <table style="width: 100%; margin-top: 2rem;">
         <tr>
             {{-- Kolom Kiri: QR --}}
             <td style="width: 60mm; vertical-align: bottom;">
@@ -121,7 +129,7 @@
             </td>
 
             {{-- Kolom Kanan: Tanda Tangan --}}
-            <td style="text-align: center;">
+            <td style="text-align: center; padding-left: 50px;">
                 <div>Limapoccoe, {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d F Y') }}</div>
                 <div class="bold">KEPALA DESA LIMAPOCCOE</div>
                 <div style="margin-top: 10px;">
@@ -141,6 +149,7 @@
             </td>
         </tr>
     </table>
+
 
     {{-- Catatan --}}
     @if(!$isPreview || $ajuan->status === 'approved')
