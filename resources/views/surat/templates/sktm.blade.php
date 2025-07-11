@@ -82,12 +82,13 @@
     </p>
 
     <div class="mt-4" style="display: flex; justify-content: space-between;">
-        @if(isset($qrCodePath) && file_exists($qrCodePath))
+        @if(isPreview)
             <div>
-                <img src="file://{{ $qrCodePath }}" style="width: 60px;" alt="QR Code">
             </div>
-        @else
-            <div></div>
+        @elseif(isset($qrCodePath) && file_exists($qrCodePath))
+            <div>
+                <img src="file://{{ $qrCodePath }}" style="width: 50px;" alt="QR Code">
+            </div>
         @endif
 
         <div style="text-align: center; width: 45%;">
