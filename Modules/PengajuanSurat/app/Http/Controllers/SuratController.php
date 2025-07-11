@@ -6,9 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\LogActivity;
 use Illuminate\Http\Request;
 use Modules\PengajuanSurat\Models\Surat;
-use Modules\PengajuanSurat\Models\ActivityLog;
 use Modules\PengajuanSurat\Transformers\SuratResource;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use Illuminate\Support\Str;
 
 
 class SuratController extends Controller
@@ -49,6 +49,7 @@ class SuratController extends Controller
 
     public function create(Request $request)
     {
+        
         $validated = $request->validate([
             'kode_surat' => 'required|max:6|min:2',
             'nama_surat' => 'required|max:255|min:12',
@@ -74,12 +75,14 @@ class SuratController extends Controller
 
         $surat->save();
 
-        $log = LogActivity::create([
+        LogActivity::create([
+            'id' => Str::uuid(),
             'user_id' => $user->id,
-            'message' => 'User membuat jenis surat baru: ' . $surat->nama_surat
+            'activity_type' => 'create',
+            'description' => 'User membuat jenis surat baru: ' . $surat->nama_surat,
+            'ip_address' => request()->ip(),
         ]);
-
-        $log->save();
+        
 
         return response()->json([
             'message' => "Berhasil membuat jenis surat baru.",
@@ -108,12 +111,13 @@ class SuratController extends Controller
         $surat = Surat::findOrFail($surat_id);
         $surat->update($validated);
 
-        $log = LogActivity::create([
+        LogActivity::create([
+            'id' => Str::uuid(),
             'user_id' => $user->id,
-            'message' => 'User mengupdate jenis surat: ' . $surat->nama_surat
+            'activity_type' => 'update',
+            'description' => 'User mengupdate jenis surat: ' . $surat->nama_surat,
+            'ip_address' => request()->ip(),
         ]);
-
-        $log->save();
 
         return response()->json([
             'message' => "Berhasil mengupdate jenis surat.",
@@ -135,12 +139,14 @@ class SuratController extends Controller
         $surat = Surat::findOrFail($surat_id);
         $surat->delete();
 
-        $log = LogActivity::create([
+        LogActivity::create([
+            'id' => Str::uuid(),
             'user_id' => $user->id,
-            'message' => 'User menghapus jenis surat: ' . $surat->nama_surat
+            'activity_type' => 'delete',
+            'description' => 'User menghapus jenis surat: ' . $surat->nama_surat,
+            'ip_address' => request()->ip(),
         ]);
-
-        $log->save();
+      
 
         return response()->json([
             'message' => "Berhasil menghapus jenis surat.",
