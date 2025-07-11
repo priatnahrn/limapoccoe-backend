@@ -124,7 +124,7 @@
 
     @if($ajuan->status === 'approved' && isset($qrCodePath) && file_exists($qrCodePath))
         <div class="qr-bottom-left">
-            <img src="file://{{ $qrCodePath }}" style="width: 50px;" alt="QR Code">
+            {!! $qrCodeSvg !!}
         </div>
     @endif
 
