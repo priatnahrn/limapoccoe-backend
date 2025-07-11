@@ -74,7 +74,7 @@
 
     <p class="mt-3">Yang bertanda tangan di bawah ini:</p>
     <div class="indent">
-        <table>
+        <table style="margin-left: 25px;">
             <tr><td>Nama</td><td>: {{ $ajuan->tandaTangan->user->name ?? 'H ANDI ABU BAKRI' }}</td></tr>
             <tr><td>Jabatan</td><td>: Kepala Desa Limapoccoe</td></tr>
         </table>
@@ -82,24 +82,24 @@
 
     <p class="mt-3">Menerangkan bahwa:</p>
     <div class="indent">
-        <table>
-            <tr  style="padding-left: 25px"><td>Nama</td><td>: {{ $user->name ?? $data['nama'] ?? '-' }}</td></tr>
-            <tr  style="padding-left: 25px"><td>NIK</td><td>: {{ $user->nik ?? $data['nik'] ?? '-' }}</td></tr>
-            <tr  style="padding-left: 25px">
+        <table style="margin-left: 25px;">
+            <tr><td>Nama</td><td>: {{ $user->name ?? $data['nama'] ?? '-' }}</td></tr>
+            <tr><td>NIK</td><td>: {{ $user->nik ?? $data['nik'] ?? '-' }}</td></tr>
+            <tr>
                 <td>Tempat/Tanggal Lahir</td>
                 <td>: {{ optional($profile)->tempat_lahir ?? $data['tempat_lahir'] ?? '-' }},
                     {{ \Carbon\Carbon::parse(optional($profile)->tanggal_lahir ?? $data['tanggal_lahir'] ?? now())->format('d-m-Y') }}
                 </td>
             </tr>
-            <tr  style="padding-left: 25px"><td>Jenis Kelamin</td><td>: {{ optional($profile)->jenis_kelamin ?? $data['jenis_kelamin'] ?? '-' }}</td></tr>
-            <tr  style="padding-left: 25px"><td>Pekerjaan</td><td>: {{ optional($profile)->pekerjaan ?? $data['pekerjaan'] ?? '-' }}</td></tr>
-            <tr  style="padding-left: 25px"><td>Alamat</td><td>: {{ optional($profile)->alamat ?? $data['alamat'] ?? '-' }}</td></tr>
+            <tr><td>Jenis Kelamin</td><td>: {{ optional($profile)->jenis_kelamin ?? $data['jenis_kelamin'] ?? '-' }}</td></tr>
+            <tr><td>Pekerjaan</td><td>: {{ optional($profile)->pekerjaan ?? $data['pekerjaan'] ?? '-' }}</td></tr>
+            <tr><td>Alamat</td><td>: {{ optional($profile)->alamat ?? $data['alamat'] ?? '-' }}</td></tr>
         </table>
     </div>
 
     <p class="mt-3">Anak dari Pasangan:</p>
     <div class="indent">
-        <table>
+        <table style="margin-left: 25px;">
            
             <tr style="padding-left: 25px"><td>Nama Ayah</td><td>: {{ $data['nama_ayah'] ?? '-' }}</td></tr>
             <tr  style="padding-left: 25px"><td>Pekerjaan Ayah</td><td>: {{ $data['pekerjaan_ayah'] ?? '-' }}</td></tr>
