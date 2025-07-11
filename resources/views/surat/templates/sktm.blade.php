@@ -6,10 +6,9 @@
     <style>
         body {
             font-family: 'Times New Roman', Times, serif;
-            line-height: 1.5;
+            line-height: 1.15;
             margin: 30px;
-            position: relative;
-            max-width: 210mm; /* aman untuk A4–F4 */
+            max-width: 210mm; /* A4-safe for F4 */
         }
 
         .center { text-align: center; }
@@ -18,12 +17,22 @@
         .mt-4 { margin-top: 2rem; }
         .text-right { text-align: right; }
         .indent { text-indent: 2em; }
-        table { width: 100%; page-break-inside: avoid; }
-        td { vertical-align: top; }
+
+        table {
+            width: 100%;
+            page-break-inside: avoid;
+            border-collapse: collapse;
+        }
+
+        td {
+            vertical-align: top;
+            padding: 0;
+        }
     </style>
 </head>
 <body>
 
+    {{-- Kop Surat --}}
     <table>
         <tr>
             <td style="width: 90px;">
@@ -84,29 +93,28 @@
         Demikian surat keterangan ini kami buat dengan sebenarnya untuk digunakan seperlunya.
     </p>
 
-   <div style="margin-top: 3rem; display: flex; justify-content: space-between; align-items: flex-start; height: 160px;">
-        
-        {{-- Kiri: QR Code --}}
-        @php
-            $showQrFromFile = !$isPreview && $ajuan->status === 'approved' && isset($qrCodePath) && file_exists($qrCodePath);
-        @endphp
+    {{-- QR Code & Tanda Tangan --}}
+    @php
+        $showQrFromFile = !$isPreview && $ajuan->status === 'approved' && isset($qrCodePath) && file_exists($qrCodePath);
+    @endphp
 
-        <div style="width: 80px; display: flex; flex-direction: column; justify-content: flex-end;">
-            @if($isPreview && isset($qrCodeSvg))
-                <div style="width: 100%; height: 80px; margin-top: auto;">
-                    {!! $qrCodeSvg !!}
-                </div>
-            @elseif($showQrFromFile)
-                <img src="file://{{ $qrCodePath }}" style="width: 100%; height: 80px; margin-top: auto;" alt="QR Code">
-            @endif
-        </div>
+    <table style="margin-top: 2rem;">
+        <tr>
+            {{-- Kolom Kiri: QR --}}
+            <td style="width: 60mm; vertical-align: bottom;">
+                @if($isPreview && isset($qrCodeSvg))
+                    <div style="width: 80px; height: 80px;">
+                        {!! $qrCodeSvg !!}
+                    </div>
+                @elseif($showQrFromFile)
+                    <img src="file://{{ $qrCodePath }}" style="width: 80px; height: auto;" alt="QR Code">
+                @endif
+            </td>
 
-        {{-- Kanan: Tanda Tangan --}}
-        <div style="text-align: center; display: flex; flex-direction: column; justify-content: flex-end; height: 160px;">
-            <div>
+            {{-- Kolom Kanan: Tanda Tangan --}}
+            <td style="text-align: center;">
                 <div>Limapoccoe, {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d F Y') }}</div>
-                <div class="bold mt-1">KEPALA DESA LIMAPOCCOE</div>
-
+                <div class="bold">KEPALA DESA LIMAPOCCOE</div>
                 <div style="margin-top: 10px;">
                     @php
                         $ttdPath = storage_path('app/private/tanda-tangan-digital.png');
@@ -121,10 +129,11 @@
                         <strong style="color: grey;">Belum ditandatangani</strong>
                     @endif
                 </div>
-            </div>
-        </div>
-    </div>
+            </td>
+        </tr>
+    </table>
 
+    {{-- Catatan --}}
     <div class="text-right mt-3">
         <hr>
         <p><em>Catatan:</em> Surat ini berlaku selama 1 bulan sejak tanggal terbit.</p>
