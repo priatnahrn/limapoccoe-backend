@@ -20,17 +20,17 @@ class DataKependudukanImport implements ToCollection, WithHeadingRow
         try {
             $grouped = $rows->groupBy('nomor_kk');
 
-            foreach ($grouped as $kk => $keluargaRows) {
-                $first = $keluargaRows->first();
+            foreach ($grouped as $kk => $dataKeluarga) {
+                $firstRow = $dataKeluarga->first();
 
-                // Simpan Rumah
                 $rumah = Rumah::firstOrCreate([
-                    'no_rumah' => $first['no_rumah'],
-                    'rt_rw' => $first['rt_rw'],
-                    'dusun' => $this->formatDusun($first['dusun']),
-                ], ['id' => Str::uuid()]);
+                    'no_rumah' => $firstRow['no_rumah'],
+                    'rt_rw' => $firstRow['rt_rw'],
+                    'dusun' => $firstRow['dusun'],
+                ], [
+                    'id' => Str::uuid(),
+                ]);
 
-                // Simpan Keluarga
                 $keluarga = Keluarga::firstOrCreate([
                     'nomor_kk' => $kk,
                 ], [
@@ -38,20 +38,19 @@ class DataKependudukanImport implements ToCollection, WithHeadingRow
                     'rumah_id' => $rumah->id,
                 ]);
 
-                foreach ($keluargaRows as $row) {
-                    $tglLahir = $this->formatTanggal($row['thn'], $row['bln'], $row['tgl']);
-
+                foreach ($dataKeluarga as $row) {
                     Penduduk::updateOrCreate([
                         'nik' => $row['nik'],
                     ], [
+                        'id' => Str::uuid(),
                         'keluarga_id' => $keluarga->id,
-                        'nama_lengkap' => $row['nama_lengkap'],
                         'no_urut' => $row['no_urut'],
-                        'hubungan' => $row['hubungan'],
+                        'nama_lengkap' => $row['nama_lengkap'],
+                        'hubungan' => $this->formatHubungan($row['hubungan']),
                         'tempat_lahir' => $row['tempat_lahir'],
-                        'tgl_lahir' => $tglLahir,
-                        'jenis_kelamin' => $this->formatJK($row['jenis_kelamin']),
-                        'status_perkawinan' => $this->formatStatus($row['status_perkawinan']),
+                        'tgl_lahir' => $this->formatTanggal($row['thn'], $row['bln'], $row['tgl']),
+                        'jenis_kelamin' => $this->formatJenisKelamin($row['jenis_kelamin']),
+                        'status_perkawinan' => $this->formatStatusPerkawinan($row['status_perkawinan']),
                         'agama' => $this->formatAgama($row['agama']),
                         'pendidikan' => $this->formatPendidikan($row['pendidikan']),
                         'pekerjaan' => $row['pekerjaan'],
@@ -69,63 +68,74 @@ class DataKependudukanImport implements ToCollection, WithHeadingRow
         }
     }
 
-    private function formatTanggal($thn, $bln, $tgl)
+    private function formatTanggal($thn, $bln, $tgl): ?string
     {
         if (!$thn || !$bln || !$tgl) return null;
         return sprintf('%04d-%02d-%02d', $thn, $bln, $tgl);
     }
 
-    private function formatJK($val)
+    private function formatHubungan($val): ?string
     {
         return match(strtolower(trim($val))) {
-            'laki-laki', 'l' => 'Laki-laki',
-            'perempuan', 'p' => 'Perempuan',
+            'kk', 'kepala keluarga' => 'Kepala Keluarga',
+            'istri' => 'Istri',
+            'anak' => 'Anak',
+            'cucu' => 'Cucu',
+            'famili lain', 'famili' => 'Famili Lain',
+            'saudara' => 'Saudara',
+            'orang tua' => 'Orang Tua',
             default => null,
         };
     }
 
-    private function formatStatus($val)
+    private function formatJenisKelamin($val): ?string
     {
-        return match(strtoupper(trim($val))) {
-            'K', 'KAWIN' => 'Kawin',
-            'BK', 'B.K', 'BELUM KAWIN' => 'Belum Kawin',
-            'CM', 'CERAI MATI' => 'Cerai Mati',
-            'CH', 'CERAI HIDUP' => 'Cerai Hidup',
+        return match(strtolower(trim($val))) {
+            'l', 'lk', 'laki', 'laki-laki' => 'Laki-laki',
+            'p', 'pr', 'perempuan' => 'Perempuan',
             default => null,
         };
     }
 
-    private function formatAgama($val)
+    private function formatStatusPerkawinan($val): ?string
     {
-        return match(strtoupper(trim($val))) {
-            'ISLAM', 'MUSLIM' => 'Islam',
-            'KRISTEN' => 'Kristen',
-            'KATOLIK' => 'Katolik',
-            'HINDU' => 'Hindu',
-            'BUDDHA' => 'Buddha',
-            'KONGHUCU' => 'Konghucu',
+        return match(strtolower(trim($val))) {
+            'bk', 'belum kawin', 'b.k' => 'Belum Kawin',
+            'k', 'kawin' => 'Kawin',
+            'cerai hidup' => 'Cerai Hidup',
+            'cerai mati' => 'Cerai Mati',
             default => null,
         };
     }
 
-    private function formatPendidikan($val)
+    private function formatAgama($val): ?string
+    {
+        return match(strtolower(trim($val))) {
+            'islam' => 'Islam',
+            'kristen' => 'Kristen',
+            'katolik' => 'Katolik',
+            'hindu' => 'Hindu',
+            'buddha' => 'Buddha',
+            'konghucu' => 'Konghucu',
+            default => 'Lainnya',
+        };
+    }
+
+    private function formatPendidikan($val): ?string
     {
         return match(strtoupper(trim($val))) {
+            '', '-' => null,
+            'TK' => 'Tidak/Belum Sekolah',
+            'BTSD', 'BELUM TAMAT SD' => 'Belum Tamat SD/Sederajat',
             'SD' => 'Tamat SD/Sederajat',
             'SMP', 'SLTP' => 'SLTP/Sederajat',
-            'SMA', 'SLTA' => 'SLTA/Sederajat',
-            'TK', 'TAMAN KANAK-KANAK', '-' => 'Tidak/Belum Sekolah',
-            'S1' => 'S-1',
-            'S2' => 'S-2',
-            'S3' => 'S-3',
+            'SMA', 'SMK', 'SLTA' => 'SLTA/Sederajat',
             'D1', 'D-1', 'D2', 'D-2' => 'D-1/D-2',
             'D3', 'D-3' => 'D-3',
+            'S1', 'S-1' => 'S-1',
+            'S2', 'S-2' => 'S-2',
+            'S3', 'S-3' => 'S-3',
             default => null,
         };
-    }
-
-    private function formatDusun($val)
-    {
-        return str_replace(['Wt. Bengo', 'WT. Bengo'], 'WT.Bengo', trim($val));
     }
 }
