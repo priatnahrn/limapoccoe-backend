@@ -28,6 +28,15 @@
             vertical-align: top;
             padding: 0;
         }
+
+        .footer-note {
+        position: absolute;
+        bottom: 30px;
+        right: 30px;
+        font-size: 12px;
+        text-align: right;
+        width: calc(100% - 60px);
+    }
     </style>
 </head>
 <body>
@@ -134,10 +143,13 @@
     </table>
 
     {{-- Catatan --}}
-    <div class="text-right mt-3">
-        <hr>
-        <p><em>Catatan:</em> Surat ini berlaku selama 1 bulan sejak tanggal terbit.</p>
-    </div>
+    @if(!$isPreview || $ajuan->status === 'approved')
+        <div class="footer-note">
+            <hr>
+            <p><em>Catatan:</em> Surat ini berlaku selama 1 bulan sejak tanggal terbit.</p>
+        </div>
+    @endif
+
 
 </body>
 </html>
