@@ -9,7 +9,7 @@
             line-height: 1.5;
             margin: 30px;
             position: relative;
-            max-width: 210mm; /* agar tidak melebihi F4 (215mm x 330mm) */
+            max-width: 210mm; /* aman untuk A4–F4 */
         }
 
         .center { text-align: center; }
@@ -20,24 +20,6 @@
         .indent { text-indent: 2em; }
         table { width: 100%; page-break-inside: avoid; }
         td { vertical-align: top; }
-
-        .qr-bottom-left {
-            position: absolute;
-            bottom: 30px;
-            left: 30px;
-            width: 60px; 
-            height: 60px;
-        }
-
-        .qr-bottom-left svg {
-            width: 100% !important;
-            height: 100% !important;
-        }
-
-        .signature-block {
-            text-align: center;
-            width: 45%;
-        }
     </style>
 </head>
 <body>
@@ -102,22 +84,19 @@
         Demikian surat keterangan ini kami buat dengan sebenarnya untuk digunakan seperlunya.
     </p>
 
-    <div style="margin-top: 3rem; display: flex; justify-content: space-between; align-items: flex-end;">
-    
-        {{-- Kiri: QR Code --}}
-        <div style="width: 60px; height: 60px;">
+    <div style="margin-top: 3rem; display: flex; justify-content: space-between; align-items: flex-end; min-height: 140px;">
+        {{-- QR Code --}}
+        <div style="width: 60px; height: 100px; display: flex; align-items: flex-end;">
             @if($isPreview && isset($qrCodeSvg))
-                {{-- Mode Preview (HTML) --}}
-                <div style="width: 100%; height: 100%;">
+                <div style="width: 100%; height: auto;">
                     {!! $qrCodeSvg !!}
                 </div>
             @elseif(!$isPreview && $ajuan->status === 'approved' && isset($qrCodePath) && file_exists($qrCodePath))
-                {{-- Mode PDF (Download) --}}
                 <img src="file://{{ $qrCodePath }}" style="width: 100%; height: auto;" alt="QR Code">
             @endif
         </div>
 
-        {{-- Kanan: Tanda Tangan --}}
+        {{-- Tanda Tangan --}}
         <div style="text-align: center;">
             <div>Limapoccoe, {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d F Y') }}</div>
             <div class="bold mt-1">KEPALA DESA LIMAPOCCOE</div>
