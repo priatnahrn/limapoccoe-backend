@@ -12,7 +12,7 @@ class AjuanRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'data_surat' => 'required|array',
+            'data_surat' => 'nullable|array',
             'lampiran' => 'nullable|array',
             "lampiran.*" => 'nullable|file|mimes:jpg,jpeg,png|max:5120',
         ];

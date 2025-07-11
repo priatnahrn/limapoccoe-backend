@@ -4,42 +4,33 @@ namespace App\Imports;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Maatwebsite\Excel\Concerns\ToCollection;
 use Illuminate\Support\Str;
+use Maatwebsite\Excel\Concerns\ToCollection;
+use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Modules\DataKependudukan\Models\Keluarga;
 use Modules\DataKependudukan\Models\Penduduk;
 use Modules\DataKependudukan\Models\Rumah;
-/**
- * Class DataKependudukanImport
- * Import data kependudukan dari file Excel.
- *
- * @package App\Imports
- */
 
-
-class DataKependudukanImport implements ToCollection
+class DataKependudukanImport implements ToCollection, WithHeadingRow
 {
-    /**
-    * @param Collection $collection
-    */
     public function collection(Collection $rows): void
     {
         DB::beginTransaction();
 
         try {
-            $grouped = $rows->skip(1)->groupBy(6); // grup berdasarkan kolom 'NOMOR KK'
+            $grouped = $rows->groupBy('nomor_kk');
 
-            foreach ($grouped as $kk => $dataKeluarga) {
-                $firstRow = $dataKeluarga->first();
+            foreach ($grouped as $kk => $keluargaRows) {
+                $first = $keluargaRows->first();
 
-                // Simpan rumah
+                // Simpan Rumah
                 $rumah = Rumah::firstOrCreate([
-                    'no_rumah' => $firstRow[2],    // NO RMH
-                    'rt_rw' => $firstRow[1],       // RT/RW
-                    'dusun' => $firstRow[0],       // Dusun
+                    'no_rumah' => $first['no_rumah'],
+                    'rt_rw' => $first['rt_rw'],
+                    'dusun' => $this->formatDusun($first['dusun']),
                 ], ['id' => Str::uuid()]);
 
-                // Simpan keluarga
+                // Simpan Keluarga
                 $keluarga = Keluarga::firstOrCreate([
                     'nomor_kk' => $kk,
                 ], [
@@ -47,24 +38,26 @@ class DataKependudukanImport implements ToCollection
                     'rumah_id' => $rumah->id,
                 ]);
 
-                foreach ($dataKeluarga as $row) {
+                foreach ($keluargaRows as $row) {
+                    $tglLahir = $this->formatTanggal($row['thn'], $row['bln'], $row['tgl']);
+
                     Penduduk::updateOrCreate([
-                        'nik' => $row[7]
+                        'nik' => $row['nik'],
                     ], [
                         'keluarga_id' => $keluarga->id,
-                        'no_urut' => $row[4] ?? null,
-                        'nama_lengkap' => $row[5],
-                        'hubungan' => $row[9],
-                        'tempat_lahir' => $row[10],
-                        'tgl_lahir' => sprintf('%04d-%02d-%02d', $row[13], $row[12], $row[11]),
-                        'jenis_kelamin' => $row[14],
-                        'status_perkawinan' => $row[15],
-                        'agama' => $row[16],
-                        'pendidikan' => $row[17],
-                        'pekerjaan' => $row[18],
-                        'no_bpjs' => $row[8],
-                        'nama_ayah' => $row[19],
-                        'nama_ibu' => $row[20],
+                        'nama_lengkap' => $row['nama_lengkap'],
+                        'no_urut' => $row['no_urut'],
+                        'hubungan' => $row['hubungan'],
+                        'tempat_lahir' => $row['tempat_lahir'],
+                        'tgl_lahir' => $tglLahir,
+                        'jenis_kelamin' => $this->formatJK($row['jenis_kelamin']),
+                        'status_perkawinan' => $this->formatStatus($row['status_perkawinan']),
+                        'agama' => $this->formatAgama($row['agama']),
+                        'pendidikan' => $this->formatPendidikan($row['pendidikan']),
+                        'pekerjaan' => $row['pekerjaan'],
+                        'no_bpjs' => $row['no_bpjs'],
+                        'nama_ayah' => $row['ayah'],
+                        'nama_ibu' => $row['ibu'],
                     ]);
                 }
             }
@@ -74,5 +67,65 @@ class DataKependudukanImport implements ToCollection
             DB::rollBack();
             throw $e;
         }
+    }
+
+    private function formatTanggal($thn, $bln, $tgl)
+    {
+        if (!$thn || !$bln || !$tgl) return null;
+        return sprintf('%04d-%02d-%02d', $thn, $bln, $tgl);
+    }
+
+    private function formatJK($val)
+    {
+        return match(strtolower(trim($val))) {
+            'laki-laki', 'l' => 'Laki-laki',
+            'perempuan', 'p' => 'Perempuan',
+            default => null,
+        };
+    }
+
+    private function formatStatus($val)
+    {
+        return match(strtoupper(trim($val))) {
+            'K', 'KAWIN' => 'Kawin',
+            'BK', 'B.K', 'BELUM KAWIN' => 'Belum Kawin',
+            'CM', 'CERAI MATI' => 'Cerai Mati',
+            'CH', 'CERAI HIDUP' => 'Cerai Hidup',
+            default => null,
+        };
+    }
+
+    private function formatAgama($val)
+    {
+        return match(strtoupper(trim($val))) {
+            'ISLAM', 'MUSLIM' => 'Islam',
+            'KRISTEN' => 'Kristen',
+            'KATOLIK' => 'Katolik',
+            'HINDU' => 'Hindu',
+            'BUDDHA' => 'Buddha',
+            'KONGHUCU' => 'Konghucu',
+            default => null,
+        };
+    }
+
+    private function formatPendidikan($val)
+    {
+        return match(strtoupper(trim($val))) {
+            'SD' => 'Tamat SD/Sederajat',
+            'SMP', 'SLTP' => 'SLTP/Sederajat',
+            'SMA', 'SLTA' => 'SLTA/Sederajat',
+            'TK', 'TAMAN KANAK-KANAK', '-' => 'Tidak/Belum Sekolah',
+            'S1' => 'S-1',
+            'S2' => 'S-2',
+            'S3' => 'S-3',
+            'D1', 'D-1', 'D2', 'D-2' => 'D-1/D-2',
+            'D3', 'D-3' => 'D-3',
+            default => null,
+        };
+    }
+
+    private function formatDusun($val)
+    {
+        return str_replace(['Wt. Bengo', 'WT. Bengo'], 'WT.Bengo', trim($val));
     }
 }
