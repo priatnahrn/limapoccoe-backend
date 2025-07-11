@@ -122,7 +122,14 @@
         <p><em>Catatan:</em> Surat ini berlaku selama 1 bulan sejak tanggal terbit.</p>
     </div>
 
-    @if($ajuan->status === 'approved' && isset($qrCodePath) && file_exists($qrCodePath))
+    @if(!$isPreview && $ajuan->status === 'approved' && isset($qrCodePath) && file_exists($qrCodePath))
+        <div class="qr-bottom-left">
+            <img src="file://{{ $qrCodePath }}" style="width: 50px;" alt="QR Code">
+        </div>
+    @endif
+
+    {{-- Untuk preview browser (opsional) --}}
+    @if($isPreview && isset($qrCodeSvg))
         <div class="qr-bottom-left">
             {!! $qrCodeSvg !!}
         </div>
