@@ -14,7 +14,8 @@ class DataKeluargaRequest extends FormRequest
 
   public function rules(): array
     {
-        $keluargaId = $this->route('id') ?? $this->route('keluarga');
+        $keluarga = $this->route('keluarga'); // atau 'id' tergantung route
+        $keluargaId = $keluarga?->id ?? $this->route('id') ?? null;
         $isUpdate = in_array($this->method(), ['PUT', 'PATCH']);
 
         return [

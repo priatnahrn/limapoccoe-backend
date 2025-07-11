@@ -183,36 +183,71 @@ class DataKependudukanController extends Controller
         DB::beginTransaction();
 
         try {
-
-            
-            // Update data keluarga
+            // Ambil data keluarga
             $keluarga = Keluarga::findOrFail($id);
-            $keluarga->update([
-                'nomor_kk' => $request->nomor_kk,
-                'rumah_id' => $keluarga->rumah_id, // Tetap menggunakan rumah yang sudah ada
-            ]);
 
-            // Update anggota keluarga
+            // Siapkan data yang mau diupdate
+            $dataUpdate = [];
+            if ($request->filled('nomor_kk')) {
+                $dataUpdate['nomor_kk'] = $request->nomor_kk;
+            }
+            // Tetap gunakan rumah_id yang lama
+            $dataUpdate['rumah_id'] = $keluarga->rumah_id;
+
+            $keluarga->update($dataUpdate);
+
+            // Update / Tambah anggota keluarga
             foreach ($request->input('anggota', []) as $anggota) {
-                Penduduk::updateOrCreate(
-                    ['id' => $anggota['id'] ?? null, 'keluarga_id' => $keluarga->id],
-                    [
-                        'nik' => $anggota['nik'],
-                        'no_urut' => $anggota['no_urut'] ?? null,
-                        'nama_lengkap' => $anggota['nama_lengkap'],
-                        'hubungan' => $anggota['hubungan'] ?? null,
-                        'tempat_lahir' => $anggota['tempat_lahir'] ?? null,
-                        'tgl_lahir' => $anggota['tgl_lahir'] ?? null,
-                        'jenis_kelamin' => $anggota['jenis_kelamin'] ?? null,
-                        'status_perkawinan' => $anggota['status_perkawinan'] ?? null,
-                        'agama' => $anggota['agama'] ?? null,
-                        'pendidikan' => $anggota['pendidikan'] ?? null,
-                        'pekerjaan' => $anggota['pekerjaan'] ?? null,
-                        'no_bpjs' => $anggota['no_bpjs'] ?? null,
-                        'nama_ayah' => $anggota['nama_ayah'] ?? null,
-                        'nama_ibu' => $anggota['nama_ibu'] ?? null,
-                    ]
-                );
+                // Skip jika data inti kosong
+                if (empty($anggota['nik']) || empty($anggota['nama_lengkap'])) {
+                    continue;
+                }
+
+                if (!empty($anggota['id'])) {
+                    // Cari penduduk berdasarkan ID dan keluarga_id
+                    $penduduk = Penduduk::where('id', $anggota['id'])
+                        ->where('keluarga_id', $keluarga->id)
+                        ->first();
+
+                    if ($penduduk) {
+                        $penduduk->update([
+                            'nik' => $anggota['nik'],
+                            'no_urut' => $anggota['no_urut'] ?? null,
+                            'nama_lengkap' => $anggota['nama_lengkap'],
+                            'hubungan' => $anggota['hubungan'] ?? null,
+                            'tempat_lahir' => $anggota['tempat_lahir'] ?? null,
+                            'tgl_lahir' => $anggota['tgl_lahir'] ?? null,
+                            'jenis_kelamin' => $anggota['jenis_kelamin'] ?? null,
+                            'status_perkawinan' => $anggota['status_perkawinan'] ?? null,
+                            'agama' => $anggota['agama'] ?? null,
+                            'pendidikan' => $anggota['pendidikan'] ?? null,
+                            'pekerjaan' => $anggota['pekerjaan'] ?? null,
+                            'no_bpjs' => $anggota['no_bpjs'] ?? null,
+                            'nama_ayah' => $anggota['nama_ayah'] ?? null,
+                            'nama_ibu' => $anggota['nama_ibu'] ?? null,
+                        ]);
+                        continue;
+                    }
+                }
+
+                // Tambah baru jika tidak ada ID valid
+                Penduduk::create([
+                    'keluarga_id' => $keluarga->id,
+                    'nik' => $anggota['nik'],
+                    'no_urut' => $anggota['no_urut'] ?? null,
+                    'nama_lengkap' => $anggota['nama_lengkap'],
+                    'hubungan' => $anggota['hubungan'] ?? null,
+                    'tempat_lahir' => $anggota['tempat_lahir'] ?? null,
+                    'tgl_lahir' => $anggota['tgl_lahir'] ?? null,
+                    'jenis_kelamin' => $anggota['jenis_kelamin'] ?? null,
+                    'status_perkawinan' => $anggota['status_perkawinan'] ?? null,
+                    'agama' => $anggota['agama'] ?? null,
+                    'pendidikan' => $anggota['pendidikan'] ?? null,
+                    'pekerjaan' => $anggota['pekerjaan'] ?? null,
+                    'no_bpjs' => $anggota['no_bpjs'] ?? null,
+                    'nama_ayah' => $anggota['nama_ayah'] ?? null,
+                    'nama_ibu' => $anggota['nama_ibu'] ?? null,
+                ]);
             }
 
             DB::commit();
@@ -224,13 +259,17 @@ class DataKependudukanController extends Controller
                 'description' => 'Memperbarui data keluarga dan rumah.',
                 'ip_address' => $request->ip(),
             ]);
+
             return response()->json([
+                'success' => true,
                 'message' => 'Data keluarga berhasil diperbarui.',
                 'data' => new DataKependudukanResource($keluarga->load(['rumah', 'penduduks'])),
             ], 200);
         } catch (\Throwable $e) {
             DB::rollBack();
+
             Log::error('Gagal memperbarui data: ' . $e->getMessage());
+
             LogActivity::create([
                 'id' => Str::uuid(),
                 'user_id' => $admin->id,
@@ -238,14 +277,17 @@ class DataKependudukanController extends Controller
                 'description' => 'Gagal memperbarui data keluarga dan rumah.',
                 'ip_address' => $request->ip(),
             ]);
+
             return response()->json([
+                'success' => false,
                 'error' => 'Terjadi kesalahan saat memperbarui data.',
-                'detail' => $e->getMessage(),
+                'detail' => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }
     }
 
-    public function deleteAnggotaKeluarga($id){
+    public function deleteAnggotaKeluarga($id)
+    {
         $admin = JWTAuth::parseToken()->authenticate();
 
         if (!$admin) {
@@ -276,7 +318,7 @@ class DataKependudukanController extends Controller
         } catch (\Throwable $e) {
             DB::rollBack();
             Log::error('Gagal menghapus data: ' . $e->getMessage());
-           
+
             LogActivity::create([
                 'id' => Str::uuid(),
                 'user_id' => $admin->id,
@@ -325,7 +367,7 @@ class DataKependudukanController extends Controller
         } catch (\Throwable $e) {
             DB::rollBack();
             Log::error('Gagal menghapus data: ' . $e->getMessage());
-           
+
             LogActivity::create([
                 'id' => Str::uuid(),
                 'user_id' => $admin->id,
