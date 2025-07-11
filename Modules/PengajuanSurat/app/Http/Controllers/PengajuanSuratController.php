@@ -833,7 +833,7 @@ public function downloadSurat($slug, $ajuanId)
             'isPreview'     => false,
         ])->setPaper('f4', 'portrait');
 
-        return $pdf->download("surat-{$slug}.pdf");
+        return $pdf->download("{$ajuanSurat->nomor_surat}-{$slug}.pdf");
 
     } catch (\Throwable $e) {
         Log::error("Gagal download surat: " . $e->getMessage());
