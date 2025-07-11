@@ -127,7 +127,7 @@
         {{-- QR Code --}}
         <td style="width: 50%; vertical-align: top;">
             @if($isPreview && isset($qrCodeSvg))
-                <div style="width: 50px; height: 50px;">
+                <div style="width: 30px; height: 30px;">
                     {!! $qrCodeSvg !!}
                 </div>
             @elseif($showQrFromFile)
@@ -146,7 +146,7 @@
                 @endphp
 
                 @if ($ajuan->status === 'approved' && $ttdBase64)
-                    <img src="data:image/png;base64,{{ $ttdBase64 }}" style="height: 100px;" alt="Tanda Tangan"><br>
+                    <img src="data:image/png;base64,{{ $ttdBase64 }}" style="height: 200px;" alt="Tanda Tangan"><br>
                     <strong>{{ $ajuan->tandaTangan->user->name ?? 'H ANDI ABU BAKRI' }}</strong>
                 @else
                     <div style="height: 100px;"></div>
