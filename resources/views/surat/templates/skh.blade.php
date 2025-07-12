@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Surat Keterangan Usaha</title>
+    <title>Surat Keterangan Kehilangan</title>
     <style>
         @page {
             size: A4 portrait;
@@ -35,7 +35,7 @@
         }
 
         table tr td:first-child {
-            width: 180px;
+            width: 150px;
         }
 
         table tr td:nth-child(2) {
@@ -53,7 +53,14 @@
 <body>
 
 @php
-    $nomorSurat = $ajuan->nomor_surat_tersimpan ?? '___/SKU/LPC/CRN/__/____';
+    $jenis = strtolower($data['jenis_dokumen'] ?? '');
+    $kodeMap = [
+        'ktp' => 'SKHK',
+        'kk' => 'SKHKK',
+        'akte' => 'SKHA',
+    ];
+    $kodeSurat = $kodeMap[$jenis] ?? 'SKH';
+    $nomorSurat = $ajuan->nomor_surat_tersimpan ?? "___/{$kodeSurat}/LPC/CRN/__/____";
 @endphp
 
 {{-- Kop Surat --}}
@@ -75,33 +82,42 @@
 <hr>
 
 <div class="center">
-    <h4><u>SURAT KETERANGAN USAHA</u></h4>
+    <h4><u>SURAT KETERANGAN HILANG {{ strtoupper($data['jenis_dokumen'] ?? 'DOKUMEN') }}</u></h4>
     <div>Nomor: {{ $nomorSurat }}</div>
 </div>
 
-<p class="mt-3 indent">
-    Yang bertanda tangan di bawah ini, Kepala Desa Limapoccoe Kecamatan Cenrana Kabupaten Maros, menerangkan bahwa:
-</p>
+<p class="mt-3">Yang bertanda tangan di bawah ini:</p>
+<div class="indent">
+    <table style="margin-left: 20px;">
+        <tr><td>Nama</td><td>: {{ $ajuan->tandaTangan->user->name ?? 'H. ANDI ABU BAKRI' }}</td></tr>
+        <tr><td>Jabatan</td><td>: Kepala Desa Limapoccoe</td></tr>
+    </table>
+</div>
 
+<p class="mt-2">Menerangkan bahwa:</p>
 <div class="indent">
     <table style="margin-left: 20px;">
         <tr><td>Nama</td><td>: {{ $user->name ?? $data['nama'] ?? '-' }}</td></tr>
         <tr>
             <td>Tempat/Tanggal Lahir</td>
-            <td>: {{ $data['tempat_lahir'] ?? '-' }}, {{ \Carbon\Carbon::parse($data['tanggal_lahir'] ?? now())->format('d-m-Y') }}</td>
+            <td>: {{ optional($profile)->tempat_lahir ?? $data['tempat_lahir'] ?? '-' }},
+                {{ \Carbon\Carbon::parse(optional($profile)->tanggal_lahir ?? $data['tanggal_lahir'] ?? now())->format('d-m-Y') }}
+            </td>
         </tr>
-        <tr><td>NIK</td><td>: {{ $user->nik ?? $data['nik'] ?? '-' }}</td></tr>
-        <tr><td>Pekerjaan</td><td>: {{ $data['pekerjaan'] ?? '-' }}</td></tr>
-        <tr><td>Alamat</td><td>: Dusun {{ $data['dusun'] ?? '-' }}, {{ $data['alamat'] ?? '-' }}</td></tr>
+        <tr><td>Jenis Kelamin</td><td>: {{ optional($profile)->jenis_kelamin ?? $data['jenis_kelamin'] ?? '-' }}</td></tr>
+        <tr><td>Pekerjaan</td><td>: {{ optional($profile)->pekerjaan ?? $data['pekerjaan'] ?? '-' }}</td></tr>
+        <tr><td>Alamat</td><td>: Dusun {{ optional($profile)->dusun ?? $data['dusun'] ?? '-' }}, {{ optional($profile)->alamat ?? $data['alamat'] ?? '-' }}</td></tr>
+        <tr><td>No KK</td><td>: {{ $data['no_kk'] ?? '-' }}</td></tr>
+        <tr><td>No KTP</td><td>: {{ $user->nik ?? $data['nik'] ?? '-' }}</td></tr>
     </table>
 </div>
 
 <p class="mt-2 indent">
-    Benar nama tersebut di atas adalah penduduk Dusun {{ $data['dusun'] ?? '-' }}, Desa Limapoccoe, Kecamatan Cenrana, Kabupaten Maros, yang memiliki usaha <strong>“{{ $data['nama_usaha'] ?? '-' }}”</strong> yang berlokasi di Dusun {{ $data['dusun'] ?? '-' }}, Desa Limapoccoe, Kecamatan Cenrana, Kabupaten Maros.
+    Adalah benar nama tersebut di atas adalah warga yang berdomisili di Dusun {{ optional($profile)->dusun ?? $data['dusun'] ?? '-' }}, Desa Limapoccoe, Kecamatan Cenrana, Kabupaten Maros, yang telah kehilangan dokumen <strong>{{ strtoupper($data['jenis_dokumen'] ?? '-') }}</strong> dengan nomor <strong>{{ $data['no_dokumen'] ?? '-' }}</strong>. Dokumen tersebut diperkirakan hilang/tercecer di <strong>{{ $data['perkiraan_lokasi_hilang'] ?? '-' }}</strong>.
 </p>
 
 <p class="indent">
-    Demikian surat keterangan usaha ini kami berikan untuk dipergunakan sebagaimana mestinya.
+    Demikian surat keterangan ini kami buat dengan sebenarnya untuk digunakan seperlunya.
 </p>
 
 {{-- QR Code & Tanda Tangan --}}

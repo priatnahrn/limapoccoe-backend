@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Surat Keterangan Usaha</title>
+    <title>Surat Keterangan Penghasilan Orang Tua</title>
     <style>
         @page {
             size: A4 portrait;
@@ -35,25 +35,22 @@
         }
 
         table tr td:first-child {
-            width: 180px;
+            width: 200px;
         }
 
         table tr td:nth-child(2) {
             padding-left: 20px;
         }
 
-        .footer-note {
-            margin-top: 1rem;
-            font-size: 10px;
-            text-align: right;
-            padding-top: 3px;
+        .text-small {
+            font-size: 9pt;
         }
     </style>
 </head>
 <body>
 
 @php
-    $nomorSurat = $ajuan->nomor_surat_tersimpan ?? '___/SKU/LPC/CRN/__/____';
+    $nomorSurat = $ajuan->nomor_surat_tersimpan ?? '___/SKPOT/LPC/CRN/__/____';
 @endphp
 
 {{-- Kop Surat --}}
@@ -75,33 +72,54 @@
 <hr>
 
 <div class="center">
-    <h4><u>SURAT KETERANGAN USAHA</u></h4>
+    <h4><u>SURAT KETERANGAN PENGHASILAN ORANG TUA</u></h4>
     <div>Nomor: {{ $nomorSurat }}</div>
 </div>
 
 <p class="mt-3 indent">
-    Yang bertanda tangan di bawah ini, Kepala Desa Limapoccoe Kecamatan Cenrana Kabupaten Maros, menerangkan bahwa:
+    Yang bertanda tangan di bawah ini, Kepala Desa Limapoccoe Kecamatan Cenrana Kabupaten Maros, menerangkan dengan sebenar-benarnya bahwa:
 </p>
 
-<div class="indent">
-    <table style="margin-left: 20px;">
-        <tr><td>Nama</td><td>: {{ $user->name ?? $data['nama'] ?? '-' }}</td></tr>
-        <tr>
-            <td>Tempat/Tanggal Lahir</td>
-            <td>: {{ $data['tempat_lahir'] ?? '-' }}, {{ \Carbon\Carbon::parse($data['tanggal_lahir'] ?? now())->format('d-m-Y') }}</td>
-        </tr>
-        <tr><td>NIK</td><td>: {{ $user->nik ?? $data['nik'] ?? '-' }}</td></tr>
-        <tr><td>Pekerjaan</td><td>: {{ $data['pekerjaan'] ?? '-' }}</td></tr>
-        <tr><td>Alamat</td><td>: Dusun {{ $data['dusun'] ?? '-' }}, {{ $data['alamat'] ?? '-' }}</td></tr>
-    </table>
-</div>
+<p class="mt-2"><strong>Data Diri Calon Mahasiswa</strong></p>
+<table style="margin-left: 20px;">
+    <tr><td>Nama Calon Mahasiswa</td><td>: {{ $data['nama'] ?? '-' }}</td></tr>
+    <tr><td>Jenis Kelamin</td><td>: {{ $data['jenis_kelamin'] ?? '-' }}</td></tr>
+    <tr><td>Tempat/Tanggal Lahir</td><td>: {{ $data['tempat_lahir'] ?? '-' }}, {{ \Carbon\Carbon::parse($data['tanggal_lahir'] ?? now())->format('d-m-Y') }}</td></tr>
+    <tr><td>Agama</td><td>: {{ $data['agama'] ?? '-' }}</td></tr>
+    <tr><td>Asal Sekolah</td><td>: {{ $data['asal_sekolah'] ?? '-' }}</td></tr>
+    <tr><td>Jurusan</td><td>: {{ $data['jurusan'] ?? '-' }}</td></tr>
+</table>
 
-<p class="mt-2 indent">
-    Benar nama tersebut di atas adalah penduduk Dusun {{ $data['dusun'] ?? '-' }}, Desa Limapoccoe, Kecamatan Cenrana, Kabupaten Maros, yang memiliki usaha <strong>“{{ $data['nama_usaha'] ?? '-' }}”</strong> yang berlokasi di Dusun {{ $data['dusun'] ?? '-' }}, Desa Limapoccoe, Kecamatan Cenrana, Kabupaten Maros.
-</p>
+<p class="mt-2"><strong>Data Orang Tua</strong></p>
+<table style="margin-left: 20px;">
+    <tr><td>Nama Orang Tua/Wali (Ayah)</td><td>: {{ $data['nama_ayah'] ?? '-' }}</td></tr>
+    <tr><td>Alamat</td><td>: Dusun {{ $data['dusun'] ?? '-' }}, {{ $data['alamat'] ?? '-' }}</td></tr>
+    <tr><td>Pekerjaan</td><td>: {{ $data['pekerjaan_ayah'] ?? '-' }}</td></tr>
+    <tr>
+        <td>Penghasilan (Per Bulan)</td>
+        <td>: Rp{{ number_format($data['penghasilan_ayah_rp'] ?? 0, 0, ',', '.') }}
+            <span class="text-small">({{ $data['penghasilan_ayah_terbilang'] ?? '-' }}) /Bulan</span>
+        </td>
+    </tr>
 
-<p class="indent">
-    Demikian surat keterangan usaha ini kami berikan untuk dipergunakan sebagaimana mestinya.
+    <tr><td>Nama Orang Tua/Wali (Ibu)</td><td>: {{ $data['nama_ibu'] ?? '-' }}</td></tr>
+    <tr><td>Alamat</td><td>: Dusun {{ $data['dusun'] ?? '-' }}, {{ $data['alamat'] ?? '-' }}</td></tr>
+    <tr><td>Pekerjaan</td><td>: {{ $data['pekerjaan_ibu'] ?? '-' }}</td></tr>
+    <tr>
+        <td>Penghasilan (Per Bulan)</td>
+        <td>
+            @if(!empty($data['penghasilan_ibu_rp']))
+                : Rp{{ number_format($data['penghasilan_ibu_rp'], 0, ',', '.') }}
+                <span class="text-small">({{ $data['penghasilan_ibu_terbilang'] ?? '-' }}) /Bulan</span>
+            @else
+                : -
+            @endif
+        </td>
+    </tr>
+</table>
+
+<p class="mt-3 indent">
+    Demikian surat keterangan ini dibuat untuk digunakan seperlunya.
 </p>
 
 {{-- QR Code & Tanda Tangan --}}
