@@ -93,7 +93,7 @@
 <p class="mt-2"><strong>Data Orang Tua</strong></p>
 <table style="margin-left: 20px;">
     <tr><td>Nama Orang Tua/Wali (Ayah)</td><td>: {{ $data['nama_ayah'] ?? '-' }}</td></tr>
-    <tr><td>Alamat</td><td>: Dusun {{ $data['dusun'] ?? '-' }}, {{ $data['alamat'] ?? '-' }}</td></tr>
+    <tr><td>Alamat</td><td>: Dusun {{ optional($profile)->dusun ?? $data['dusun'] ?? '-' }}, {{ optional($profile)->alamat ?? $data['alamat'] ?? '-' }}</td></tr>
     <tr><td>Pekerjaan</td><td>: {{ $data['pekerjaan_ayah'] ?? '-' }}</td></tr>
     <tr>
         <td>Penghasilan (Per Bulan)</td>
@@ -103,7 +103,7 @@
     </tr>
 
     <tr><td>Nama Orang Tua/Wali (Ibu)</td><td>: {{ $data['nama_ibu'] ?? '-' }}</td></tr>
-    <tr><td>Alamat</td><td>: Dusun {{ $data['dusun'] ?? '-' }}, {{ $data['alamat'] ?? '-' }}</td></tr>
+    <tr><td>Alamat</td><td>: Dusun {{ optional($profile)->dusun ?? $data['dusun'] ?? '-' }}, {{ optional($profile)->alamat ?? $data['alamat'] ?? '-' }}</td></tr>
     <tr><td>Pekerjaan</td><td>: {{ $data['pekerjaan_ibu'] ?? '-' }}</td></tr>
     <tr>
         <td>Penghasilan (Per Bulan)</td>
