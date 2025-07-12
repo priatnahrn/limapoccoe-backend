@@ -470,8 +470,8 @@ class PengajuanSuratController extends Controller
         }
 
         // ✅ Generate QR code as SVG
-        $verificationUrl = url("/verifikasi-surat/{$ajuanSurat->id}");
-        $qrCodeSvg = QrCode::format('svg')->size(150)->generate($verificationUrl);
+        $verificationUrl = "https://limapoccoedigital.id/verifikasi-surat/{$ajuanSurat->id}";
+        $qrCodeSvg = QrCode::format('svg')->size(50)->generate($verificationUrl);
 
         // ✅ Simpan QR sebagai file SVG
         $qrFilename = "qr-{$ajuanSurat->id}.svg";
