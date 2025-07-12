@@ -97,7 +97,7 @@
 </div>
 
 <p class="mt-2 indent">
-    Benar nama tersebut di atas adalah penduduk Dusun {{ $data['dusun_usaha'] ?? '-' }}, Desa Limapoccoe, Kecamatan Cenrana, Kabupaten Maros, yang memiliki usaha <strong>“{{ $data['nama_usaha'] ?? '-' }}”</strong> yang berlokasi di Dusun {{ $data['dusun'] ?? '-' }}, Desa Limapoccoe, Kecamatan Cenrana, Kabupaten Maros.
+    Benar nama tersebut di atas adalah penduduk Dusun {{optional($profile)->dusun ?? $data['dusun'] ?? '-' }}, Desa Limapoccoe, Kecamatan Cenrana, Kabupaten Maros, yang memiliki usaha <strong>“{{ $data['nama_usaha'] ?? '-' }}”</strong> yang berlokasi di Dusun {{ $data['dusun_usaha'] ?? '-' }}, Desa Limapoccoe, Kecamatan Cenrana, Kabupaten Maros.
 </p>
 
 <p class="indent">
