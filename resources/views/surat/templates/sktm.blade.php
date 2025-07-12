@@ -47,7 +47,6 @@
             margin-top: 1rem;
             font-size: 10px;
             text-align: right;
-            border-top: 1px solid #000;
             padding-top: 3px;
         }
     </style>
