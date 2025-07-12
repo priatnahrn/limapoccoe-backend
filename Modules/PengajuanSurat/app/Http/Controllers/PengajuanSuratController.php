@@ -833,7 +833,7 @@ public function downloadSurat($slug, $ajuanId)
             'qrCodePath'    => $qrCodePath,
             'downloaded_at' => now()->translatedFormat('l, d F Y H:i'),
             'isPreview'     => false,
-        ])->setPaper('letter', 'portrait');
+        ])->setPaper('a4', 'portrait');
 
         return $pdf->download("{$ajuanSurat->nomor_surat}-{$slug}.pdf");
 
