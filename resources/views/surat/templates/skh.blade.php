@@ -82,7 +82,7 @@
 <hr>
 
 <div class="center">
-    <h4><u>SURAT KETERANGAN HILANG {{ strtoupper($data['jenis_dokumen'] ?? 'DOKUMEN') }}</u></h4>
+    <h4 style="margin-bottom: 0;"><u>SURAT KETERANGAN HILANG {{ strtoupper($data['jenis_dokumen'] ?? 'DOKUMEN') }}</u></h4>
     <div>Nomor: {{ $nomorSurat }}</div>
 </div>
 
@@ -144,7 +144,7 @@
             <div class="bold">KEPALA DESA LIMAPOCCOE</div>
             <div style="margin-top: 10px;">
                 @php
-                    $ttdPath = storage_path('app/private/tanda-tangan-digital.png');
+                    $ttdPath = storage_path('app/private/tandatangan.png');
                     $ttdBase64 = file_exists($ttdPath) ? base64_encode(file_get_contents($ttdPath)) : null;
                 @endphp
 

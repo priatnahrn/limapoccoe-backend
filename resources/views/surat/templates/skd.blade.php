@@ -72,7 +72,7 @@
     <hr>
 
     <div class="center">
-        <h4><u>SURAT KETERANGAN DOMISILI</u></h4>
+        <h4 style="margin-bottom: 0;"><u>SURAT KETERANGAN DOMISILI</u></h4>
         <div>Nomor: {{ $ajuan->nomor_surat_tersimpan ?? '___/SKD/LPC/CRN/__/____' }}</div>
     </div>
 
