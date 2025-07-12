@@ -11,12 +11,89 @@ use App\Models\LogActivity;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 use Modules\Pengaduan\Http\Requests\PengaduanRequest;
 use Illuminate\Support\Facades\Storage;
 use Modules\Pengaduan\Http\Requests\ProcessedAduanRequest;
 
 class PengaduanController extends Controller
 {
+
+    // public function create(PengaduanRequest $request)
+    // {
+    //     try {
+    //         // ✅ ASVS 2.1.1 – Validasi token dan autentikasi pengguna
+    //         $user = JWTAuth::parseToken()->authenticate();
+
+    //         if (!$user) {
+    //             // ✅ SCP #122 – Tidak bocorkan detail login
+    //             return response()->json(['message' => 'User belum login.'], 401);
+    //         }
+
+    //         // ✅ ASVS 5.1.6 – Role-based access control (RBAC)
+    //         if (!$user->hasRole('masyarakat')) {
+    //             return response()->json(['message' => 'Akses ditolak.'], 403);
+    //         }
+
+    //         // ✅ ASVS 5.1.3 – Validasi input trusted dari sisi server (pakai FormRequest)
+    //         $validated = $request->validated();
+
+    //         // ✅ ASVS 13.2.1 – Validasi dan pembatasan upload file (tipe dan ukuran)
+    //         $evidencePath = null;
+    //         if ($request->hasFile('evidence')) {
+    //             $originalExtension = $request->file('evidence')->getClientOriginalExtension();
+    //             $timestamp = now()->format('YmdHis');
+    //             $slugName = Str::slug($user->name); // gunakan slug nama user
+    //             $fileName = 'aduan_' . $slugName . '_' . $timestamp . '.' . $originalExtension;
+
+    //             // ✅ SCP #37 – Gunakan nama file aman dan konsisten
+    //             $evidencePath = $request->file('evidence')->storeAs('aduan/evidence', $fileName, 'public');
+    //         }
+
+    //         DB::beginTransaction();
+
+    //         // ✅ ASVS 1.7 – Data hanya dibuat atas nama user yang sedang login
+    //         $aduan = Pengaduan::create([
+    //             'user_id' => $user->id,
+    //             'title' => $validated['title'],
+    //             'content' => $validated['content'],
+    //             'location' => $validated['location'] ?? null,
+    //             'category' => $validated['category'],
+    //             'evidence' => $evidencePath,
+    //             'status' => 'waiting', // ✅ ASVS 13.4.1 – Default state bukan "approved"
+    //         ]);
+
+    //         // ✅ ASVS 7.1.3 – Logging aktivitas penting untuk audit trail
+    //         LogActivity::create([
+    //             'id' => Str::uuid(),
+    //             'user_id' => $user->id,
+    //             'activity_type' => 'create_pengaduan',
+    //             'description' => "User {$user->name} membuat aduan ID {$aduan->id}",
+    //             'ip_address' => $request->ip(),
+    //         ]);
+
+    //         DB::commit();
+
+    //         // ✅ SCP #122 – Response tidak expose informasi sensitif
+    //         return response()->json([
+    //             'message' => 'Aduan berhasil dibuat.',
+    //             'aduan' => new PengaduanResource($aduan->load('user')), // ✅ Gunakan resource untuk kontrol output
+    //         ], 201);
+
+    //     } catch (\Throwable $e) {
+    //         DB::rollBack();
+
+    //         // ✅ SCP #107 – Log detail error internal (tanpa expose ke client)
+    //         Log::error('Gagal membuat pengaduan', [
+    //             'user_id' => $user->id ?? null,
+    //             'error' => $e->getMessage()
+    //         ]);
+
+    //         return response()->json([
+    //             'message' => 'Terjadi kesalahan saat membuat aduan.' // ✅ SCP #110 – Jangan bocorkan stacktrace
+    //         ], 500);
+    //     }
+    // }
 
     public function create(PengaduanRequest $request)
     {
@@ -28,6 +105,16 @@ class PengaduanController extends Controller
                 // ✅ SCP #122 – Tidak bocorkan detail login
                 return response()->json(['message' => 'User belum login.'], 401);
             }
+
+            // ✅ Rate Limiting: Maksimal 1 aduan setiap 2 menit
+            $rateLimitKey = 'rl:pengaduan:' . $user->id;
+            if (RateLimiter::tooManyAttempts($rateLimitKey, 1)) {
+                $seconds = RateLimiter::availableIn($rateLimitKey);
+                return response()->json([
+                    'message' => 'Anda hanya bisa membuat aduan setiap 2 menit. Silakan coba lagi dalam ' . $seconds . ' detik.',
+                ], 429); // Too Many Requests
+            }
+            RateLimiter::hit($rateLimitKey, 120); // Hit dengan batas 2 menit (120 detik)
 
             // ✅ ASVS 5.1.6 – Role-based access control (RBAC)
             if (!$user->hasRole('masyarakat')) {
@@ -42,7 +129,7 @@ class PengaduanController extends Controller
             if ($request->hasFile('evidence')) {
                 $originalExtension = $request->file('evidence')->getClientOriginalExtension();
                 $timestamp = now()->format('YmdHis');
-                $slugName = Str::slug($user->name); // gunakan slug nama user
+                $slugName = Str::slug($user->name);
                 $fileName = 'aduan_' . $slugName . '_' . $timestamp . '.' . $originalExtension;
 
                 // ✅ SCP #37 – Gunakan nama file aman dan konsisten
@@ -76,7 +163,7 @@ class PengaduanController extends Controller
             // ✅ SCP #122 – Response tidak expose informasi sensitif
             return response()->json([
                 'message' => 'Aduan berhasil dibuat.',
-                'aduan' => new PengaduanResource($aduan->load('user')), // ✅ Gunakan resource untuk kontrol output
+                'aduan' => new PengaduanResource($aduan->load('user')),
             ], 201);
 
         } catch (\Throwable $e) {
@@ -93,6 +180,7 @@ class PengaduanController extends Controller
             ], 500);
         }
     }
+
 
     public function getAllAduan()
     {
