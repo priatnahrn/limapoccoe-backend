@@ -135,7 +135,8 @@
                         {!! $qrCodeSvg !!}
                     </div>
                 @elseif($showQrFromFile)
-                    <img src="file://{{ $qrCodePath }}" style="width: 50px; height: auto;" alt="QR Code">
+                    <img src="file://{{ $qrCodePath }}" style="width: 50px; height: auto; bottom: 10mm; left: 10mm;
+position: absolute;" alt="QR Code">
                 @endif
             </td>
 
@@ -150,7 +151,7 @@
                     @endphp
 
                     @if ($ajuan->status === 'approved' && $ttdBase64)
-                        <img src="data:image/png;base64,{{ $ttdBase64 }}" style="height: 140px;" alt="Tanda Tangan"><br>
+                        <img src="data:image/png;base64,{{ $ttdBase64 }}" style="height: 180px;" alt="Tanda Tangan"><br>
                         <strong>{{ $ajuan->tandaTangan->user->name ?? 'H ANDI ABU BAKRI' }}</strong>
                     @else
                         <div style="height: 100px;"></div>
