@@ -88,7 +88,7 @@
         <tr><td>Nama</td><td>: {{ $user->name ?? $data['nama'] ?? '-' }}</td></tr>
         <tr>
             <td>Tempat/Tanggal Lahir</td>
-            <td>: {{ $data['tempat_lahir'] ?? '-' }}, {{ \Carbon\Carbon::parse($data['tanggal_lahir'] ?? now())->format('d-m-Y') }}</td>
+            <td>: {{ optional($profile)->tempat_lahir ?? $data['tempat_lahir'] ?? '-' }}, {{ \Carbon\Carbon::parse($data['tanggal_lahir'] ?? now())->format('d-m-Y') }}</td>
         </tr>
         <tr><td>NIK</td><td>: {{ $user->nik ?? $data['nik'] ?? '-' }}</td></tr>
         <tr><td>Pekerjaan</td><td>: {{ optional($profile)->pekerjaan ?? $data['pekerjaan'] ?? '-' }}</td></tr>
@@ -97,7 +97,7 @@
 </div>
 
 <p class="mt-2 indent">
-    Benar nama tersebut di atas adalah penduduk Dusun {{ optional($profile)->dusun ?? $data['dusun_usaha'] ?? '-' }}, Desa Limapoccoe, Kecamatan Cenrana, Kabupaten Maros, yang memiliki usaha <strong>“{{ $data['nama_usaha'] ?? '-' }}”</strong> yang berlokasi di Dusun {{ $data['dusun'] ?? '-' }}, Desa Limapoccoe, Kecamatan Cenrana, Kabupaten Maros.
+    Benar nama tersebut di atas adalah penduduk Dusun {{ $data['dusun_usaha'] ?? '-' }}, Desa Limapoccoe, Kecamatan Cenrana, Kabupaten Maros, yang memiliki usaha <strong>“{{ $data['nama_usaha'] ?? '-' }}”</strong> yang berlokasi di Dusun {{ $data['dusun'] ?? '-' }}, Desa Limapoccoe, Kecamatan Cenrana, Kabupaten Maros.
 </p>
 
 <p class="indent">
