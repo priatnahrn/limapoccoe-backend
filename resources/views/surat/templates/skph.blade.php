@@ -97,8 +97,8 @@
     <tr><td>Pekerjaan</td><td>: {{ $data['pekerjaan_ayah'] ?? '-' }}</td></tr>
     <tr>
         <td>Penghasilan (Per Bulan)</td>
-        <td>: Rp{{ number_format($data['penghasilan_ayah_rp'] ?? 0, 0, ',', '.') }}
-            <span class="text-small">({{ $data['penghasilan_ayah_terbilang'] ?? '-' }}) /Bulan</span>
+        <td>: Rp{{ number_format($data['penghasilan_ayah'] ?? 0, 0, ',', '.') }}
+             /Bulan
         </td>
     </tr>
 
@@ -108,9 +108,8 @@
     <tr>
         <td>Penghasilan (Per Bulan)</td>
         <td>
-            @if(!empty($data['penghasilan_ibu_rp']))
-                : Rp{{ number_format($data['penghasilan_ibu_rp'], 0, ',', '.') }}
-                <span class="text-small">({{ $data['penghasilan_ibu_terbilang'] ?? '-' }}) /Bulan</span>
+            @if(!empty($data['penghasilan_ibu']))
+                : Rp{{ number_format($data['penghasilan_ibu'], 0, ',', '.') }} /Bulan
             @else
                 : -
             @endif
