@@ -181,7 +181,7 @@ class PengajuanSuratController extends Controller
 
             // ✅ Rate Limiting: Maksimal 1 pengajuan per menit per user
             $rateLimitKey = 'rl:ajuan:surat:' . $authUser->id;
-            if (RateLimiter::tooManyAttempts($rateLimitKey, 2)) {
+            if (RateLimiter::tooManyAttempts($rateLimitKey, 1)) {
                 $seconds = RateLimiter::availableIn($rateLimitKey);
                 return response()->json([
                     'error' => 'Anda hanya bisa mengajukan surat sekali setiap 2 menit. Silakan coba lagi dalam ' . $seconds . ' detik.'
