@@ -26,7 +26,7 @@ use Spatie\LaravelPdf\Facades\Pdf as SpatiePdf;
 
 class PengajuanSuratController extends Controller
 {
-    
+
     // public function ajukanSurat(Request $request, $slug)
     // {
     //     $authUser = JWTAuth::parseToken()->authenticate();
@@ -155,7 +155,6 @@ class PengajuanSuratController extends Controller
                 'message' => 'Surat berhasil diajukan.',
                 'ajuan_surat' => new AjuanResource($ajuan),
             ], 200);
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             // ✅ [ASVS V9.2] Penanganan validasi input yang aman
             return response()->json([
@@ -227,7 +226,6 @@ class PengajuanSuratController extends Controller
                 'message' => 'Berhasil mendapatkan daftar pengajuan surat.',
                 'pengajuan_surat' => AjuanResource::collection($pengajuanSurat),
             ], 200);
-
         } catch (\Exception $e) {
             // ✅ [SCP #108, #112] Error tidak mengekspos informasi sistem
             Log::error('Gagal mendapatkan pengajuan surat: ' . $e->getMessage());
@@ -276,11 +274,12 @@ class PengajuanSuratController extends Controller
         // ✅ [ASVS V9.1] [SCP #107, #119] Respon aman, tidak mengembalikan data sensitif secara langsung
         return response()->json([
             'message' => 'Berhasil mendapatkan detail pengajuan surat.',
-            'pengajuan_surat' => new AjuanResource($pengajuanSurat), 
+            'pengajuan_surat' => new AjuanResource($pengajuanSurat),
         ], 200);
     }
-   
-    public function fillNumber(FillNumberRequest $request, $slug, $ajuanId){
+
+    public function fillNumber(FillNumberRequest $request, $slug, $ajuanId)
+    {
         $user = JWTAuth::parseToken()->authenticate();
 
         if (!$user->hasRole('staff-desa')) {
@@ -329,7 +328,8 @@ class PengajuanSuratController extends Controller
     }
 
 
-    private function toRoman($number){
+    private function toRoman($number)
+    {
         $map = [
             'I',
             'II',
@@ -344,7 +344,7 @@ class PengajuanSuratController extends Controller
             'XI',
             'XII',
         ];
-        return $map[$number-1] ?? $number;
+        return $map[$number - 1] ?? $number;
     }
 
     // public function previewSurat($slug, $ajuan_id)
@@ -422,7 +422,7 @@ class PengajuanSuratController extends Controller
     //     return response($html, 200)->header('Content-Type', 'text/html');
     // }
 
-   
+
 
 
     public function previewSurat($slug, $ajuan_id)
@@ -709,294 +709,297 @@ class PengajuanSuratController extends Controller
 
 
 
-// public function downloadSurat($slug, $ajuanId)
-// {
-//     Carbon::setLocale('id');
-//     ini_set('memory_limit', '-1');
+    // public function downloadSurat($slug, $ajuanId)
+    // {
+    //     Carbon::setLocale('id');
+    //     ini_set('memory_limit', '-1');
 
-//     $user = JWTAuth::parseToken()->authenticate();
+    //     $user = JWTAuth::parseToken()->authenticate();
 
-//     if (!$user->hasAnyRole(['masyarakat', 'staff-desa', 'kepala-desa', 'super-admin'])) {
-//         return response()->json(['error' => 'Akses ditolak.'], 403);
-//     }
+    //     if (!$user->hasAnyRole(['masyarakat', 'staff-desa', 'kepala-desa', 'super-admin'])) {
+    //         return response()->json(['error' => 'Akses ditolak.'], 403);
+    //     }
 
-//     $ajuanSurat = Ajuan::with([
-//         'user.profileMasyarakat',
-//         'surat',
-//         'tandaTangan.user'
-//     ])->where('id', $ajuanId)
-//       ->whereHas('surat', fn($q) => $q->where('slug', $slug))
-//       ->first();
+    //     $ajuanSurat = Ajuan::with([
+    //         'user.profileMasyarakat',
+    //         'surat',
+    //         'tandaTangan.user'
+    //     ])->where('id', $ajuanId)
+    //       ->whereHas('surat', fn($q) => $q->where('slug', $slug))
+    //       ->first();
 
-//     if (!$ajuanSurat || $ajuanSurat->status !== 'approved' || !$ajuanSurat->tandaTangan) {
-//         return response()->json(['error' => 'Surat tidak valid atau belum disetujui.'], 400);
-//     }
+    //     if (!$ajuanSurat || $ajuanSurat->status !== 'approved' || !$ajuanSurat->tandaTangan) {
+    //         return response()->json(['error' => 'Surat tidak valid atau belum disetujui.'], 400);
+    //     }
 
-//     $dataSurat = is_array($ajuanSurat->data_surat)
-//         ? $ajuanSurat->data_surat
-//         : json_decode($ajuanSurat->data_surat, true);
+    //     $dataSurat = is_array($ajuanSurat->data_surat)
+    //         ? $ajuanSurat->data_surat
+    //         : json_decode($ajuanSurat->data_surat, true);
 
-//     $template = 'surat.templates.' . strtolower(optional($ajuanSurat->surat)->kode_surat ?? 'default');
-//     if (!view()->exists($template)) {
-//         return response("Template surat tidak ditemukan", 500);
-//     }
+    //     $template = 'surat.templates.' . strtolower(optional($ajuanSurat->surat)->kode_surat ?? 'default');
+    //     if (!view()->exists($template)) {
+    //         return response("Template surat tidak ditemukan", 500);
+    //     }
 
-//     // Generate QR Code in base64
-//     $verificationUrl = url("/verifikasi-surat/{$ajuanSurat->id}");
-//     $qrCodeSvg = QrCode::format('svg')->size(150)->generate($verificationUrl);
-//     $downloadedAt = Carbon::now()->translatedFormat('l, d F Y H:i');
+    //     // Generate QR Code in base64
+    //     $verificationUrl = url("/verifikasi-surat/{$ajuanSurat->id}");
+    //     $qrCodeSvg = QrCode::format('svg')->size(150)->generate($verificationUrl);
+    //     $downloadedAt = Carbon::now()->translatedFormat('l, d F Y H:i');
 
-//     $html = view($template, [
-//         'ajuan' => $ajuanSurat,
-//         'user' => $ajuanSurat->user,
-//         'profile' => $ajuanSurat->user->profileMasyarakat,
-//         'data' => $dataSurat,
-//         'qrCodeSvg' => $qrCodeSvg,
-//         'downloaded_at' => $downloadedAt,
-//     ])->render();
+    //     $html = view($template, [
+    //         'ajuan' => $ajuanSurat,
+    //         'user' => $ajuanSurat->user,
+    //         'profile' => $ajuanSurat->user->profileMasyarakat,
+    //         'data' => $dataSurat,
+    //         'qrCodeSvg' => $qrCodeSvg,
+    //         'downloaded_at' => $downloadedAt,
+    //     ])->render();
 
-//     $nomorSurat = preg_replace('/[\/\\\\]/', '-', $ajuanSurat->nomor_surat ?? 'tanpa-nomor');
-//     $pdf = Pdf::loadHTML($html);
-//     return $pdf->download("surat-{$nomorSurat}.pdf");
-// }
-
-
-// fiks yang ini kalo gdrive gagal
-// public function downloadSurat($slug, $ajuanId)
-// {
-//     try {
-//         $ajuanSurat = Ajuan::with(['user', 'user.profileMasyarakat', 'surat'])
-//             ->where('id', $ajuanId)
-//             ->whereHas('surat', fn($q) => $q->where('slug', $slug))
-//             ->firstOrFail();
-
-//         // Buat data surat
-//         $dataSurat = is_array($ajuanSurat->data_surat)
-//             ? $ajuanSurat->data_surat
-//             : json_decode($ajuanSurat->data_surat, true);
-
-//         // Buat QR code langsung inline (tanpa simpan file PNG)
-//         $verificationUrl = url("/verifikasi-surat/{$ajuanSurat->id}");
-//         $qrCodeBase64 = base64_encode(QrCode::format('png')->size(150)->generate($verificationUrl));
-//         $qrCodeDataUri = "data:image/png;base64,{$qrCodeBase64}";
-
-//         $template = 'surat.templates.' . strtolower($ajuanSurat->surat->kode_surat ?? 'default');
-
-//         // Generate PDF (langsung tampilkan tanpa simpan file)
-//         $pdf = Pdf::loadView($template, [
-//             'ajuan' => $ajuanSurat,
-//             'user' => $ajuanSurat->user,
-//             'profile' => $ajuanSurat->user->profileMasyarakat,
-//             'data' => $dataSurat,
-//             'qrCodePath' => $qrCodeDataUri,
-//             'downloaded_at' => now()->translatedFormat('l, d F Y H:i'),
-//         ])->setPaper('a4', 'landscape');
-
-//         return $pdf->download("surat-{$slug}.pdf");
-
-//     } catch (\Throwable $e) {
-//         Log::error("Gagal download surat: " . $e->getMessage());
-//         return response()->json(['error' => 'Gagal download surat.'], 500);
-//     }
-
-// }
-
-// public function downloadSurat($slug, $ajuanId)
-// {
-//     ini_set('memory_limit', '512M');
-
-//     try {
-//         $ajuanSurat = Ajuan::with(['user', 'user.profileMasyarakat', 'surat', 'tandaTangan'])
-//             ->where('id', $ajuanId)
-//             ->whereHas('surat', fn($q) => $q->where('slug', $slug))
-//             ->firstOrFail();
-
-//         $dataSurat = is_array($ajuanSurat->data_surat)
-//             ? $ajuanSurat->data_surat
-//             : json_decode($ajuanSurat->data_surat, true);
-
-//         $template = 'surat.templates.' . strtolower($ajuanSurat->surat->kode_surat ?? 'default');
-
-//         // ✅ Ambil QR code dari file jika tersedia
-//         $qrCodePath = null;
-//         if ($ajuanSurat->qr_code_path) {
-//             $storedPath = storage_path('app/' . $ajuanSurat->qr_code_path);
-//             if (file_exists($storedPath)) {
-//                 $qrCodePath = $storedPath;
-//             }
-//         }
-
-//         $pdf = Pdf::loadView($template, [
-//             'ajuan'         => $ajuanSurat,
-//             'user'          => $ajuanSurat->user,
-//             'profile'       => $ajuanSurat->user->profileMasyarakat,
-//             'data'          => $dataSurat,
-//             'qrCodePath'    => $qrCodePath,
-//             'downloaded_at' => now()->translatedFormat('l, d F Y H:i'),
-//             'isPreview'     => false,
-//         ])->setPaper('a4', 'portrait');
+    //     $nomorSurat = preg_replace('/[\/\\\\]/', '-', $ajuanSurat->nomor_surat ?? 'tanpa-nomor');
+    //     $pdf = Pdf::loadHTML($html);
+    //     return $pdf->download("surat-{$nomorSurat}.pdf");
+    // }
 
 
-//         return $pdf->download("{$ajuanSurat->nomor_surat}-{$slug}.pdf");
+    // fiks yang ini kalo gdrive gagal
+    // public function downloadSurat($slug, $ajuanId)
+    // {
+    //     try {
+    //         $ajuanSurat = Ajuan::with(['user', 'user.profileMasyarakat', 'surat'])
+    //             ->where('id', $ajuanId)
+    //             ->whereHas('surat', fn($q) => $q->where('slug', $slug))
+    //             ->firstOrFail();
 
-//     } catch (\Throwable $e) {
-//         Log::error("Gagal download surat: " . $e->getMessage());
-//         return response()->json(['error' => 'Gagal download surat.'], 500);
-//     }
-// }
+    //         // Buat data surat
+    //         $dataSurat = is_array($ajuanSurat->data_surat)
+    //             ? $ajuanSurat->data_surat
+    //             : json_decode($ajuanSurat->data_surat, true);
+
+    //         // Buat QR code langsung inline (tanpa simpan file PNG)
+    //         $verificationUrl = url("/verifikasi-surat/{$ajuanSurat->id}");
+    //         $qrCodeBase64 = base64_encode(QrCode::format('png')->size(150)->generate($verificationUrl));
+    //         $qrCodeDataUri = "data:image/png;base64,{$qrCodeBase64}";
+
+    //         $template = 'surat.templates.' . strtolower($ajuanSurat->surat->kode_surat ?? 'default');
+
+    //         // Generate PDF (langsung tampilkan tanpa simpan file)
+    //         $pdf = Pdf::loadView($template, [
+    //             'ajuan' => $ajuanSurat,
+    //             'user' => $ajuanSurat->user,
+    //             'profile' => $ajuanSurat->user->profileMasyarakat,
+    //             'data' => $dataSurat,
+    //             'qrCodePath' => $qrCodeDataUri,
+    //             'downloaded_at' => now()->translatedFormat('l, d F Y H:i'),
+    //         ])->setPaper('a4', 'landscape');
+
+    //         return $pdf->download("surat-{$slug}.pdf");
+
+    //     } catch (\Throwable $e) {
+    //         Log::error("Gagal download surat: " . $e->getMessage());
+    //         return response()->json(['error' => 'Gagal download surat.'], 500);
+    //     }
+
+    // }
+
+    // public function downloadSurat($slug, $ajuanId)
+    // {
+    //     ini_set('memory_limit', '512M');
+
+    //     try {
+    //         $ajuanSurat = Ajuan::with(['user', 'user.profileMasyarakat', 'surat', 'tandaTangan'])
+    //             ->where('id', $ajuanId)
+    //             ->whereHas('surat', fn($q) => $q->where('slug', $slug))
+    //             ->firstOrFail();
+
+    //         $dataSurat = is_array($ajuanSurat->data_surat)
+    //             ? $ajuanSurat->data_surat
+    //             : json_decode($ajuanSurat->data_surat, true);
+
+    //         $template = 'surat.templates.' . strtolower($ajuanSurat->surat->kode_surat ?? 'default');
+
+    //         // ✅ Ambil QR code dari file jika tersedia
+    //         $qrCodePath = null;
+    //         if ($ajuanSurat->qr_code_path) {
+    //             $storedPath = storage_path('app/' . $ajuanSurat->qr_code_path);
+    //             if (file_exists($storedPath)) {
+    //                 $qrCodePath = $storedPath;
+    //             }
+    //         }
+
+    //         $pdf = Pdf::loadView($template, [
+    //             'ajuan'         => $ajuanSurat,
+    //             'user'          => $ajuanSurat->user,
+    //             'profile'       => $ajuanSurat->user->profileMasyarakat,
+    //             'data'          => $dataSurat,
+    //             'qrCodePath'    => $qrCodePath,
+    //             'downloaded_at' => now()->translatedFormat('l, d F Y H:i'),
+    //             'isPreview'     => false,
+    //         ])->setPaper('a4', 'portrait');
 
 
-public function downloadSurat($slug, $ajuanId)
-{
-    ini_set('memory_limit', '512M');
+    //         return $pdf->download("{$ajuanSurat->nomor_surat}-{$slug}.pdf");
 
-    try {
-        $ajuanSurat = Ajuan::with(['user', 'user.profileMasyarakat', 'surat', 'tandaTangan'])
-            ->where('id', $ajuanId)
-            ->whereHas('surat', fn($q) => $q->where('slug', $slug))
-            ->firstOrFail();
+    //     } catch (\Throwable $e) {
+    //         Log::error("Gagal download surat: " . $e->getMessage());
+    //         return response()->json(['error' => 'Gagal download surat.'], 500);
+    //     }
+    // }
 
-        $dataSurat = is_array($ajuanSurat->data_surat)
-            ? $ajuanSurat->data_surat
-            : json_decode($ajuanSurat->data_surat, true);
 
-        $template = 'surat.templates.' . strtolower($ajuanSurat->surat->kode_surat ?? 'default');
+    public function downloadSurat($slug, $ajuanId)
+    {
+        ini_set('memory_limit', '512M');
 
-        $qrCodePath = null;
-        if ($ajuanSurat->qr_code_path) {
-            $storedPath = storage_path('app/' . $ajuanSurat->qr_code_path);
-            if (file_exists($storedPath)) {
-                $qrCodePath = $storedPath;
+        try {
+            $ajuanSurat = Ajuan::with(['user', 'user.profileMasyarakat', 'surat', 'tandaTangan'])
+                ->where('id', $ajuanId)
+                ->whereHas('surat', fn($q) => $q->where('slug', $slug))
+                ->firstOrFail();
+
+            $dataSurat = is_array($ajuanSurat->data_surat)
+                ? $ajuanSurat->data_surat
+                : json_decode($ajuanSurat->data_surat, true);
+
+            $template = 'surat.templates.' . strtolower($ajuanSurat->surat->kode_surat ?? 'default');
+
+            // Cek QR Code file
+            $qrCodePath = null;
+            if ($ajuanSurat->qr_code_path) {
+                $storedPath = storage_path('app/' . $ajuanSurat->qr_code_path);
+                if (file_exists($storedPath)) {
+                    $qrCodePath = $storedPath;
+                }
             }
+
+            // Siapkan folder temp
+            $tempDir = storage_path('app/temp');
+            if (!file_exists($tempDir)) {
+                mkdir($tempDir, 0755, true);
+            }
+
+            // Nama file dan path lokal
+            $filename = "{$ajuanSurat->nomor_surat}-{$slug}.pdf";
+            $localPath = $tempDir . '/' . $filename;
+
+            // Generate PDF dan simpan
+            Pdf::loadView($template, [
+                'ajuan'         => $ajuanSurat,
+                'user'          => $ajuanSurat->user,
+                'profile'       => $ajuanSurat->user->profileMasyarakat,
+                'data'          => $dataSurat,
+                'qrCodePath'    => $qrCodePath,
+                'downloaded_at' => now()->translatedFormat('l, d F Y H:i'),
+                'isPreview'     => false,
+            ])->setPaper('a4', 'portrait')->save($localPath);
+
+            // Upload ke Google Drive
+            Storage::disk('google')->put("surat/{$filename}", fopen($localPath, 'r+'));
+
+            // Download ke browser dan hapus file setelahnya
+            return response()->download($localPath)->deleteFileAfterSend(true);
+        } catch (\Throwable $e) {
+            Log::error("Gagal download surat: " . $e->getMessage());
+            return response()->json(['error' => 'Gagal download surat.'], 500);
         }
-
-        $filename = "{$ajuanSurat->nomor_surat}-{$slug}.pdf";
-        $localPath = storage_path("app/temp/{$filename}");
-
-        // Buat PDF & simpan sementara
-        Pdf::loadView($template, [
-            'ajuan'         => $ajuanSurat,
-            'user'          => $ajuanSurat->user,
-            'profile'       => $ajuanSurat->user->profileMasyarakat,
-            'data'          => $dataSurat,
-            'qrCodePath'    => $qrCodePath,
-            'downloaded_at' => now()->translatedFormat('l, d F Y H:i'),
-            'isPreview'     => false,
-        ])->setPaper('a4', 'portrait')->save($localPath);
-
-        // Upload ke Google Drive
-        Storage::disk('google')->put("surat/{$filename}", fopen($localPath, 'r+'));
-
-        // Download ke user & hapus file setelah terkirim
-        return response()->download($localPath)->deleteFileAfterSend(true);
-
-    } catch (\Throwable $e) {
-        Log::error("Gagal download surat: " . $e->getMessage());
-        return response()->json(['error' => 'Gagal download surat.'], 500);
     }
-}
 
 
-// public function downloadSurat($slug, $ajuanId)
-// {
-//     ini_set('memory_limit', '512M');
+    // public function downloadSurat($slug, $ajuanId)
+    // {
+    //     ini_set('memory_limit', '512M');
 
-//     try {
-//         $ajuanSurat = Ajuan::with(['user', 'user.profileMasyarakat', 'surat'])
-//             ->where('id', $ajuanId)
-//             ->whereHas('surat', fn($q) => $q->where('slug', $slug))
-//             ->firstOrFail();
+    //     try {
+    //         $ajuanSurat = Ajuan::with(['user', 'user.profileMasyarakat', 'surat'])
+    //             ->where('id', $ajuanId)
+    //             ->whereHas('surat', fn($q) => $q->where('slug', $slug))
+    //             ->firstOrFail();
 
-//         $dataSurat = is_array($ajuanSurat->data_surat)
-//             ? $ajuanSurat->data_surat
-//             : json_decode($ajuanSurat->data_surat, true);
+    //         $dataSurat = is_array($ajuanSurat->data_surat)
+    //             ? $ajuanSurat->data_surat
+    //             : json_decode($ajuanSurat->data_surat, true);
 
-//         $template = 'surat.templates.' . strtolower($ajuanSurat->surat->kode_surat ?? 'default');
+    //         $template = 'surat.templates.' . strtolower($ajuanSurat->surat->kode_surat ?? 'default');
 
-//         $pdf = Pdf::loadView($template, [
-//             'ajuan' => $ajuanSurat,
-//             'user' => $ajuanSurat->user,
-//             'profile' => $ajuanSurat->user->profileMasyarakat,
-//             'data' => $dataSurat,
-//             'downloaded_at' => now()->translatedFormat('l, d F Y H:i'),
-//             'isPreview' => false, // 🟢 Ini penting!
-//         ])->setPaper('f4', 'portrait');
+    //         $pdf = Pdf::loadView($template, [
+    //             'ajuan' => $ajuanSurat,
+    //             'user' => $ajuanSurat->user,
+    //             'profile' => $ajuanSurat->user->profileMasyarakat,
+    //             'data' => $dataSurat,
+    //             'downloaded_at' => now()->translatedFormat('l, d F Y H:i'),
+    //             'isPreview' => false, // 🟢 Ini penting!
+    //         ])->setPaper('f4', 'portrait');
 
-//         return $pdf->download("surat-{$slug}.pdf");
+    //         return $pdf->download("surat-{$slug}.pdf");
 
-//     } catch (\Throwable $e) {
-//         Log::error("Gagal download surat: " . $e->getMessage());
-//         return response()->json(['error' => 'Gagal download surat.'], 500);
-//     }
-// }
+    //     } catch (\Throwable $e) {
+    //         Log::error("Gagal download surat: " . $e->getMessage());
+    //         return response()->json(['error' => 'Gagal download surat.'], 500);
+    //     }
+    // }
 
 
-public function testDownloadPdf()
-{
-    try {
-        $pdf = Pdf::loadHTML('
+    public function testDownloadPdf()
+    {
+        try {
+            $pdf = Pdf::loadHTML('
             <h1>Halo Dunia!</h1>
             <p>Ini adalah tes PDF sederhana tanpa imagick.</p>
         ');
 
-        return $pdf->download('test-pdf.pdf');
-
-    } catch (Throwable $e) {
-        Log::error('Gagal generate PDF: ' . $e->getMessage());
-        return response()->json(['error' => 'Gagal generate PDF'], 500);
+            return $pdf->download('test-pdf.pdf');
+        } catch (Throwable $e) {
+            Log::error('Gagal generate PDF: ' . $e->getMessage());
+            return response()->json(['error' => 'Gagal generate PDF'], 500);
+        }
     }
-}
 
 
-public function verifikasiSurat($ajuanId)
-{
-    $ajuan = Ajuan::with(['user', 'surat', 'tandaTangan'])->find($ajuanId);
+    public function verifikasiSurat($ajuanId)
+    {
+        $ajuan = Ajuan::with(['user', 'surat', 'tandaTangan'])->find($ajuanId);
 
-    if (!$ajuan || !$ajuan->tandaTangan) {
+        if (!$ajuan || !$ajuan->tandaTangan) {
+            return view('pengajuan-surat::verifikasi-surat', [
+                'valid' => false,
+                'message' => '❌ Dokumen tidak ditemukan atau belum ditandatangani.'
+            ]);
+        }
+
+        $signatureData = $ajuan->tandaTangan->signature_data;
+        $signature = base64_decode($ajuan->tandaTangan->signature);
+
+        $publicKeyPath = storage_path('app/keys/public.pem');
+        if (!file_exists($publicKeyPath)) {
+            return view('pengajuan-surat::verifikasi-surat', [
+                'valid' => false,
+                'message' => '❌ Public key tidak tersedia.'
+            ]);
+        }
+
+        $publicKey = file_get_contents($publicKeyPath);
+        $publicKeyRes = openssl_pkey_get_public($publicKey);
+
+        $verified = openssl_verify($signatureData, $signature, $publicKeyRes, OPENSSL_ALGO_SHA256);
+
         return view('pengajuan-surat::verifikasi-surat', [
-            'valid' => false,
-            'message' => '❌ Dokumen tidak ditemukan atau belum ditandatangani.'
+            'valid' => $verified === 1,
+            'message' => $verified === 1
+                ? '✅ Dokumen ASLI dan belum dimodifikasi.'
+                : '❌ Dokumen tidak valid atau telah dimodifikasi.',
+            'data' => json_decode($signatureData, true),
+            'ajuan' => $ajuan, // ⬅ DITAMBAHKAN!
         ]);
     }
 
-    $signatureData = $ajuan->tandaTangan->signature_data;
-    $signature = base64_decode($ajuan->tandaTangan->signature);
 
-    $publicKeyPath = storage_path('app/keys/public.pem');
-    if (!file_exists($publicKeyPath)) {
-        return view('pengajuan-surat::verifikasi-surat', [
-            'valid' => false,
-            'message' => '❌ Public key tidak tersedia.'
-        ]);
+    public function testPdfBlade()
+    {
+        try {
+            $pdf = Pdf::loadView('test-pdf');
+            return $pdf->download('test-gambar.pdf');
+        } catch (Throwable $e) {
+            Log::error('Gagal render PDF dari blade: ' . $e->getMessage());
+            return response()->json(['error' => 'Gagal render PDF dari view.'], 500);
+        }
     }
-
-    $publicKey = file_get_contents($publicKeyPath);
-    $publicKeyRes = openssl_pkey_get_public($publicKey);
-
-    $verified = openssl_verify($signatureData, $signature, $publicKeyRes, OPENSSL_ALGO_SHA256);
-
-    return view('pengajuan-surat::verifikasi-surat', [
-        'valid' => $verified === 1,
-        'message' => $verified === 1
-            ? '✅ Dokumen ASLI dan belum dimodifikasi.'
-            : '❌ Dokumen tidak valid atau telah dimodifikasi.',
-        'data' => json_decode($signatureData, true),
-        'ajuan' => $ajuan, // ⬅ DITAMBAHKAN!
-    ]);
-}
-
-
-public function testPdfBlade()
-{
-    try {
-        $pdf = Pdf::loadView('test-pdf');
-        return $pdf->download('test-gambar.pdf');
-    } catch (Throwable $e) {
-        Log::error('Gagal render PDF dari blade: ' . $e->getMessage());
-        return response()->json(['error' => 'Gagal render PDF dari view.'], 500);
-    }
-}
-
-
-    
 }
