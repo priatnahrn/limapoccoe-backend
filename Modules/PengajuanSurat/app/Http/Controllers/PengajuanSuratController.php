@@ -14,6 +14,7 @@ use Modules\PengajuanSurat\Models\TandaTangan;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Modules\PengajuanSurat\Http\Requests\AjuanRequest;
 use Modules\PengajuanSurat\Http\Requests\FillNumberRequest;
 use Modules\PengajuanSurat\Transformers\AjuanResource;
@@ -760,7 +761,7 @@ class PengajuanSuratController extends Controller
 // }
 
 
-
+// fiks yang ini kalo gdrive gagal
 // public function downloadSurat($slug, $ajuanId)
 // {
 //     try {
@@ -800,6 +801,51 @@ class PengajuanSuratController extends Controller
 
 // }
 
+// public function downloadSurat($slug, $ajuanId)
+// {
+//     ini_set('memory_limit', '512M');
+
+//     try {
+//         $ajuanSurat = Ajuan::with(['user', 'user.profileMasyarakat', 'surat', 'tandaTangan'])
+//             ->where('id', $ajuanId)
+//             ->whereHas('surat', fn($q) => $q->where('slug', $slug))
+//             ->firstOrFail();
+
+//         $dataSurat = is_array($ajuanSurat->data_surat)
+//             ? $ajuanSurat->data_surat
+//             : json_decode($ajuanSurat->data_surat, true);
+
+//         $template = 'surat.templates.' . strtolower($ajuanSurat->surat->kode_surat ?? 'default');
+
+//         // ✅ Ambil QR code dari file jika tersedia
+//         $qrCodePath = null;
+//         if ($ajuanSurat->qr_code_path) {
+//             $storedPath = storage_path('app/' . $ajuanSurat->qr_code_path);
+//             if (file_exists($storedPath)) {
+//                 $qrCodePath = $storedPath;
+//             }
+//         }
+
+//         $pdf = Pdf::loadView($template, [
+//             'ajuan'         => $ajuanSurat,
+//             'user'          => $ajuanSurat->user,
+//             'profile'       => $ajuanSurat->user->profileMasyarakat,
+//             'data'          => $dataSurat,
+//             'qrCodePath'    => $qrCodePath,
+//             'downloaded_at' => now()->translatedFormat('l, d F Y H:i'),
+//             'isPreview'     => false,
+//         ])->setPaper('a4', 'portrait');
+
+
+//         return $pdf->download("{$ajuanSurat->nomor_surat}-{$slug}.pdf");
+
+//     } catch (\Throwable $e) {
+//         Log::error("Gagal download surat: " . $e->getMessage());
+//         return response()->json(['error' => 'Gagal download surat.'], 500);
+//     }
+// }
+
+
 public function downloadSurat($slug, $ajuanId)
 {
     ini_set('memory_limit', '512M');
@@ -816,7 +862,6 @@ public function downloadSurat($slug, $ajuanId)
 
         $template = 'surat.templates.' . strtolower($ajuanSurat->surat->kode_surat ?? 'default');
 
-        // ✅ Ambil QR code dari file jika tersedia
         $qrCodePath = null;
         if ($ajuanSurat->qr_code_path) {
             $storedPath = storage_path('app/' . $ajuanSurat->qr_code_path);
@@ -825,7 +870,11 @@ public function downloadSurat($slug, $ajuanId)
             }
         }
 
-        $pdf = Pdf::loadView($template, [
+        $filename = "{$ajuanSurat->nomor_surat}-{$slug}.pdf";
+        $localPath = storage_path("app/temp/{$filename}");
+
+        // Buat PDF & simpan sementara
+        Pdf::loadView($template, [
             'ajuan'         => $ajuanSurat,
             'user'          => $ajuanSurat->user,
             'profile'       => $ajuanSurat->user->profileMasyarakat,
@@ -833,15 +882,20 @@ public function downloadSurat($slug, $ajuanId)
             'qrCodePath'    => $qrCodePath,
             'downloaded_at' => now()->translatedFormat('l, d F Y H:i'),
             'isPreview'     => false,
-        ])->setPaper('a4', 'portrait');
+        ])->setPaper('a4', 'portrait')->save($localPath);
 
-        return $pdf->download("{$ajuanSurat->nomor_surat}-{$slug}.pdf");
+        // Upload ke Google Drive
+        Storage::disk('google')->put("surat/{$filename}", fopen($localPath, 'r+'));
+
+        // Download ke user & hapus file setelah terkirim
+        return response()->download($localPath)->deleteFileAfterSend(true);
 
     } catch (\Throwable $e) {
         Log::error("Gagal download surat: " . $e->getMessage());
         return response()->json(['error' => 'Gagal download surat.'], 500);
     }
 }
+
 
 // public function downloadSurat($slug, $ajuanId)
 // {
