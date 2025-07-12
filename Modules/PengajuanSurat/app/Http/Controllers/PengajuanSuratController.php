@@ -20,6 +20,8 @@ use Modules\PengajuanSurat\Transformers\AjuanResource;
 use Modules\PengajuanSurat\Transformers\TandaTanganResource;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Throwable;
+use Spatie\LaravelPdf\Facades\Pdf as SpatiePdf;
+
 
 class PengajuanSuratController extends Controller
 {
@@ -831,7 +833,7 @@ public function downloadSurat($slug, $ajuanId)
             'qrCodePath'    => $qrCodePath,
             'downloaded_at' => now()->translatedFormat('l, d F Y H:i'),
             'isPreview'     => false,
-        ])->setPaper('f4', 'portrait');
+        ])->setPaper('letter', 'portrait');
 
         return $pdf->download("{$ajuanSurat->nomor_surat}-{$slug}.pdf");
 
@@ -940,6 +942,7 @@ public function testPdfBlade()
         return response()->json(['error' => 'Gagal render PDF dari view.'], 500);
     }
 }
+
 
     
 }
