@@ -45,11 +45,20 @@
 <body>
 
 {{-- Kop Surat --}}
-<div class="center">
-    <div class="bold">PEMERINTAH KABUPATEN MAROS</div>
-    <div class="bold">KECAMATAN CENRANA</div>
-    <div class="bold">DESA LIMAPOCCOE</div>
-</div>
+<table>
+    <tr>
+        <td style="width: 80px;">
+            <img src="{{ $isPreview ? asset('logo-limapoccoe.png') : public_path('logo-limapoccoe.png') }}" alt="Logo" style="height: 80px;">
+        </td>
+        <td class="center">
+            <div class="bold">PEMERINTAH DESA LIMAPOCCOE</div>
+            <div class="bold">KECAMATAN CENRANA</div>
+            <div class="bold">KABUPATEN MAROS</div>
+            <div>Alamat: Jl Poros Maros-Bone Km 36 Kode Pos 90562</div>
+            <div>Email: desalimapoccoe07@gmail.com</div>
+        </td>
+    </tr>
+</table>
 
 <hr>
 
