@@ -120,9 +120,9 @@
         <td style="width: 50%; text-align: center;">
             <div>Limapoccoe, {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d F Y') }}</div>
             <div class="bold">KEPALA DESA LIMAPOCCOE</div>
-            <div style="margin-top: 10px;">
+            <div style="margin-top: 2px;">
                 @php
-                    $ttdPath = storage_path('app/private/tanda-tangan-digital.png');
+                    $ttdPath = storage_path('app/private/tandatangan.png');
                     $ttdBase64 = file_exists($ttdPath) ? base64_encode(file_get_contents($ttdPath)) : null;
                 @endphp
 
