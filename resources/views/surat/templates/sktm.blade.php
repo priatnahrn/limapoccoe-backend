@@ -11,7 +11,7 @@
             }
 
             body {
-                margin: 0;
+                margin: 60mm;
             }
             
         @else
