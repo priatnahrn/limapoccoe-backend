@@ -7,11 +7,10 @@
         @if ($isPreview)
             @page {
                 size: 210mm 297mm;
-                margin: 50px 50px 25px 25px; 
+                margin: 12mm; 
             }
 
             body {
-                padding: 50px 50px 25px 25px;
                 margin: 0;
             }
             
