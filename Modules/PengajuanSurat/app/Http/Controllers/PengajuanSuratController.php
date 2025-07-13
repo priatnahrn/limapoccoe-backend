@@ -693,6 +693,59 @@ class PengajuanSuratController extends Controller
         }
     }
 
+    public function updatePengajuanSurat(AjuanRequest $request, $slug, $ajuan_id)
+    {
+        try {
+
+            // ✅ [ASVS V2.1] Autentikasi pengguna
+            $user = JWTAuth::parseToken()->authenticate();
+            if (!$user) {
+                return response()->json(['message' => 'User belum login. Silakan login terlebih dahulu'], 401);
+            }
+            // ✅ [ASVS V4.1] Kontrol akses berbasis peran
+            if (!$user->hasRole('super-admin') && !$user->hasRole('staff-desa')) {
+                return response()->json(['message' => 'Akses ditolak. Anda tidak memiliki izin untuk memperbarui pengajuan surat ini'], 403);
+            }
+            // ✅ [ASVS V5.1] Validasi slug agar sesuai format yang diharapkan (jika belum di route-level)
+            if (!preg_match('/^[a-z0-9-]+$/', $slug)) {
+                return response()->json(['message' => 'Format slug tidak valid.'], 400);
+            }
+            // ✅ [ASVS V4.1.3] Validasi ID pengajuan berdasarkan slug
+            $ajuanSurat = Ajuan::where('id', $ajuan_id)
+                ->whereHas('surat', fn($q) => $q->where('slug', $slug))
+                ->first();
+
+
+            // ✅ [ASVS V4.2.3] Validasi apakah pengajuan surat ditemukan
+            if (!$ajuanSurat) {
+                return response()->json(['message' => 'Ajuan surat tidak ditemukan'], 404);
+            }
+
+
+            // ✅ [ASVS V5.1] Validasi input eksplisit via FormRequest
+            $validated = $request->validated();
+
+            $ajuanSurat->update($validated);
+
+            // ✅ [ASVS V8.3] Logging aktivitas
+            LogActivity::create([
+                'id' => Str::uuid(),
+                'user_id' => $user->id,
+                'activity_type' => 'update_pengajuan_surat',
+                'description' => 'Pengajuan surat dengan ID ' . $ajuanSurat->id . ' telah diperbarui.',
+                'ip_address' => request()->ip(),
+            ]);
+
+            return response()->json([
+                'message' => 'Pengajuan surat berhasil diperbarui',
+                'data' => new AjuanResource($ajuanSurat)
+            ], 200);
+        } catch (\Throwable $e) {
+            return response()->json(['message' => 'Terjadi kesalahan saat memperbarui pengajuan surat'], 500);
+        }
+    }
+
+
 
     // public function previewSurat($slug, $ajuan_id)
     // {
@@ -773,12 +826,12 @@ class PengajuanSuratController extends Controller
     //     return response($html, 200)->header('Content-Type', 'text/html');
     // }
 
-    public function rejectedStatusPengajuan(Request $request,$slug, $ajuanId)
+    public function rejectedStatusPengajuan(Request $request, $slug, $ajuanId)
     {
         try {
 
             $validated = $request->validate([
-                'alasan_penolakan' => 'required|string|max:255',
+                'alasan_penolakan' => 'nullable|string|max:255',
             ]);
 
             // ✅ [ASVS V2.1.1] Autentikasi wajib untuk semua endpoint non-publik
@@ -819,7 +872,7 @@ class PengajuanSuratController extends Controller
             $pengajuanSurat->save();
 
             // Kirim Notifikasi
-             $message = "Hai {$pengajuanSurat->user['name']} dengan NIK {$pengajuanSurat->user['nik']},\n\n"
+            $message = "Hai {$pengajuanSurat->user['name']} dengan NIK {$pengajuanSurat->user['nik']},\n\n"
                 . "Mohon maaf, pengajuan surat Anda dengan nomor {$pengajuanSurat->nomor_surat} telah ditolak oleh Kepala Desa.\n\n"
                 . "Alasan penolakan: {$validated['alasan_penolakan']}\n\n"
                 . "Terimakasih telah menggunakan layanan kami.\n\n";
@@ -1159,13 +1212,13 @@ class PengajuanSuratController extends Controller
             // ✅ [ASVS V5.1.4] – Update status surat secara eksplisit
             $ajuan->update(['status' => 'approved']);
 
-             // ✅ Kirim OTP ke WhatsApp (ASVS 10.2.1 / SCP #143)
+            // ✅ Kirim OTP ke WhatsApp (ASVS 10.2.1 / SCP #143)
             $message = "Hai {$ajuan->user['name']} dengan NIK {$ajuan->user['nik']},\n\n"
                 . "Surat dengan nomor {$ajuan->nomor_surat} telah berhasil disetujui oleh Kepala Desa pada {$signedAt->toIso8601String()}.\n\n"
                 . "Silakan cek website kami untuk mendapatkan dokumen surat.\n\n"
                 . "Terima kasih telah menggunakan layanan kami.";
 
-            $sent = FonnteHelper::sendWhatsAppMessage($ajuan->user->no_whatsapp ??$ajuan->data_surat['no_whatsapp'], $message);
+            $sent = FonnteHelper::sendWhatsAppMessage($ajuan->user->no_whatsapp ?? $ajuan->data_surat['no_whatsapp'], $message);
 
             if (!$sent) {
                 return response()->json([
