@@ -831,7 +831,7 @@ class PengajuanSuratController extends Controller
         try {
 
             $validated = $request->validate([
-                'alasan_penolakan' => 'nullable|string|max:255',
+                'alasan_penolakan' => 'required|string|max:255',
             ]);
 
             // ✅ [ASVS V2.1.1] Autentikasi wajib untuk semua endpoint non-publik
