@@ -44,7 +44,7 @@ class AuthController extends Controller
                 'message' => 'Terlalu banyak permintaan. Silakan coba lagi dalam ' . $seconds . ' detik.',
             ], 429);
         }
-        RateLimiter::hit($rateLimitKey, 60); // delay 60 detik antar OTP
+        RateLimiter::hit($rateLimitKey, 120); // delay 60 detik antar OTP
 
         // Buat token registrasi dan OTP secara aman (ASVS 6.2.2 / SCP #104)
         $reg_token = Str::uuid()->toString();
@@ -318,6 +318,8 @@ class AuthController extends Controller
                 'message' => 'Terlalu banyak percobaan login. Coba lagi dalam ' . $seconds . ' detik.',
             ], 429);
         }
+        // ✅ ASVS 7.5.1 – Proteksi brute-force
+        RateLimiter::hit($rateKey, 60); // 1x login per 60 detik
 
         $user = AuthUser::where('nik', $validated['nik'])
             ->whereHas('roles', fn($q) => $q->where('name', 'masyarakat'))
@@ -365,6 +367,8 @@ class AuthController extends Controller
                 'message' => 'Terlalu banyak percobaan login. Coba lagi dalam ' . $seconds . ' detik.',
             ], 429);
         }
+        // ✅ ASVS 7.5.1 – Proteksi brute-force
+        RateLimiter::hit($rateKey, 60); // 1x login per 60 detik
 
         $user = AuthUser::where('username', $validated['username'])->first();
 

@@ -4,10 +4,25 @@
     <meta charset="UTF-8">
     <title>Surat Keterangan Tidak Mampu</title>
     <style>
-        @page {
-            size: A4 portrait;
-            margin: 12mm;
-        }
+        @if ($isPreview)
+            @page {
+                size: 210mm 297mm;
+                margin: 20mm 20mm 25mm 20mm; /* Atas, Kanan, Bawah, Kiri */
+            }
+            body {
+                background: #f5f5f5;
+                margin: 20mm;
+            }
+        @else
+            @page {
+                size: A4 portrait;
+                margin: 12mm;
+            }
+            body {
+                margin: 0;
+            }
+        @endif
+
 
         body {
             font-family: 'Times New Roman', Times, serif;
@@ -87,17 +102,17 @@
     <p class="mt-2">Menerangkan bahwa:</p>
     <div class="indent">
         <table style="margin-left: 20px;">
-            <tr><td>Nama</td><td>: {{ $user->name ?? $data['nama'] ?? '-' }}</td></tr>
+            <tr><td>Nama</td><td>: {{  $data['nama'] ?? $user->name ?? '-' }}</td></tr>
             <tr><td>NIK</td><td>: {{ $user->nik ?? $data['nik'] ?? '-' }}</td></tr>
             <tr>
                 <td>Tempat/Tanggal Lahir</td>
-                <td>: {{ optional($profile)->tempat_lahir ?? $data['tempat_lahir'] ?? '-' }},
-                    {{ \Carbon\Carbon::parse(optional($profile)->tanggal_lahir ?? $data['tanggal_lahir'] ?? now())->format('d-m-Y') }}
+                <td>: {{ $data['tempat_lahir'] ?? optional($profile)->tempat_lahir ??  '-' }},
+                    {{$data['tanggal_lahir'] ??  \Carbon\Carbon::parse(optional($profile)->tanggal_lahir ?? now())->format('d-m-Y') }}
                 </td>
             </tr>
-            <tr><td>Jenis Kelamin</td><td>: {{ optional($profile)->jenis_kelamin ?? $data['jenis_kelamin'] ?? '-' }}</td></tr>
-            <tr><td>Pekerjaan</td><td>: {{ optional($profile)->pekerjaan ?? $data['pekerjaan'] ?? '-' }}</td></tr>
-            <tr><td>Alamat</td><td>: {{ optional($profile)->alamat ?? $data['alamat'] ?? '-' }}</td></tr>
+            <tr><td>Jenis Kelamin</td><td>: {{ $data['jenis_kelamin'] ?? optional($profile)->jenis_kelamin ??  '-' }}</td></tr>
+            <tr><td>Pekerjaan</td><td>: {{  $data['pekerjaan'] ?? optional($profile)->pekerjaan ?? '-' }}</td></tr>
+            <tr><td>Alamat</td><td>: {{ $data['alamat'] ?? optional($profile)->alamat ?? '-' }}</td></tr>
         </table>
     </div>
 
@@ -113,7 +128,7 @@
     </div>
 
     <p class="mt-2 indent">
-        Benar penduduk di atas adalah penduduk Dusun {{ optional($profile)->dusun ?? $data['dusun'] ?? '-' }} Desa Limapoccoe tergolong dari keluarga yang kurang mampu.
+        Benar penduduk di atas adalah penduduk Dusun {{ $data['dusun'] ?? optional($profile)->dusun ?? '-' }} Desa Limapoccoe tergolong dari keluarga yang kurang mampu.
     </p>
 
     <p class="indent">
@@ -134,8 +149,7 @@
                         {!! $qrCodeSvg !!}
                     </div>
                 @elseif($showQrFromFile)
-                    <img src="file://{{ $qrCodePath }}" style="width: 50px; height: auto; bottom: 10mm; left: 10mm;
-position: absolute;" alt="QR Code">
+                    <img src="file://{{ $qrCodePath }}" style="width: 50px; height: auto; bottom: 10mm; left: 10mm; position: absolute;" alt="QR Code">
                 @endif
             </td>
 

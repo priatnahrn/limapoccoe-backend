@@ -123,6 +123,7 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
     
+    'kode_wilayah' => env('KODE_WILAYAH', '10.2003'), 
 
 
 ];
