@@ -6,11 +6,11 @@
     <style>
         @if ($isPreview)
             @page {
-                padding: 60mm; 
+                padding: 20mm; 
             }
 
             body {
-                padding: 60mm;
+                padding: 20mm;
             }
             
         @else
