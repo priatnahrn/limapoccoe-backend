@@ -14,6 +14,7 @@ Route::middleware(['auth:api'])->group(function () {
             Route::post('/', [PengajuanSuratController::class, 'ajukanSurat']);
             Route::get('/', [PengajuanSuratController::class, 'getPengajuanSurat']);
             Route::get('/{id}', [PengajuanSuratController::class, 'getDetailPengajuanSurat']);
+            Route::get('/last-number', [PengajuanSuratController::class, 'getLastNomorSurat']);
             Route::put('/{id}/number', [PengajuanSuratController::class, 'fillNumber']);
             Route::put('/{id}/rejected', [PengajuanSuratController::class, 'rejectedStatusPengajuan']);
             Route::put('/{id}/confirmed', [PengajuanSuratController::class, 'confirmedStatusPengajuan']);

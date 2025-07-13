@@ -416,6 +416,60 @@ class PengajuanSuratController extends Controller
     //     ], 200);
     // }
 
+    public function getLastNomorSurat($slug)
+    {
+        try {
+            $user = JWTAuth::parseToken()->authenticate();
+
+            // Optional: cek role jika endpoint ini terbatas
+            if (!$user->hasRole('staff-desa')) {
+                return response()->json([
+                    'error' => 'Akses ditolak.'
+                ], 403);
+            }
+
+            $lastNomorSurat = Ajuan::whereHas('surat', function ($query) use ($slug) {
+                    $query->where('slug', $slug);
+                })
+                ->whereNotNull('nomor_surat')
+                ->orderByDesc('created_at')
+                ->first();
+
+            $nomorTerakhir = $lastNomorSurat?->nomor_surat ?? null;
+
+            // Hitung next urut
+            $lastUrut = 0;
+            if ($nomorTerakhir && preg_match('/^(\d+)/', $nomorTerakhir, $matches)) {
+                $lastUrut = (int) $matches[1];
+            }
+
+            $nextUrut = str_pad($lastUrut + 1, 3, '0', STR_PAD_LEFT);
+
+            $kodeSurat = $lastNomorSurat?->surat->kode_surat ?? 'XXX';
+            $kodeWilayah = config('app.kode_wilayah', '10.2003');
+            $bulanRomawi = $this->toRoman(now()->month);
+            $tahun = now()->year;
+
+            $nomorSuratBaru = $nextUrut . '/' . $kodeSurat . '/' . $kodeWilayah . '/' . $bulanRomawi . '/' . $tahun;
+
+            return response()->json([
+                'nomor_surat_terakhir' => $nomorTerakhir,
+                'nomor_surat_berikutnya' => $nomorSuratBaru
+            ], 200);
+
+        } catch (\Throwable $e) {
+            Log::error('Gagal mengambil nomor surat terakhir', [
+                'user_id' => $user->id ?? null,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'error' => 'Terjadi kesalahan saat mengambil data nomor surat.'
+            ], 500);
+        }
+    }
+
+
     public function fillNumber(FillNumberRequest $request, $slug, $ajuanId)
     {
         try {
