@@ -7,7 +7,7 @@
         @if ($isPreview)
             @page {
                 size: 210mm 297mm;
-                margin: 12mm; 
+                margin: 60mm; 
             }
 
             body {
