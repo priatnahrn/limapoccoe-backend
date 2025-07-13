@@ -7,7 +7,7 @@
         @if ($isPreview)
             @page {
                 size: 210mm 297mm;
-                margin: 25mm 25mm 25mm 25mm; /* Atas, Kanan, Bawah, Kiri */
+                margin: 50px 50px 25px 25px; /* Atas, Kanan, Bawah, Kiri */
             }
             
         @else
