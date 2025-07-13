@@ -7,12 +7,9 @@
         @if ($isPreview)
             @page {
                 size: 210mm 297mm;
-                margin: 20mm 20mm 25mm 20mm; /* Atas, Kanan, Bawah, Kiri */
+                margin: 25mm 25mm 25mm 25mm; /* Atas, Kanan, Bawah, Kiri */
             }
-            body {
-                background: #f5f5f5;
-                margin: 20mm;
-            }
+            
         @else
             @page {
                 size: A4 portrait;
