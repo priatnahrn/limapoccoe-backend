@@ -28,8 +28,8 @@
             font-family: 'Times New Roman', Times, serif;
             font-size: 11pt;
             line-height: 1.4;
-            margin: 0;
-            padding: 0;
+            /* margin: 0;
+            padding: 0; */
         }
 
         .center { text-align: center; }
