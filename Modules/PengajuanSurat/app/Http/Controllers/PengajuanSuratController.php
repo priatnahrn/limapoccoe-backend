@@ -824,7 +824,7 @@ class PengajuanSuratController extends Controller
                 . "Alasan penolakan: {$validated['alasan_penolakan']}\n\n"
                 . "Terimakasih telah menggunakan layanan kami.\n\n";
 
-            $sent = FonnteHelper::sendWhatsAppMessage($pengajuanSurat->user['no_whatsapp'], $message);
+            $sent = FonnteHelper::sendWhatsAppMessage($pengajuanSurat->user->no_whatsapp ?? $pengajuanSurat->data_surat['no_whatsapp'], $message);
 
             if (!$sent) {
                 return response()->json([
@@ -1163,9 +1163,9 @@ class PengajuanSuratController extends Controller
             $message = "Hai {$ajuan->user['name']} dengan NIK {$ajuan->user['nik']},\n\n"
                 . "Surat dengan nomor {$ajuan->nomor_surat} telah berhasil disetujui oleh Kepala Desa pada {$signedAt->toIso8601String()}.\n\n"
                 . "Silakan cek website kami untuk mendapatkan dokumen surat.\n\n"
-                . "Terima kasih telah menggunakan layanan kami.\n\n";
+                . "Terima kasih telah menggunakan layanan kami.";
 
-            $sent = FonnteHelper::sendWhatsAppMessage($ajuan->user['no_whatsapp'], $message);
+            $sent = FonnteHelper::sendWhatsAppMessage($ajuan->user->no_whatsapp ??$ajuan->data_surat['no_whatsapp'], $message);
 
             if (!$sent) {
                 return response()->json([
