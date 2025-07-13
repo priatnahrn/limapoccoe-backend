@@ -875,7 +875,7 @@ class PengajuanSuratController extends Controller
             $message = "Hai {$pengajuanSurat->user['name']} dengan NIK {$pengajuanSurat->user['nik']},\n\n"
                 . "Mohon maaf, pengajuan surat Anda dengan nomor {$pengajuanSurat->nomor_surat} telah ditolak oleh Kepala Desa.\n\n"
                 . "Alasan penolakan: {$validated['alasan_penolakan']}\n\n"
-                . "Terimakasih telah menggunakan layanan kami.\n\n";
+                . "Terimakasih telah menggunakan layanan kami.";
 
             $sent = FonnteHelper::sendWhatsAppMessage($pengajuanSurat->user->no_whatsapp ?? $pengajuanSurat->data_surat['no_whatsapp'], $message);
 
