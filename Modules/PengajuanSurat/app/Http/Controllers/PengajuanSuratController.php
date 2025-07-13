@@ -416,12 +416,11 @@ class PengajuanSuratController extends Controller
     //     ], 200);
     // }
 
-    public function getLastNomorSurat($slug)
+    public function getLastNomorSurat(Request $request, $slug)
     {
         try {
             $user = JWTAuth::parseToken()->authenticate();
 
-            // Optional: cek role jika endpoint ini terbatas
             if (!$user->hasRole('staff-desa')) {
                 return response()->json([
                     'error' => 'Akses ditolak.'
@@ -437,7 +436,7 @@ class PengajuanSuratController extends Controller
 
             $nomorTerakhir = $lastNomorSurat?->nomor_surat ?? null;
 
-            // Hitung next urut
+            // Hitung next urut (default 001)
             $lastUrut = 0;
             if ($nomorTerakhir && preg_match('/^(\d+)/', $nomorTerakhir, $matches)) {
                 $lastUrut = (int) $matches[1];
@@ -445,18 +444,10 @@ class PengajuanSuratController extends Controller
 
             $nextUrut = str_pad($lastUrut + 1, 3, '0', STR_PAD_LEFT);
 
-            $kodeSurat = $lastNomorSurat?->surat->kode_surat ?? 'XXX';
-            $kodeWilayah = config('app.kode_wilayah', '10.2003');
-            $bulanRomawi = $this->toRoman(now()->month);
-            $tahun = now()->year;
-
-            $nomorSuratBaru = $nextUrut . '/' . $kodeSurat . '/' . $kodeWilayah . '/' . $bulanRomawi . '/' . $tahun;
-
             return response()->json([
                 'nomor_surat_terakhir' => $nomorTerakhir,
-                'nomor_surat_berikutnya' => $nomorSuratBaru
-            ], 200);
-
+                'nomor_surat_berikutnya' => $nextUrut
+            ]);
         } catch (\Throwable $e) {
             Log::error('Gagal mengambil nomor surat terakhir', [
                 'user_id' => $user->id ?? null,
@@ -468,6 +459,7 @@ class PengajuanSuratController extends Controller
             ], 500);
         }
     }
+
 
 
     public function fillNumber(FillNumberRequest $request, $slug, $ajuanId)
