@@ -6,7 +6,6 @@
     <style>
         @if ($isPreview)
             @page {
-                size: 210mm 297mm;
                 padding: 60mm; 
             }
 
