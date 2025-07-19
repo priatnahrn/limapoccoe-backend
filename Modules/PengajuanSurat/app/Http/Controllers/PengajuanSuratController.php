@@ -465,7 +465,7 @@ class PengajuanSuratController extends Controller
 
             // Ambil semua Ajuan yang punya nomor_surat dan urutkan berdasarkan created_at
             $lastNomorSurat = Ajuan::whereNotNull('nomor_surat')
-                ->orderByDesc('created_at')
+                ->orderByDesc('updated_at')
                 ->get();
 
             // Ambil nomor_surat terakhir dari koleksi data yang ada
