@@ -776,36 +776,45 @@ class PengajuanSuratController extends Controller
     public function updatePengajuanSurat(AjuanRequest $request, $slug, $ajuan_id)
     {
         try {
-
             // ✅ [ASVS V2.1] Autentikasi pengguna
             $user = JWTAuth::parseToken()->authenticate();
             if (!$user) {
-                return response()->json(['message' => 'User belum login. Silakan login terlebih dahulu'], 401);
-            }
-            // ✅ [ASVS V4.1] Kontrol akses berbasis peran
-            if (!$user->hasRole('super-admin') && !$user->hasRole('staff-desa')) {
-                return response()->json(['message' => 'Akses ditolak. Anda tidak memiliki izin untuk memperbarui pengajuan surat ini'], 403);
-            }
-            // ✅ [ASVS V5.1] Validasi slug agar sesuai format yang diharapkan (jika belum di route-level)
-            if (!preg_match('/^[a-z0-9-]+$/', $slug)) {
-                return response()->json(['message' => 'Format slug tidak valid.'], 400);
+                return response()->json([
+                    'message' => 'User belum login. Silakan login terlebih dahulu'
+                ], 401);
             }
 
-            
-            
-            // ✅ [ASVS V4.1.3] Validasi ID pengajuan berdasarkan slug
+            // ✅ [ASVS V4.1] Kontrol akses berbasis peran
+            if (!$user->hasRole('super-admin') && !$user->hasRole('staff-desa')) {
+                return response()->json([
+                    'message' => 'Akses ditolak. Anda tidak memiliki izin untuk memperbarui pengajuan surat ini'
+                ], 403);
+            }
+
+            // ✅ [ASVS V5.1] Validasi format slug
+            if (!preg_match('/^[a-z0-9-]+$/', $slug)) {
+                return response()->json([
+                    'message' => 'Format slug tidak valid.'
+                ], 400);
+            }
+
+            // ✅ [ASVS V4.1.3] Cari ajuan berdasarkan ID dan slug surat
             $ajuanSurat = Ajuan::where('id', $ajuan_id)
                 ->whereHas('surat', fn($q) => $q->where('slug', $slug))
                 ->first();
 
-
             // ✅ [ASVS V4.2.3] Validasi apakah pengajuan surat ditemukan
             if (!$ajuanSurat) {
-                return response()->json(['message' => 'Ajuan surat tidak ditemukan'], 404);
+                return response()->json([
+                    'message' => 'Ajuan surat tidak ditemukan'
+                ], 404);
             }
 
-            if(!$ajuanSurat->status == 'processed') {
-                return response()->json(['message' => 'Pengajuan surat ini tidak dapat diperbarui karena tidak dalam status sedang diproses'], 400);
+            // ✅ Validasi bahwa status harus 'processed' agar bisa diperbarui
+            if ($ajuanSurat->status !== 'processed') {
+                return response()->json([
+                    'message' => 'Pengajuan surat ini tidak dapat diperbarui karena tidak dalam status sedang diproses'
+                ], 400);
             }
 
             // ✅ [ASVS V5.1] Validasi input eksplisit via FormRequest
@@ -827,7 +836,14 @@ class PengajuanSuratController extends Controller
                 'data' => new AjuanResource($ajuanSurat)
             ], 200);
         } catch (\Throwable $e) {
-            return response()->json(['message' => 'Terjadi kesalahan saat memperbarui pengajuan surat'], 500);
+            Log::error('Gagal memperbarui pengajuan surat', [
+                'user_id' => $user->id ?? null,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'Terjadi kesalahan saat memperbarui pengajuan surat'
+            ], 500);
         }
     }
 
