@@ -258,8 +258,9 @@ class PengajuanSuratController extends Controller
         }
     }
 
-    public function getAllPengajuanSurat(){
-        try{
+    public function getAllPengajuanSurat()
+    {
+        try {
             // ✅ [ASVS V2.1] [SCP #23] Autentikasi di awal proses
             $user = JWTAuth::parseToken()->authenticate();
 
@@ -271,7 +272,7 @@ class PengajuanSuratController extends Controller
             $query = Ajuan::with(['user', 'user.profileMasyarakat', 'surat']);
 
             // ✅ [ASVS V4.2] Kontrol akses berbasis peran (Role-Based Access Control)
-            if(!$user->hasAnyRole(['super-admin', 'staff-desa'])) {
+            if (!$user->hasAnyRole(['super-admin', 'staff-desa'])) {
                 $query->where('user_id', $user->id);
             }
 
@@ -283,8 +284,7 @@ class PengajuanSuratController extends Controller
                 'message' => 'Berhasil mendapatkan semua pengajuan surat.',
                 'pengajuan_surat' => AjuanResource::collection($pengajuanSurat),
             ], 200);
-
-        }catch (\Exception $e) {
+        } catch (\Exception $e) {
             // ✅ [SCP #108, #112] Error tidak mengekspos informasi sistem
             Log::error('Gagal mendapatkan semua pengajuan surat: ' . $e->getMessage());
             return response()->json(['error' => 'Terjadi kesalahan internal.'], 500);
@@ -400,6 +400,8 @@ class PengajuanSuratController extends Controller
         ], 200);
     }
 
+
+
     // public function fillNumber(FillNumberRequest $request, $slug, $ajuanId)
     // {
     //     $user = JWTAuth::parseToken()->authenticate();
@@ -449,7 +451,7 @@ class PengajuanSuratController extends Controller
     //     ], 200);
     // }
 
-    public function getLastNomorSurat(Request $request, $slug)
+    public function getLastNomorSurat()
     {
         try {
             $user = JWTAuth::parseToken()->authenticate();
@@ -460,10 +462,8 @@ class PengajuanSuratController extends Controller
                 ], 403);
             }
 
-            $lastNomorSurat = Ajuan::whereHas('surat', function ($query) use ($slug) {
-                    $query->where('slug', $slug);
-                })
-                ->whereNotNull('nomor_surat')
+            // Ambil Ajuan terakhir yang punya nomor_surat (tanpa filter slug)
+            $lastNomorSurat = Ajuan::whereNotNull('nomor_surat')
                 ->orderByDesc('created_at')
                 ->first();
 
@@ -492,6 +492,7 @@ class PengajuanSuratController extends Controller
             ], 500);
         }
     }
+
 
 
 
