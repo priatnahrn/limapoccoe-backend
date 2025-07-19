@@ -2,6 +2,7 @@
 
 namespace Modules\Pengaduan\Http\Controllers;
 
+use App\Helpers\FonnteHelper;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Modules\Pengaduan\Models\Pengaduan;
@@ -397,6 +398,23 @@ class PengaduanController extends Controller
             // ✅ SCP #10 – Lakukan update hanya pada field yang diizinkan
             $aduan->update(['status' => 'approved']);
 
+            $message = "Hai, {$aduan->user->name},\n\n"
+                . "Pengaduan Anda dengan judul *{$aduan->title}* telah disetujui oleh Kepala Desa.\n\n"
+                . "Terimakasih telah menggunakan layanan kami.";
+
+            // ✅ SCP #37 – Gunakan helper untuk kirim notifikasi WhatsApp
+           try {
+                $sent = FonnteHelper::sendWhatsAppMessage(
+                    $aduan->user->no_whatsapp ?? $aduan->data_surat['no_whatsapp'],
+                    $message
+                );
+            } catch (\Exception $e) {
+                Log::error('Gagal mengirim notifikasi WhatsApp', [
+                    'aduan_id' => $aduan->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+            
             // ✅ ASVS 7.1.3 – Logging untuk audit trail
             LogActivity::create([
                 'id' => Str::uuid(),

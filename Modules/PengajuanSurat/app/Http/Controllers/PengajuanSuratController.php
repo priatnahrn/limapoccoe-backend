@@ -465,7 +465,7 @@ class PengajuanSuratController extends Controller
             // Ambil Ajuan terakhir yang punya nomor_surat (tanpa filter slug)
             $lastNomorSurat = Ajuan::whereNotNull('nomor_surat')
                 ->orderByDesc('created_at')
-                ->first();
+                ->get();
 
             $nomorTerakhir = $lastNomorSurat?->nomor_surat ?? null;
 
@@ -975,8 +975,9 @@ class PengajuanSuratController extends Controller
 
             // Kirim Notifikasi
             $message = "Hai {$pengajuanSurat->user['name']} dengan NIK {$pengajuanSurat->user['nik']},\n\n"
-                . "Mohon maaf, pengajuan surat Anda dengan nomor {$pengajuanSurat->nomor_surat} telah ditolak oleh Kepala Desa.\n\n"
-                . "Alasan penolakan: {$validated['alasan_penolakan']}\n\n"
+                . "Mohon maaf, pengajuan surat dengan nama surat *{$pengajuanSurat->surat['nama_surat']}* Anda telah ditolak oleh Staff Desa.\n\n"
+                . "Alasan penolakan: *{$validated['alasan_penolakan']}*\n\n"
+                . "Silakan periksa kembali data yang Anda berikan dan ajukan ulang jika diperlukan.\n\n"
                 . "Terimakasih telah menggunakan layanan kami.";
 
             $sent = FonnteHelper::sendWhatsAppMessage($pengajuanSurat->user->no_whatsapp ?? $pengajuanSurat->data_surat['no_whatsapp'], $message);
