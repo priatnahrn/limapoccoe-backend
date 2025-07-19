@@ -23,10 +23,10 @@ Route::middleware(['auth:api'])->group(function () {
             Route::get('/{id}/download', [PengajuanSuratController::class, 'downloadSurat']);
         });
 
-        Route::prefix('pengajuan')->group(function () {
-            Route::get('/', [PengajuanSuratController::class, 'getAllPengajuanSurat']);
-            Route::put('/pengajuan/{id}', [PengajuanSuratController::class, 'updatePengajuan']);
-            Route::delete('/pengajuan/{id}', [PengajuanSuratController::class, 'deletePengajuan']);
-        });
+    });
+    Route::prefix('pengajuan')->group(function () {
+        Route::get('/', [PengajuanSuratController::class, 'getAllPengajuanSurat']);
+        Route::put('/pengajuan/{id}', [PengajuanSuratController::class, 'updatePengajuan']);
+        Route::delete('/pengajuan/{id}', [PengajuanSuratController::class, 'deletePengajuan']);
     });
 });
