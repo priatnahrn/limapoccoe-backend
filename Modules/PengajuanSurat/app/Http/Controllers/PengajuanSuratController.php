@@ -456,20 +456,22 @@ class PengajuanSuratController extends Controller
         try {
             $user = JWTAuth::parseToken()->authenticate();
 
+            // Pastikan hanya staff-desa yang bisa mengakses
             if (!$user->hasRole('staff-desa')) {
                 return response()->json([
                     'error' => 'Akses ditolak.'
                 ], 403);
             }
 
-            // Ambil Ajuan terakhir yang punya nomor_surat (tanpa filter slug)
+            // Ambil semua Ajuan yang punya nomor_surat dan urutkan berdasarkan created_at
             $lastNomorSurat = Ajuan::whereNotNull('nomor_surat')
                 ->orderByDesc('created_at')
                 ->get();
 
-            $nomorTerakhir = $lastNomorSurat?->nomor_surat ?? null;
+            // Ambil nomor_surat terakhir dari koleksi data yang ada
+            $nomorTerakhir = $lastNomorSurat->first()?->nomor_surat ?? null;
 
-            // Hitung next urut (default 001)
+            // Hitung nomor urut berikutnya (default 001)
             $lastUrut = 0;
             if ($nomorTerakhir && preg_match('/^(\d+)/', $nomorTerakhir, $matches)) {
                 $lastUrut = (int) $matches[1];
@@ -492,6 +494,7 @@ class PengajuanSuratController extends Controller
             ], 500);
         }
     }
+
 
 
 
