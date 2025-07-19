@@ -790,6 +790,9 @@ class PengajuanSuratController extends Controller
             if (!preg_match('/^[a-z0-9-]+$/', $slug)) {
                 return response()->json(['message' => 'Format slug tidak valid.'], 400);
             }
+
+            
+            
             // ✅ [ASVS V4.1.3] Validasi ID pengajuan berdasarkan slug
             $ajuanSurat = Ajuan::where('id', $ajuan_id)
                 ->whereHas('surat', fn($q) => $q->where('slug', $slug))
@@ -801,6 +804,9 @@ class PengajuanSuratController extends Controller
                 return response()->json(['message' => 'Ajuan surat tidak ditemukan'], 404);
             }
 
+            if(!$ajuanSurat->status == 'processed') {
+                return response()->json(['message' => 'Pengajuan surat ini tidak dapat diperbarui karena tidak dalam status sedang diproses'], 400);
+            }
 
             // ✅ [ASVS V5.1] Validasi input eksplisit via FormRequest
             $validated = $request->validated();
