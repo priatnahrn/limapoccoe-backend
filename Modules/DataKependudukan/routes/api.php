@@ -10,7 +10,7 @@ Route::middleware(['auth:api'])->group(function () {
         Route::get('/{id}', [DataKependudukanController::class, 'getDetailDataKependudukan']);
         Route::put('/{id}', [DataKependudukanController::class, 'updateDataKependudukan']);
         Route::delete('/anggota-keluarga/{id}', [DataKependudukanController::class, 'deleteAnggotaKeluarga']);
-        Route::delete('/{id}', [DataKependudukanController::class, 'deleteDataKeluarga']);
+        Route::delete('/{id}', [DataKependudukanController::class, 'destroyKeluarga']);
         Route::post('/import', [DataKependudukanController::class, 'importExcel']);
     });
 });

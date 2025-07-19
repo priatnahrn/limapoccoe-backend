@@ -789,7 +789,7 @@ class DataKependudukanController extends Controller
     //     }
     // }
 
-    public function deleteDataKeluarga($id)
+    public function destroyKeluarga($id)
     {
         try {
             // 🔐 [SCP #23–24, ASVS 2.1.1] – Validasi autentikasi
