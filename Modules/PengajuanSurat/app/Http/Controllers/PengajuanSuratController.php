@@ -258,7 +258,40 @@ class PengajuanSuratController extends Controller
         }
     }
 
-    public function getPengajuanSurat($slug)
+    public function getAllPengajuanSurat(){
+        try{
+            // ✅ [ASVS V2.1] [SCP #23] Autentikasi di awal proses
+            $user = JWTAuth::parseToken()->authenticate();
+
+            if (!$user) {
+                return response()->json(['error' => 'Anda belum login. Silakan login terlebih dahulu'], 401);
+            }
+
+            // ✅ [ASVS V4.1] Inisialisasi query dasar
+            $query = Ajuan::with(['user', 'user.profileMasyarakat', 'surat']);
+
+            // ✅ [ASVS V4.2] Kontrol akses berbasis peran (Role-Based Access Control)
+            if(!$user->hasAnyRole(['super-admin', 'staff-desa'])) {
+                $query->where('user_id', $user->id);
+            }
+
+            // ✅ [ASVS V9.1] Ambil semua pengajuan surat
+            $pengajuanSurat = $query->get();
+
+            // ✅ [ASVS V9.1] Response aman, tidak bocorkan info sensitif
+            return response()->json([
+                'message' => 'Berhasil mendapatkan semua pengajuan surat.',
+                'pengajuan_surat' => AjuanResource::collection($pengajuanSurat),
+            ], 200);
+
+        }catch (\Exception $e) {
+            // ✅ [SCP #108, #112] Error tidak mengekspos informasi sistem
+            Log::error('Gagal mendapatkan semua pengajuan surat: ' . $e->getMessage());
+            return response()->json(['error' => 'Terjadi kesalahan internal.'], 500);
+        }
+    }
+
+    public function getPengajuanSuratBySlug($slug)
     {
         try {
             // ✅ [ASVS V2.1] [SCP #23] Autentikasi di awal proses
