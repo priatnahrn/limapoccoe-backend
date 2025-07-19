@@ -475,7 +475,7 @@ class PengajuanSuratController extends Controller
                 $lastUrut = (int) $matches[1];
             }
 
-            $nextUrut = str_pad($lastUrut + 1, 3, '0', STR_PAD_LEFT);
+            $nextUrut = $lastUrut + 1;
 
             return response()->json([
                 'nomor_surat_terakhir' => $nomorTerakhir,
