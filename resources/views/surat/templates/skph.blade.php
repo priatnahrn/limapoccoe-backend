@@ -84,7 +84,7 @@
 <table style="margin-left: 20px;">
     <tr><td>Nama Calon Mahasiswa</td><td>: {{ $user->name ?? $data['nama'] ?? '-' }}</td></tr>
     <tr><td>Jenis Kelamin</td><td>: {{ optional($profile)->jenis_kelamin ?? $data['jenis_kelamin'] ?? '-' }}</td></tr>
-    <tr><td>Tempat/Tanggal Lahir</td><td>: {{ optional($profile)->tempat_lahir ?? $data['tempat_lahir'] ?? '-' }}, {{ \Carbon\Carbon::parse($data['tanggal_lahir'] ?? now())->format('d-m-Y') }}</td></tr>
+    <tr><td>Tempat/Tanggal Lahir</td><td>: {{ optional($profile)->tempat_lahir ?? $data['tempat_lahir'] ?? '-' }}, {{ \Carbon\Carbon::parse( optional($profile)->tanggal_lahir ?? $data['tanggal_lahir'] ?? now())->format('d-m-Y') }}</td></tr>
     <tr><td>Agama</td><td>: {{ optional($profile)->agama ?? $data['agama'] ?? '-' }}</td></tr>
     <tr><td>Asal Sekolah</td><td>: {{ $data['asal_sekolah'] ?? '-' }}</td></tr>
     <tr><td>Jurusan</td><td>: {{ $data['jurusan'] ?? '-' }}</td></tr>

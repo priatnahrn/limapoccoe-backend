@@ -88,7 +88,7 @@
         <tr><td>Nama</td><td>: {{ $user->name ?? $data['nama'] ?? '-' }}</td></tr>
         <tr>
             <td>Tempat/Tanggal Lahir</td>
-            <td>: {{ optional($profile)->tempat_lahir ?? $data['tempat_lahir'] ?? '-' }}, {{ \Carbon\Carbon::parse($data['tanggal_lahir'] ?? now())->format('d-m-Y') }}</td>
+            <td>: {{ $data['tempat_lahir'] ?? optional($profile)->tempat_lahir ?? '-' }}, {{ \Carbon\Carbon::parse($data['tanggal_lahir'] ?? optional($profile)->tanggal_lahir ?? '-')  }}</td>
         </tr>
         <tr><td>NIK</td><td>: {{ $user->nik ?? $data['nik'] ?? '-' }}</td></tr>
         <tr><td>Pekerjaan</td><td>: {{ optional($profile)->pekerjaan ?? $data['pekerjaan'] ?? '-' }}</td></tr>

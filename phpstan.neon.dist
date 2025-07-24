@@ -1,1 +1,10 @@
-parameters
+includes:
+  - ./vendor/nunomaduro/larastan/extension.neon
+
+parameters:
+  level: 5
+  paths:
+    - Modules/Auth 
+    - app     
+  ignoreErrors:
+    - '#Function __\w+ is deprecated#'
