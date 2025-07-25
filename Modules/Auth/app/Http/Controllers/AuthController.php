@@ -36,6 +36,29 @@ class AuthController extends Controller
     {
         $validated = $request->validated();
 
+        $nikExists = AuthUser::where('nik', $validated['nik'])->exists();
+        if ($nikExists) {
+            return response()->json([
+                'message' => 'NIK sudah terdaftar. Silakan gunakan NIK lain.',
+            ], 409); 
+        }
+
+        $whatsappExists = AuthUser::where('no_whatsapp', $validated['no_whatsapp'])->exists();
+        if ($whatsappExists) {
+            return response()->json([
+                'message' => 'Nomor WhatsApp sudah terdaftar. Silakan gunakan nomor lain.',
+            ], 409);
+        }
+
+        $nikExistsInPenduduk = DB::table('penduduks')
+            ->where('nik', $validated['nik'])
+            ->exists();
+        if (!$nikExistsInPenduduk) {
+            return response()->json([
+                'message' => 'Anda bukan merupakan penduduk Desa Limapoccoe. Silakan hubungi admin desa untuk bantuan.',
+            ], 404);
+        }
+
         // Rate Limiting untuk pengiriman OTP (ASVS 7.5.1 / SCP #94)
         $rateLimitKey = 'rl:register:wa:' . $validated['no_whatsapp'];
         if (RateLimiter::tooManyAttempts($rateLimitKey, 1)) {
