@@ -39,14 +39,14 @@ services:
       MYSQL_USER: limapoccoe
       MYSQL_PASSWORD: limapoccoedb2025
     volumes:
-      - mysql_data:/var/lib/mysql
+      - limapoccoe-backend_mysql_data:/var/lib/mysql
     ports:
       - "3306:3306"
     restart: always
     networks:
       - limapoccoe-backend-network
   
-  # Di docker-compose.yml, tambahkan ports ke phpmyadmin:
+
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     container_name: limapoccoe-backend-phpmyadmin
@@ -71,7 +71,8 @@ services:
       - limapoccoe-backend-network
 
 volumes:
-  mysql_data:
+  limapoccoe-backend_mysql_data:
+    name: limapoccoe-backend_mysql_data
     driver: local
 
 networks:

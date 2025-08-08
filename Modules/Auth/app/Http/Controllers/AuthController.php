@@ -35,14 +35,14 @@ class AuthController extends Controller
     public function register(RegisterRequest $request)
     {
         $validated = $request->validated();
-
+        // Validasi apakah NIK sudah terdaftar (ASVS 5.1.1 / SCP #30)
         $nikExists = AuthUser::where('nik', $validated['nik'])->exists();
         if ($nikExists) {
             return response()->json([
                 'message' => 'NIK sudah terdaftar. Silakan gunakan NIK lain.',
-            ], 409); 
+            ], 409);
         }
-
+        // Validasi apakah nomor WhatsApp sudah terdaftar (ASVS 5.1.1 / SCP #30)
         $whatsappExists = AuthUser::where('no_whatsapp', $validated['no_whatsapp'])->exists();
         if ($whatsappExists) {
             return response()->json([
