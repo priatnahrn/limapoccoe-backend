@@ -50,18 +50,18 @@ class PengajuanSuratDatabaseSeeder extends Seeder
                 'deskripsi' => 'Surat resmi dari desa yang menyatakan seseorang kehilangan dokumen penting, digunakan sebagai dasar laporan polisi dan pengurusan ulang dokumen.',
                 'syarat_ketentuan' => 'Fotokopi KTP, Surat Pengantar RT/RW, Uraian/kronologi kehilangan, Jenis dokumen yang hilang, Mengisi formulir permohonan',
             ],
-            [
-                'kode_surat' => 'SKBN',
-                'nama_surat' => 'Surat Keterangan Belum Nikah',
-                'deskripsi' => 'Surat yang menyatakan bahwa seseorang belum pernah menikah secara hukum atau agama, dibutuhkan untuk CPNS, beasiswa, dan keperluan administrasi lainnya.',
-                'syarat_ketentuan' => 'Fotokopi KTP, Fotokopi KK, Surat Pengantar RT/RW, Pernyataan belum menikah dari desa, Mengisi formulir permohonan',
-            ],
-            [
-                'kode_surat' => 'SKN',
-                'nama_surat' => 'Surat Keterangan Nikah',
-                'deskripsi' => 'Surat dari desa yang menyatakan pasangan telah menikah secara agama namun belum tercatat resmi di instansi pemerintah, digunakan untuk administrasi keluarga.',
-                'syarat_ketentuan' => 'Fotokopi KTP suami dan istri, Fotokopi KK, Surat nikah dari tokoh agama, Surat Pengantar RT/RW, Mengisi formulir permohonan',
-            ],
+            // [
+            //     'kode_surat' => 'SKBN',
+            //     'nama_surat' => 'Surat Keterangan Belum Nikah',
+            //     'deskripsi' => 'Surat yang menyatakan bahwa seseorang belum pernah menikah secara hukum atau agama, dibutuhkan untuk CPNS, beasiswa, dan keperluan administrasi lainnya.',
+            //     'syarat_ketentuan' => 'Fotokopi KTP, Fotokopi KK, Surat Pengantar RT/RW, Pernyataan belum menikah dari desa, Mengisi formulir permohonan',
+            // ],
+            // [
+            //     'kode_surat' => 'SKN',
+            //     'nama_surat' => 'Surat Keterangan Nikah',
+            //     'deskripsi' => 'Surat dari desa yang menyatakan pasangan telah menikah secara agama namun belum tercatat resmi di instansi pemerintah, digunakan untuk administrasi keluarga.',
+            //     'syarat_ketentuan' => 'Fotokopi KTP suami dan istri, Fotokopi KK, Surat nikah dari tokoh agama, Surat Pengantar RT/RW, Mengisi formulir permohonan',
+            // ],
             [
                 'kode_surat' => 'SKL',
                 'nama_surat' => 'Surat Keterangan Kelahiran',
@@ -74,12 +74,12 @@ class PengajuanSuratDatabaseSeeder extends Seeder
                 'deskripsi' => 'Surat resmi dari desa yang menyatakan seseorang atau keluarganya belum memiliki rumah pribadi, digunakan untuk program bantuan/subsidi rumah.',
                 'syarat_ketentuan' => 'Fotokopi KTP, Fotokopi KK, Surat Pengantar RT/RW, Pernyataan belum memiliki rumah, Mengisi formulir permohonan',
             ],
-            [
-                'kode_surat' => 'SKBBM',
-                'nama_surat' => 'Surat Rekomendasi Pembelian BBM Bersubsidi',
-                'deskripsi' => 'Surat rekomendasi resmi dari desa agar seseorang dapat membeli BBM bersubsidi untuk keperluan usaha seperti pertanian, nelayan, atau transportasi.',
-                'syarat_ketentuan' => 'Fotokopi KTP, Fotokopi KK, Surat Pengantar RT/RW, Data kendaraan atau alat usaha, Tujuan pembelian BBM subsidi, Mengisi formulir permohonan',
-            ],
+            // [
+            //     'kode_surat' => 'SKBBM',
+            //     'nama_surat' => 'Surat Rekomendasi Pembelian BBM Bersubsidi',
+            //     'deskripsi' => 'Surat rekomendasi resmi dari desa agar seseorang dapat membeli BBM bersubsidi untuk keperluan usaha seperti pertanian, nelayan, atau transportasi.',
+            //     'syarat_ketentuan' => 'Fotokopi KTP, Fotokopi KK, Surat Pengantar RT/RW, Data kendaraan atau alat usaha, Tujuan pembelian BBM subsidi, Mengisi formulir permohonan',
+            // ],
         ];
 
         foreach ($surats as $item) {
