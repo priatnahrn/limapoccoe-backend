@@ -6,23 +6,21 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        Schema::table('sessions', function (Blueprint $table) {
-            $table->char('user_id', 36)->nullable()->change();
-        });
+        if (Schema::hasTable('sessions') && Schema::hasColumn('sessions', 'user_id')) {
+            Schema::table('sessions', function (Blueprint $table) {
+                $table->char('user_id', 36)->nullable()->change();
+            });
+        }
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::table('sessions', function (Blueprint $table) {
-            $table->unsignedBigInteger('user_id')->nullable()->change(); // atau tipe sebelumnya
-        });
+        if (Schema::hasTable('sessions') && Schema::hasColumn('sessions', 'user_id')) {
+            Schema::table('sessions', function (Blueprint $table) {
+                $table->unsignedBigInteger('user_id')->nullable()->change(); // atau tipe sebelumnya
+            });
+        }
     }
 };
