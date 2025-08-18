@@ -17,10 +17,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (Schema::hasTable('sessions') && Schema::hasColumn('sessions', 'user_id')) {
-            Schema::table('sessions', function (Blueprint $table) {
-                $table->unsignedBigInteger('user_id')->nullable()->change(); // atau tipe sebelumnya
-            });
-        }
+       
     }
 };
