@@ -10,6 +10,7 @@ use Modules\Informasi\Models\Informasi;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class InformasiController extends Controller
 {
@@ -59,51 +60,68 @@ class InformasiController extends Controller
         }
     }
 
-   public function updateInformasi(Request $request, $id)
-{
-    try {
-        $user = JWTAuth::parseToken()->authenticate();
-        if (!$user || !$user->hasRole('staff-desa')) {
-            return response()->json(['error' => 'Tidak punya akses.'], 403);
+    public function updateInformasi(InformasiRequest $request, $id)
+    {
+        try {
+            // 🔐 Autentikasi & role check
+            $user = JWTAuth::parseToken()->authenticate();
+            if (!$user || !$user->hasRole('staff-desa')) {
+                return response()->json(['error' => 'Tidak punya akses.'], 403);
+            }
+
+            // 🔎 Ambil data dari DB
+            $informasi = Informasi::findOrFail($id);
+
+            // 🧹 Siapkan data yang mau diupdate (hanya isi yang dikirim)
+            $payload = [];
+
+            if ($request->filled('judul')) {
+                $payload['judul'] = $request->input('judul');
+
+                // 🔁 Kalau judul berubah, update slug juga
+                if ($informasi->judul !== $request->input('judul')) {
+                    $payload['slug'] = Informasi::generateUniqueSlug($request->input('judul'), $informasi->id);
+                }
+            }
+
+            if ($request->filled('konten')) {
+                $payload['konten'] = $request->input('konten');
+            }
+
+            if ($request->filled('kategori')) {
+                $payload['kategori'] = $request->input('kategori');
+            }
+
+            $payload['updated_by'] = $user->id;
+
+            // 📸 Ganti gambar jika ada
+            if ($request->hasFile('gambar')) {
+                if ($informasi->gambar) {
+                    Storage::disk('public')->delete($informasi->gambar);
+                }
+                $payload['gambar'] = $request->file('gambar')->store('informasi', 'public');
+            }
+
+            // 💾 Update ke DB
+            $informasi->update($payload);
+            $informasi->refresh();
+
+            // ✅ Respon
+            return response()->json([
+                'message' => 'Informasi berhasil diperbarui.',
+                'informasi' => $informasi
+            ], 200);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['error' => 'Validasi gagal.', 'details' => $e->errors()], 422);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['error' => 'Informasi tidak ditemukan.'], 404);
+        } catch (\Exception $e) {
+            Log::error('Update informasi gagal: ' . $e->getMessage());
+            return response()->json(['error' => 'Terjadi kesalahan internal. Silakan coba lagi.'], 500);
         }
-
-        $rules = [
-            'judul' => 'nullable|string|max:255',
-            'konten' => 'nullable|string',
-            'gambar' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
-            'kategori' => 'nullable|in:berita,pengumuman,artikel,wisata,produk,banner,galeri',
-        ];
-
-        $input = $request->all(); // fix buat form-data
-        $validatedData = validator($input, $rules)->validate();
-
-        if ($request->hasFile('gambar')) {
-            $validatedData['gambar'] = $request->file('gambar')->store('informasi', 'public');
-        }
-
-        $informasi = Informasi::findOrFail($id);
-        $validatedData['updated_by'] = $user->id;
-        $validatedData['updated_at'] = now();
-
-        $informasi->update($validatedData);
-
-        return response()->json([
-            'message' => 'Informasi berhasil diperbarui.',
-            'informasi' => $informasi
-        ], 200);
-
-    } catch (\Illuminate\Validation\ValidationException $e) {
-        return response()->json([
-            'error' => 'Validasi gagal.',
-            'details' => $e->errors(),
-        ], 422);
-    } catch (\Exception $e) {
-        Log::error('Update informasi gagal: ' . $e->getMessage());
-        return response()->json([
-            'error' => 'Terjadi kesalahan internal. Silakan coba lagi.'
-        ], 500);
     }
-}
+
 
 
 

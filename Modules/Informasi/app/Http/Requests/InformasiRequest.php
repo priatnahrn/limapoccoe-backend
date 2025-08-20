@@ -12,12 +12,11 @@ class InformasiRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'judul' => 'required',
-            'konten' => 'nullable',
-            'gambar' => 'nullable|image|mimes:jpeg,png,jpg|max:5120', // Maksimal 5MB
-            'kategori' => 'nullable|in:berita,pengumuman,artikel,wisata,produk,banner,galeri',
-            'created_by' => 'nullable|exists:auth_users,id',
-            'updated_by' => 'nullable|exists:auth_users,id',
+            'judul'     => 'sometimes|string|max:225',
+            'konten'    => 'nullable|string',
+            'kategori'  => 'nullable|in:berita,pengumuman,artikel,wisata,produk,banner,galeri',
+            'gambar'    => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
+            // Tidak perlu validasi slug karena tidak dikirim dari frontend
         ];
     }
 
@@ -32,11 +31,9 @@ class InformasiRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'judul.required' => 'Judul informasi harus diisi.',
-            'gambar.image' => 'File gambar harus berupa gambar.',
-            'gambar.mimes' => 'Gambar harus berformat jpeg, png, atau jpg.',
-            'gambar.max' => 'Ukuran gambar maksimal 5MB.',
-            'kategori.in' => 'Kategori informasi tidak valid.',
+            'gambar.image' => 'Format gambar tidak valid.',
+            'gambar.max' => 'Ukuran gambar tidak boleh lebih dari 5MB.',
+            'kategori.in' => 'Kategori tidak valid.',
         ];
     }
 }
