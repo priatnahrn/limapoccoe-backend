@@ -12,6 +12,9 @@
             font-size: 11pt; line-height: 1.4;
         }
 
+        /* beri ruang aman di bawah agar konten tidak ketutupan footer fixed */
+        .content { padding-bottom: 36mm; }
+
         /* -------- Util -------- */
         .center { text-align: center; }
         .bold { font-weight: bold; }
@@ -25,21 +28,16 @@
         hr { margin: 6px 0; border: 0; border-top: 1px solid #000; }
 
         /* -------- Kolom TTD mepet kanan -------- */
-        .sign-row {
-            display: flex;
-            margin-top: 1.5rem;
-        }
-        /* Kolom TTD didorong ke kanan dan diberi lebar tetap */
+        .sign-row { display: flex; margin-top: 1.5rem; }
         .sig-wrap {
-            margin-left: auto;         /* kunci: nempel kanan */
-            width: 300px;              /* lebar kolom */
+            margin-left: auto;          /* nempel kanan */
+            width: 300px;               /* lebar kolom TTD */
             text-align: center;
         }
         .sig-title { margin-bottom: 6px; }
         .sig-box {
             position: relative;
-            width: 270px;              /* kunci sesuai gambar */
-            height: 180px;
+            width: 270px; height: 180px;/* kunci ukuran gambar */
             margin: 10px auto 0;
             line-height: 0;
         }
@@ -52,35 +50,40 @@
             position: absolute; left: 0; right: 0; top: 50%;
             transform: translateY(-50%);
             text-align: center; font-size: 12px; font-weight: bold; color: #000;
-            opacity: .85; /* mix-blend-mode:multiply; jika engine mendukung */
+            opacity: .85; /* mix-blend-mode: multiply;  jika engine mendukung */
         }
         .sig-name { margin-top: 6px; font-weight: bold; }
 
-        /* -------- QR & Catatan: fixed saat print, normal saat screen -------- */
-        /* default untuk screen: tidak fixed agar tidak menutupi konten */
-        .qr-fixed, .footer-fixed { position: static; }
-        .qr-fixed { width: 60px; height: 60px; margin-top: 24px; }
-        .qr-fixed img, .qr-fixed svg { width: 100%; height: 100%; object-fit: contain; display: block; }
-        .footer-fixed { font-size: 10px; text-align: right; margin-top: 8px; }
-
-        @media print {
-          .qr-fixed {
+        /* -------- FOOTER: QR kiri & catatan kanan dalam satu baris -------- */
+        .page-footer {
             position: fixed;
-            left: 12mm;                 /* sejajar margin kiri */
-            bottom: 12mm;               /* nempel bawah */
-            width: 60px; height: 60px; z-index: 5;
-          }
-          .footer-fixed {
-            position: fixed;
-            right: 12mm;                /* sejajar margin kanan */
-            bottom: 12mm;               /* nempel bawah */
-            font-size: 10px; text-align: right; z-index: 4;
-          }
+            left: 12mm;                   /* sejajar margin @page */
+            right: 12mm;                  /* sejajar margin @page */
+            bottom: 12mm;                 /* nempel bawah */
+            display: flex;
+            align-items: flex-end;        /* sejajarkan vertikal */
+            justify-content: space-between;
+            z-index: 10;
+        }
+        .footer-qr {
+            width: 60px; height: 60px;
+            flex: 0 0 auto;
+        }
+        .footer-qr img, .footer-qr svg {
+            width: 100%; height: 100%;
+            object-fit: contain; display: block;
+        }
+        .footer-note {
+            font-size: 10px;
+            text-align: right;
+            flex: 1 1 auto;
+            margin-left: 12px;            /* jarak dari QR */
         }
     </style>
 </head>
 <body>
 
+<div class="content">
     {{-- Kop Surat --}}
     <table>
         <tr>
@@ -140,18 +143,6 @@
         Demikian surat keterangan ini kami buat dengan sebenarnya untuk digunakan seperlunya.
     </p>
 
-    {{-- QR (screen: ikut flow; print/PDF: fixed kiri bawah) --}}
-    @php
-        $showQrFromFile = !$isPreview && $ajuan->status === 'approved' && isset($qrCodePath) && file_exists($qrCodePath);
-    @endphp
-    <div class="qr-fixed">
-        @if($isPreview && isset($qrCodeSvg))
-            {!! $qrCodeSvg !!}
-        @elseif($showQrFromFile)
-            <img src="file://{{ $qrCodePath }}" alt="QR Code">
-        @endif
-    </div>
-
     {{-- Tanda Tangan (nempel kanan) --}}
     @php
         $ttdPath    = storage_path('app/private/tanda-tangan-digital.png');
@@ -178,13 +169,26 @@
             @endif
         </div>
     </div>
+</div> {{-- /content --}}
 
-    {{-- Catatan (screen: ikut flow; print/PDF: fixed kanan bawah) --}}
+{{-- FOOTER: QR kiri + catatan kanan (selalu fixed & sejajar) --}}
+@php
+    $showQrFromFile = !$isPreview && $ajuan->status === 'approved' && isset($qrCodePath) && file_exists($qrCodePath);
+@endphp
+<div class="page-footer">
+    <div class="footer-qr">
+        @if($isPreview && isset($qrCodeSvg))
+            {!! $qrCodeSvg !!}
+        @elseif($showQrFromFile)
+            <img src="file://{{ $qrCodePath }}" alt="QR Code">
+        @endif
+    </div>
     @if(!$isPreview || $ajuan->status === 'approved')
-        <div class="footer-fixed">
+        <div class="footer-note">
             <em>Catatan:</em> Surat ini berlaku selama 1 bulan sejak tanggal terbit.
         </div>
     @endif
+</div>
 
 </body>
 </html>
