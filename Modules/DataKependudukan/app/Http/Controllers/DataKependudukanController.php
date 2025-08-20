@@ -560,4 +560,69 @@ class DataKependudukanController extends Controller
             ], 500);
         }
     }
+
+
+    public function getJumlahKeluarga()
+    {
+        $jumlahKeluarga = Keluarga::count();
+        return response()->json(['jumlah_keluarga' => $jumlahKeluarga]);
+    }
+
+    public function getJumlahPenduduk()
+    {
+        $jumlahPenduduk = Penduduk::count();
+        return response()->json(['jumlah_penduduk' => $jumlahPenduduk]);
+    }
+
+    public function getJumlahPendudukPerJenisKelamin()
+    {
+        $jumlahPendudukPerJenisKelamin = Penduduk::select('jenis_kelamin', DB::raw('count(*) as total'))
+            ->groupBy('jenis_kelamin')
+            ->get();
+
+        return response()->json($jumlahPendudukPerJenisKelamin);
+    }
+
+    public function getJumlahPendudukPerDusun()
+    {
+        $jumlahPendudukPerDusun = Keluarga::join('rumahs', 'keluargas.rumah_id', '=', 'rumahs.id')
+            ->join('penduduks', 'keluargas.id', '=', 'penduduks.keluarga_id')
+            ->select('rumahs.dusun', DB::raw('count(penduduks.id) as total'))
+            ->groupBy('rumahs.dusun')
+            ->get();
+
+        return response()->json($jumlahPendudukPerDusun);
+    }
+
+    public function getJumlahPendudukPerPendidikan()
+    {
+        $jumlahPendudukPerPendidikan = Penduduk::select('pendidikan', DB::raw('count(*) as total'))
+            ->groupBy('pendidikan')
+            ->get();
+
+        return response()->json($jumlahPendudukPerPendidikan);
+    }
+
+    public function getJumlahPendudukPerPerkawinan()
+    {
+        $jumlahPendudukPerPerkawinan = Penduduk::select('status_perkawinan', DB::raw('count(*) as total'))
+            ->groupBy('status_perkawinan')
+            ->get();
+
+        return response()->json($jumlahPendudukPerPerkawinan);
+    }
+
+    public function getJumlahPendudukPerAgama()
+    {
+        $jumlahPendudukPerAgama = Penduduk::select('agama', DB::raw('count(*) as total'))
+            ->groupBy('agama')
+            ->get();
+
+        return response()->json($jumlahPendudukPerAgama);
+    }
+
+    
+
+
+
 }

@@ -13,4 +13,11 @@ Route::middleware(['auth:api'])->group(function () {
         Route::delete('/{id}', [DataKependudukanController::class, 'destroyKeluarga']);
         Route::post('/import', [DataKependudukanController::class, 'importExcel']);
     });
+
+});
+
+Route::prefix('statistik')->group(function () {
+    Route::get('/jumlah-penduduk', [DataKependudukanController::class, 'getJumlahPenduduk']);
+    Route::get('/jumlah-keluarga', [DataKependudukanController::class, 'getJumlahKeluarga']);
+    Route::get('/jumlah-jenis-kelamin', [DataKependudukanController::class, 'getJumlahPerJenisKelamin']);
 });

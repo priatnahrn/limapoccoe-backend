@@ -23,7 +23,7 @@ return new class extends Migration
             $table->string('tempat_lahir', 50)->nullable();
             $table->date('tgl_lahir')->nullable();
             $table->enum('jenis_kelamin', ['Laki-laki', 'Perempuan'])->nullable();                  // Jenis kelamin
-            $table->enum('status_perkawinan',['Belum Kawin', 'Kawin', 'Cerai Hidup', 'Cerai Mati'])->nullable();
+            $table->enum('status_perkawinan',['Belum Kawin', 'Kawin', 'Kawin Tercatat','Cerai Hidup', 'Cerai Mati'])->nullable();
             $table->enum('agama', ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Konghucu', 'Lainnya'])->nullable();
             $table->enum('pendidikan', [
                 'Tidak/Belum Sekolah',
