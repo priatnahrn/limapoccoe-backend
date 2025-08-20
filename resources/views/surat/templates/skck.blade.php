@@ -139,47 +139,56 @@
                 @endif
             </td>
 
+            {{-- Tanda Tangan --}}
             <td style="width: 50%; text-align: center;">
-    <div>Limapoccoe, {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d F Y') }}</div>
-    <div class="bold">KEPALA DESA LIMAPOCCOE</div>
+                <div>Limapoccoe, {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d F Y') }}</div>
+                <div class="bold">KEPALA DESA LIMAPOCCOE</div>
 
-    <div style="margin-top: 10px; position: relative; display: inline-block;">
-        @php
-            $ttdPath = storage_path('app/private/tandatangan.png');
-            $ttdBase64 = file_exists($ttdPath) ? base64_encode(file_get_contents($ttdPath)) : null;
-        @endphp
+                {{-- siapkan source tanda tangan --}}
+                @php
+                    $ttdPath   = storage_path('app/private/tanda-tangan-digital.png');
+                    $ttdBase64 = file_exists($ttdPath) ? base64_encode(file_get_contents($ttdPath)) : null;
 
-        @if ($ajuan->status === 'approved' && $ttdBase64)
-            <!-- Gambar TTD -->
-            <img src="data:image/png;base64,{{ $ttdBase64 }}" 
-                 style="height: 180px;" 
-                 alt="Tanda Tangan">
+                    // tanggal yang mau ditulis di atas tanda tangan (silakan sesuaikan sumbernya)
+                    $tanggalTtd = \Carbon\Carbon::parse($ajuan->updated_at ?? now())->format('d/m/Y');
+                @endphp
 
-            <!-- Tanggal di atas gambar -->
-            <div style="
-                position: absolute; 
-                top: 5px; 
-                left: 50%; 
-                transform: translateX(-50%); 
-                font-size: 11px; 
-                font-weight: bold;
-                background: rgba(255,255,255,0.6); /* biar tetap kebaca kalau nabrak ttd */
-                padding: 2px 5px;
-            ">
-                {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d F Y') }}
-            </div>
+                <div style="margin-top: 10px; position: relative; display: inline-block;">
+                    @if ($ajuan->status === 'approved' && $ttdBase64)
+                        <!-- Gambar tanda tangan -->
+                        <img src="data:image/png;base64,{{ $ttdBase64 }}" style="height: 180px;" alt="Tanda Tangan">
 
-            <br>
-            <strong>{{ $ajuan->tandaTangan->user->name ?? 'H ANDI ABU BAKRI' }}</strong>
-        @else
-            <div style="height: 100px;"></div>
-            <strong style="color: grey;">Belum ditandatangani</strong>
-        @endif
-    </div>
-</td>
+                         <!-- Tanggal overlap di tengah gambar -->
+                        <div style="
+                            position: absolute;
+                            top: 50%;
+                            left: 50%;
+                            transform: translate(-50%, -50%);
+                            font-size: 12px;
+                            font-weight: bold;
+                            color: black;
+                            mix-blend-mode: multiply; /* biar kayak nyatu sama tinta */
+                        ">
+                            {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d/m/Y') }}
+                        </div>
+
+                        <br>
+                        <strong>{{ $ajuan->tandaTangan->user->name ?? 'H ANDI ABU BAKRI' }}</strong>
+                    @else
+                        <div style="height: 100px;"></div>
+                        <strong style="color: grey;">Belum ditandatangani</strong>
+                    @endif
+                </div>
+            </td>
 
         </tr>
     </table>
+     {{-- Catatan --}}
+    @if(!$isPreview || $ajuan->status === 'approved')
+        <div class="footer-note">
+            <p><em>Catatan:</em> Surat ini berlaku selama 1 bulan sejak tanggal terbit.</p>
+        </div>
+    @endif
 
 </body>
 </html>

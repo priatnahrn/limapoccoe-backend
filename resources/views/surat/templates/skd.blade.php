@@ -146,18 +146,18 @@
                         <!-- Gambar tanda tangan -->
                         <img src="data:image/png;base64,{{ $ttdBase64 }}" style="height: 180px;" alt="Tanda Tangan">
 
-                        <!-- Tanggal di atas tanda tangan -->
+                         <!-- Tanggal overlap di tengah gambar -->
                         <div style="
                             position: absolute;
-                            bottom: 15px;           /* geser naik/turun sesuai kebutuhan */
+                            top: 50%;
                             left: 50%;
-                            transform: translateX(-50%);
-                            font-size: 10px;
-                            line-height: 1;
-                            z-index: 2;             /* pastikan di atas gambar */
-                            white-space: nowrap;
+                            transform: translate(-50%, -50%);
+                            font-size: 12px;
+                            font-weight: bold;
+                            color: black;
+                            mix-blend-mode: multiply; /* biar kayak nyatu sama tinta */
                         ">
-                            {{ $tanggalTtd }}
+                            {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d/m/Y') }}
                         </div>
 
                         <br>
