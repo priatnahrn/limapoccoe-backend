@@ -24,50 +24,58 @@
         table tr td:nth-child(2) { padding-left: 20px; }
         hr { margin: 6px 0; border: 0; border-top: 1px solid #000; }
 
-        /* -------- TTD mepet kanan -------- */
+        /* -------- Kolom TTD mepet kanan -------- */
         .sign-row {
             display: flex;
-            justify-content: flex-end;   /* dorong ke kanan */
             margin-top: 1.5rem;
         }
-        .sig-wrap { text-align: center; }
+        /* Kolom TTD didorong ke kanan dan diberi lebar tetap */
+        .sig-wrap {
+            margin-left: auto;         /* kunci: nempel kanan */
+            width: 300px;              /* lebar kolom */
+            text-align: center;
+        }
         .sig-title { margin-bottom: 6px; }
         .sig-box {
             position: relative;
-            width: 270px;    /* kunci sesuai ukuran gambar */
+            width: 270px;              /* kunci sesuai gambar */
             height: 180px;
             margin: 10px auto 0;
             line-height: 0;
         }
         .sig-img {
             position: absolute; inset: 0;
-            width: 100%; height: 100%; object-fit: contain; display: block;
+            width: 100%; height: 100%;
+            object-fit: contain; display: block;
         }
         .sig-date {
             position: absolute; left: 0; right: 0; top: 50%;
             transform: translateY(-50%);
             text-align: center; font-size: 12px; font-weight: bold; color: #000;
-            opacity: .85; /* fallback jika blend-mode tak didukung */
-            /* mix-blend-mode: multiply; */
+            opacity: .85; /* mix-blend-mode:multiply; jika engine mendukung */
         }
         .sig-name { margin-top: 6px; font-weight: bold; }
 
-        /* -------- Elemen 'fixed' di bawah halaman -------- */
-        .qr-fixed {
-            position: fixed;
-            left: 12mm;            /* sejajar margin kiri halaman */
-            bottom: 12mm;          /* nempel bawah (ikut margin @page) */
-            width: 60px; height: 60px;
-            z-index: 5;
-        }
+        /* -------- QR & Catatan: fixed saat print, normal saat screen -------- */
+        /* default untuk screen: tidak fixed agar tidak menutupi konten */
+        .qr-fixed, .footer-fixed { position: static; }
+        .qr-fixed { width: 60px; height: 60px; margin-top: 24px; }
         .qr-fixed img, .qr-fixed svg { width: 100%; height: 100%; object-fit: contain; display: block; }
+        .footer-fixed { font-size: 10px; text-align: right; margin-top: 8px; }
 
-        .footer-fixed {
+        @media print {
+          .qr-fixed {
             position: fixed;
-            right: 12mm;           /* sejajar margin kanan */
-            bottom: 12mm;          /* sejajar margin bawah */
-            font-size: 10px; text-align: right;
-            z-index: 4;
+            left: 12mm;                 /* sejajar margin kiri */
+            bottom: 12mm;               /* nempel bawah */
+            width: 60px; height: 60px; z-index: 5;
+          }
+          .footer-fixed {
+            position: fixed;
+            right: 12mm;                /* sejajar margin kanan */
+            bottom: 12mm;               /* nempel bawah */
+            font-size: 10px; text-align: right; z-index: 4;
+          }
         }
     </style>
 </head>
@@ -132,7 +140,7 @@
         Demikian surat keterangan ini kami buat dengan sebenarnya untuk digunakan seperlunya.
     </p>
 
-    {{-- QR fixed di pojok kiri bawah --}}
+    {{-- QR (screen: ikut flow; print/PDF: fixed kiri bawah) --}}
     @php
         $showQrFromFile = !$isPreview && $ajuan->status === 'approved' && isset($qrCodePath) && file_exists($qrCodePath);
     @endphp
@@ -144,7 +152,7 @@
         @endif
     </div>
 
-    {{-- Tanda Tangan (mepet kanan) --}}
+    {{-- Tanda Tangan (nempel kanan) --}}
     @php
         $ttdPath    = storage_path('app/private/tanda-tangan-digital.png');
         $ttdBase64  = file_exists($ttdPath) ? base64_encode(file_get_contents($ttdPath)) : null;
@@ -171,7 +179,7 @@
         </div>
     </div>
 
-    {{-- Catatan fixed paling bawah (kanan) --}}
+    {{-- Catatan (screen: ikut flow; print/PDF: fixed kanan bawah) --}}
     @if(!$isPreview || $ajuan->status === 'approved')
         <div class="footer-fixed">
             <em>Catatan:</em> Surat ini berlaku selama 1 bulan sejak tanggal terbit.
