@@ -27,11 +27,21 @@
         table tr td:nth-child(2) { padding-left: 20px; }
         hr { margin: 6px 0; border: 0; border-top: 1px solid #000; }
 
+        /* ---- Daftar rapat (untuk a/b/c) ---- */
+        .list-tight {
+            margin: 2px 0 0 22px;     /* kecilkan margin */
+            padding-left: 0;
+            line-height: 1.2;         /* rapatkan baris */
+        }
+        .list-tight li {
+            margin: 0 0 2px 0;        /* hilangkan gap antar-li */
+        }
+
         /* ---- Signature (kanan) ---- */
-        .sign-row { display: flex; margin-top: 1.2rem; break-inside: avoid; page-break-inside: avoid; }
+        .sign-row { display: flex; margin-top: 1.1rem; break-inside: avoid; page-break-inside: avoid; }
         .sig-wrap { margin-left: auto; width: 300px; text-align: center; }
         .sig-title { margin-bottom: 6px; }
-        .sig-box { position: relative; width: 270px; height: 175px; margin: 8px auto 0; line-height: 0; }
+        .sig-box { position: relative; width: 270px; height: 175px; margin: 6px auto 0; line-height: 0; }
         .sig-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; }
         .sig-date { position: absolute; left:0; right:0; top:50%; transform:translateY(-50%); text-align:center; font-size:12px; font-weight:bold; opacity:.85; }
         .sig-name { margin-top: 6px; font-weight: bold; }
@@ -45,16 +55,20 @@
         .footer-qr img, .footer-qr svg { width: 100%; height: 100%; object-fit: contain; display: block; }
         .footer-note { font-size: 10px; text-align: right; flex: 1 1 auto; }
 
-        /* ---- Kompres saat cetak agar aman 1 halaman ---- */
+        /* ---- Kompres saat cetak ---- */
         @media print {
             body { font-size: 10.5pt; line-height: 1.35; }
             .logo { height: 70px; }
-            .mt-3 { margin-top: .8rem; }
-            .mt-2 { margin-top: .4rem; }
+            .mt-3 { margin-top: .75rem; }
+            .mt-2 { margin-top: .38rem; }
             table tr td:first-child { width: 140px; }
             table tr td:nth-child(2) { padding-left: 14px; }
             hr { margin: 4px 0; }
-            .sig-box { height: 165px; }
+
+            .list-tight { line-height: 1.15; margin-top: 0; }  /* lebih rapat lagi di print */
+            .list-tight li { margin-bottom: 1px; }
+
+            .sig-box { height: 165px; }   /* sedikit dipendekkan */
             .sig-date { font-size: 11px; }
         }
     </style>
@@ -113,15 +127,14 @@
         </table>
     </div>
 
-    <p class="mt-2 indent">
-        Benar nama tersebut di atas sepanjang pengetahuan dan penyelidikan kami tidak pernah terlibat:
-    </p>
+    <p class="mt-2 indent">Benar nama tersebut di atas sepanjang pengetahuan dan penyelidikan kami tidak pernah terlibat:</p>
 
-    <div class="indent" style="margin-left:20px;">
-        <p>a. Tindakan Kriminal</p>
-        <p>b. G.30 S/PKI</p>
-        <p>c. Organisasi terlarang</p>
-    </div>
+    <!-- POIN DIPADATKAN -->
+    <ul class="list-tight">
+        <li>a. Tindakan Kriminal</li>
+        <li>b. G.30 S/PKI</li>
+        <li>c. Organisasi terlarang</li>
+    </ul>
 
     <p class="indent">Dan kami nyatakan yang bersangkutan berkelakuan baik.</p>
     <p class="indent">Demikian surat keterangan ini kami buat dan bersifat sebagai pengantar untuk digunakan sebagaimana mestinya.</p>
@@ -151,7 +164,7 @@
         </div>
     </div>
 
-    {{-- Footer (QR kiri, catatan kanan) --}}
+    {{-- Footer (ikut alur, nempel bawah) --}}
     @php
         $showQrFromFile = !$isPreview && $ajuan->status === 'approved' && isset($qrCodePath) && file_exists($qrCodePath);
     @endphp
