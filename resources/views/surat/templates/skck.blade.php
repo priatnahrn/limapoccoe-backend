@@ -27,15 +27,14 @@
         table tr td:nth-child(2) { padding-left: 20px; }
         hr { margin: 6px 0; border: 0; border-top: 1px solid #000; }
 
-        /* ---- Daftar rapat (untuk a/b/c) ---- */
-        .list-tight {
-            margin: 2px 0 0 22px;     /* kecilkan margin */
-            padding-left: 0;
-            line-height: 1.2;         /* rapatkan baris */
+        /* ---- Daftar rapat TANPA bullet (untuk a/b/c) ---- */
+        .list-tight{
+            list-style: none;          /* hilangkan bullets */
+            margin: 2px 0 0 22px;      /* tetap agak menjorok */
+            padding: 0;
+            line-height: 1.2;          /* rapatkan baris */
         }
-        .list-tight li {
-            margin: 0 0 2px 0;        /* hilangkan gap antar-li */
-        }
+        .list-tight li{ margin: 0 0 2px 0; }
 
         /* ---- Signature (kanan) ---- */
         .sign-row { display: flex; margin-top: 1.1rem; break-inside: avoid; page-break-inside: avoid; }
@@ -55,7 +54,7 @@
         .footer-qr img, .footer-qr svg { width: 100%; height: 100%; object-fit: contain; display: block; }
         .footer-note { font-size: 10px; text-align: right; flex: 1 1 auto; }
 
-        /* ---- Kompres saat cetak ---- */
+        /* ---- Kompres saat cetak (jaga 1 halaman) ---- */
         @media print {
             body { font-size: 10.5pt; line-height: 1.35; }
             .logo { height: 70px; }
@@ -64,11 +63,9 @@
             table tr td:first-child { width: 140px; }
             table tr td:nth-child(2) { padding-left: 14px; }
             hr { margin: 4px 0; }
-
-            .list-tight { line-height: 1.15; margin-top: 0; }  /* lebih rapat lagi di print */
+            .list-tight { line-height: 1.15; margin-top: 0; }
             .list-tight li { margin-bottom: 1px; }
-
-            .sig-box { height: 165px; }   /* sedikit dipendekkan */
+            .sig-box { height: 165px; }
             .sig-date { font-size: 11px; }
         }
     </style>
@@ -129,7 +126,7 @@
 
     <p class="mt-2 indent">Benar nama tersebut di atas sepanjang pengetahuan dan penyelidikan kami tidak pernah terlibat:</p>
 
-    <!-- POIN DIPADATKAN -->
+    <!-- POIN RAPAT TANPA BULLET -->
     <ul class="list-tight">
         <li>a. Tindakan Kriminal</li>
         <li>b. G.30 S/PKI</li>
