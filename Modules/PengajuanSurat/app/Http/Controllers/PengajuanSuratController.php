@@ -976,12 +976,13 @@ class PengajuanSuratController extends Controller
             $pengajuanSurat->status = 'rejected';
             $pengajuanSurat->save();
 
-            // Kirim Notifikasi
-            $message = "Hai {$pengajuanSurat->user['name']} dengan NIK {$pengajuanSurat->user['nik']},\n\n"
-                . "Mohon maaf, pengajuan surat dengan nama surat *{$pengajuanSurat->surat['nama_surat']}* Anda telah ditolak oleh Staff Desa.\n\n"
-                . "Alasan penolakan: *{$validated['alasan_penolakan']}*\n\n"
+           // Kirim Notifikasi
+            $message = "👋 Hai *{$pengajuanSurat->user['name']}* (NIK: {$pengajuanSurat->user['nik']}),\n\n"
+                . "Pengajuan surat *{$pengajuanSurat->surat['nama_surat']}* Anda *ditolak* oleh Staff Desa.\n\n"
+                . "📌 Alasan penolakan: *{$validated['alasan_penolakan']}*\n\n"
                 . "Silakan periksa kembali data yang Anda berikan dan ajukan ulang jika diperlukan.\n\n"
-                . "Terimakasih telah menggunakan layanan kami.";
+                . "🙏 Terimakasih telah menggunakan layanan kami.";
+
 
             $sent = FonnteHelper::sendWhatsAppMessage($pengajuanSurat->user->no_whatsapp ?? $pengajuanSurat->data_surat['no_whatsapp'], $message);
 
@@ -1319,10 +1320,12 @@ class PengajuanSuratController extends Controller
             $ajuan->update(['status' => 'approved']);
 
             // ✅ Kirim OTP ke WhatsApp (ASVS 10.2.1 / SCP #143)
-            $message = "Hai {$ajuan->user['name']} dengan NIK {$ajuan->user['nik']},\n\n"
-                . "Surat dengan nomor {$ajuan->nomor_surat} telah berhasil disetujui oleh Kepala Desa pada {$signedAt->toIso8601String()}.\n\n"
-                . "Silakan cek website kami untuk mendapatkan dokumen surat.\n\n"
-                . "Terima kasih telah menggunakan layanan kami.";
+            $message = "👋 Hai *{$ajuan->user['name']}* (NIK: {$ajuan->user['nik']}),\n\n"
+                        . "Surat dengan nomor *{$ajuan->nomor_surat_tersimpan}* telah berhasil *disetujui* oleh Kepala Desa pada {$signedAt->toIso8601String()}.\n\n"
+                        . "📌 Segera unduh dan cek website kami untuk mendapatkan dokumen surat:\n"
+                        . "🌐 https://limapoccoedigital.id\n\n"
+                        . "Anda juga dapat *menscan QR Code* pada surat untuk memverifikasi keaslian dokumen.\n\n"
+                        . "🙏 Terimakasih telah menggunakan layanan kami.";
 
             $sent = FonnteHelper::sendWhatsAppMessage($ajuan->user->no_whatsapp ?? $ajuan->data_surat['no_whatsapp'], $message);
 
