@@ -5,16 +5,11 @@
     <title>Surat Keterangan Domisili</title>
     <style>
         /* -------- Halaman & Body -------- */
-        @page {
-            size: A4 portrait;
-            margin: 12mm;
-        }
+        @page { size: A4 portrait; margin: 12mm; }
         body {
-            margin: 0;
-            padding: 0;
+            margin: 0; padding: 0;
             font-family: 'Times New Roman', Times, serif;
-            font-size: 11pt;
-            line-height: 1.4;
+            font-size: 11pt; line-height: 1.4;
         }
 
         /* -------- Util -------- */
@@ -23,73 +18,57 @@
         .mt-3 { margin-top: 1rem; }
         .mt-2 { margin-top: 0.5rem; }
         .indent { text-indent: 2em; }
-
         table { width: 100%; page-break-inside: avoid; border-collapse: collapse; }
         td { vertical-align: top; padding: 0; }
         table tr td:first-child { width: 150px; }
         table tr td:nth-child(2) { padding-left: 20px; }
-
         hr { margin: 6px 0; border: 0; border-top: 1px solid #000; }
 
-        .footer-note {
-            margin-top: 1rem;
-            font-size: 10px;
-            text-align: right;
-            padding-top: 3px;
-        }
-
-        /* -------- Area QR & TTD (ANTI GESER) -------- */
+        /* -------- TTD mepet kanan -------- */
         .sign-row {
             display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 16px;
+            justify-content: flex-end;   /* dorong ke kanan */
             margin-top: 1.5rem;
         }
-        .qr-box {
-            position: relative;
-            width: 60px;      /* kunci lebar */
-            height: 60px;     /* kunci tinggi */
-        }
-        .qr-box img, .qr-box svg { 
-            position: absolute; 
-            inset: 0; 
-            width: 100%; 
-            height: 100%; 
-            object-fit: contain;
-        }
-
-        /* Kontainer tanda tangan berukuran pasti */
-        .sig-wrap { text-align: center; flex: 1; }
+        .sig-wrap { text-align: center; }
         .sig-title { margin-bottom: 6px; }
         .sig-box {
             position: relative;
-            width: 270px;     /* KUNCI LEBAR supaya engine PDF tidak reflow */
-            height: 180px;    /* KUNCI TINGGI sesuai tinggi gambar */
+            width: 270px;    /* kunci sesuai ukuran gambar */
+            height: 180px;
             margin: 10px auto 0;
-            line-height: 0;   /* hilangkan line-box */
+            line-height: 0;
         }
         .sig-img {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: contain;  /* jaga rasio */
-            display: block;
+            position: absolute; inset: 0;
+            width: 100%; height: 100%; object-fit: contain; display: block;
         }
         .sig-date {
-            position: absolute;
-            left: 0; right: 0; top: 50%;
-            transform: translateY(-50%); /* center vertikal */
-            text-align: center;
-            font-size: 12px;
-            font-weight: bold;
-            color: #000;
-            opacity: .85;               /* fallback jika blend-mode tidak didukung */
-            /* mix-blend-mode: multiply; */ /* aktifkan jika engine kamu support */
-            /* background: rgba(255,255,255,.3); padding: 1px 4px; */ /* opsi bila perlu kontras */
+            position: absolute; left: 0; right: 0; top: 50%;
+            transform: translateY(-50%);
+            text-align: center; font-size: 12px; font-weight: bold; color: #000;
+            opacity: .85; /* fallback jika blend-mode tak didukung */
+            /* mix-blend-mode: multiply; */
         }
         .sig-name { margin-top: 6px; font-weight: bold; }
+
+        /* -------- Elemen 'fixed' di bawah halaman -------- */
+        .qr-fixed {
+            position: fixed;
+            left: 12mm;            /* sejajar margin kiri halaman */
+            bottom: 12mm;          /* nempel bawah (ikut margin @page) */
+            width: 60px; height: 60px;
+            z-index: 5;
+        }
+        .qr-fixed img, .qr-fixed svg { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+        .footer-fixed {
+            position: fixed;
+            right: 12mm;           /* sejajar margin kanan */
+            bottom: 12mm;          /* sejajar margin bawah */
+            font-size: 10px; text-align: right;
+            z-index: 4;
+        }
     </style>
 </head>
 <body>
@@ -144,33 +123,35 @@
     </div>
 
     <p class="mt-2 indent">
-        Benar nama tersebut di atas adalah penduduk {{ $data['alamat'] ?? optional($profile)->alamat ?? '-' }} yang berdomisili di Dusun {{ $data['dusun'] ?? optional($profile)->dusun ?? '-' }}, Desa Limapoccoe, Kecamatan Cenrana, Kabupaten Maros.
+        Benar nama tersebut di atas adalah penduduk {{ $data['alamat'] ?? optional($profile)->alamat ?? '-' }}
+        yang berdomisili di Dusun {{ $data['dusun'] ?? optional($profile)->dusun ?? '-' }},
+        Desa Limapoccoe, Kecamatan Cenrana, Kabupaten Maros.
     </p>
 
     <p class="indent">
         Demikian surat keterangan ini kami buat dengan sebenarnya untuk digunakan seperlunya.
     </p>
 
-    {{-- QR Code & Tanda Tangan (pakai FLEX, bukan tabel) --}}
+    {{-- QR fixed di pojok kiri bawah --}}
     @php
         $showQrFromFile = !$isPreview && $ajuan->status === 'approved' && isset($qrCodePath) && file_exists($qrCodePath);
+    @endphp
+    <div class="qr-fixed">
+        @if($isPreview && isset($qrCodeSvg))
+            {!! $qrCodeSvg !!}
+        @elseif($showQrFromFile)
+            <img src="file://{{ $qrCodePath }}" alt="QR Code">
+        @endif
+    </div>
 
+    {{-- Tanda Tangan (mepet kanan) --}}
+    @php
         $ttdPath    = storage_path('app/private/tanda-tangan-digital.png');
         $ttdBase64  = file_exists($ttdPath) ? base64_encode(file_get_contents($ttdPath)) : null;
         $tanggalTtd = \Carbon\Carbon::parse($ajuan->updated_at ?? ($data['tanggal_surat'] ?? now()))->format('d/m/Y');
     @endphp
 
     <div class="sign-row">
-        <!-- QR -->
-        <div class="qr-box">
-            @if($isPreview && isset($qrCodeSvg))
-                <div>{!! $qrCodeSvg !!}</div>
-            @elseif($showQrFromFile)
-                <img src="file://{{ $qrCodePath }}" alt="QR Code">
-            @endif
-        </div>
-
-        <!-- Tanda Tangan -->
         <div class="sig-wrap">
             <div class="sig-title">
                 Limapoccoe, {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d F Y') }}<br>
@@ -190,10 +171,10 @@
         </div>
     </div>
 
-    {{-- Catatan --}}
+    {{-- Catatan fixed paling bawah (kanan) --}}
     @if(!$isPreview || $ajuan->status === 'approved')
-        <div class="footer-note">
-            <p><em>Catatan:</em> Surat ini berlaku selama 1 bulan sejak tanggal terbit.</p>
+        <div class="footer-fixed">
+            <em>Catatan:</em> Surat ini berlaku selama 1 bulan sejak tanggal terbit.
         </div>
     @endif
 
