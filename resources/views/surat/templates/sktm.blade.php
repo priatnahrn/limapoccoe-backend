@@ -4,74 +4,83 @@
     <meta charset="UTF-8">
     <title>Surat Keterangan Tidak Mampu</title>
     <style>
-        /* -------- Halaman & Body -------- */
+        /* ---- Page ---- */
         @page { size: A4 portrait; margin: 12mm; }
+        html, body { height: 100%; }
         body {
             margin: 0; padding: 0;
             font-family: 'Times New Roman', Times, serif;
             font-size: 11pt; line-height: 1.4;
         }
-        /* ruang aman untuk preview (lebih longgar di screen) */
-        .content { padding-bottom: 36mm; }
+        .page { min-height: 273mm; display: flex; flex-direction: column; }
 
-        /* -------- Util -------- */
+        /* ---- Utils ---- */
         .center { text-align: center; }
         .bold { font-weight: bold; }
         .mt-3 { margin-top: 1rem; }
         .mt-2 { margin-top: 0.5rem; }
         .indent { text-indent: 2em; }
-        table { width: 100%; page-break-inside: avoid; border-collapse: collapse; }
+        table { width: 100%; border-collapse: collapse; page-break-inside: avoid; }
         td { vertical-align: top; padding: 0; }
         table tr td:first-child { width: 150px; }
         table tr td:nth-child(2) { padding-left: 20px; }
         hr { margin: 6px 0; border: 0; border-top: 1px solid #000; }
+        .logo { height: 80px; }
 
-        /* -------- Kolom TTD mepet kanan -------- */
-        .sign-row { display: flex; margin-top: 1.5rem; }
+        /* ---- Blok data (akan jadi 2 kolom saat print) ---- */
+        .data-wrap { display: block; }
+        .data-block { break-inside: avoid; page-break-inside: avoid; }
+        .data-title { margin: 0 0 6px 0; font-weight: bold; }
+
+        /* ---- TTD kanan ---- */
+        .sign-row { display: flex; margin-top: 1.2rem; break-inside: avoid; page-break-inside: avoid; }
         .sig-wrap { margin-left: auto; width: 300px; text-align: center; }
         .sig-title { margin-bottom: 6px; }
-        .sig-box { position: relative; width: 270px; height: 180px; margin: 10px auto 0; line-height: 0; }
+        .sig-box { position: relative; width: 270px; height: 175px; margin: 8px auto 0; line-height: 0; }
         .sig-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; }
-        .sig-date {
-            position: absolute; left: 0; right: 0; top: 50%;
-            transform: translateY(-50%); text-align: center;
-            font-size: 12px; font-weight: bold; color: #000; opacity: .85;
-            /* mix-blend-mode: multiply;  bisa diaktifkan jika engine mendukung */
-        }
+        .sig-date { position: absolute; left:0; right:0; top:50%; transform:translateY(-50%); text-align:center; font-size:12px; font-weight:bold; opacity:.85; }
         .sig-name { margin-top: 6px; font-weight: bold; }
 
-        /* -------- FOOTER: QR kiri & catatan kanan -------- */
-        .page-footer {
-            position: fixed;
-            left: 12mm; right: 12mm; bottom: 12mm;
-            display: flex; justify-content: space-between; align-items: flex-end; z-index: 10;
+        /* ---- Footer di alur dokumen (flex mendorong ke bawah) ---- */
+        .footer-row {
+            margin-top: auto;
+            display: flex; justify-content: space-between; align-items: flex-end; gap: 12px;
         }
-        .footer-qr { width: 20mm; height: 20mm; flex: 0 0 auto; } /* ukuran aman untuk print */
+        .footer-qr { width: 20mm; height: 20mm; flex: 0 0 auto; }
         .footer-qr img, .footer-qr svg { width: 100%; height: 100%; object-fit: contain; display: block; }
-        .footer-note { font-size: 10px; text-align: right; flex: 1 1 auto; margin-left: 12px; }
+        .footer-note { font-size: 10px; text-align: right; flex: 1 1 auto; }
 
-        /* -------- Kompres khusus cetak agar muat 1 halaman -------- */
+        /* ---- KOMpresi khusus CETAK (konten dipress) ---- */
         @media print {
-            body { font-size: 10.5pt; line-height: 1.35; }
-            .content { padding-bottom: 28mm; }      /* cukup untuk QR 20mm + margin */
-            .mt-3 { margin-top: 0.8rem; }
-            .mt-2 { margin-top: 0.4rem; }
-            .sign-row { margin-top: 1.2rem; }
-            .sig-box { height: 170px; }             /* sedikit lebih pendek saat print */
+            body { font-size: 10.25pt; line-height: 1.33; }
+            .logo { height: 70px; }
+            .mt-3 { margin-top: .7rem; }
+            .mt-2 { margin-top: .35rem; }
+            hr { margin: 3px 0; }
+            table tr td:first-child { width: 135px; }
+            table tr td:nth-child(2) { padding-left: 12px; }
+
+            /* Dua kolom hemat ruang */
+            .data-wrap {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                column-gap: 14px; row-gap: 8px;
+                align-items: start;
+            }
+            .data-block { margin: 0; }
+            .sig-box { height: 160px; }     /* tekan tinggi ttd */
             .sig-date { font-size: 11px; }
-            table tr td:first-child { width: 140px; }
-            hr { margin: 4px 0; }
         }
     </style>
 </head>
 <body>
 
-<div class="content">
-    {{-- Kop Surat --}}
+<div class="page">
+    {{-- KOP --}}
     <table>
         <tr>
-            <td style="width: 80px;">
-                <img src="{{ $isPreview ? asset('logo-limapoccoe.png') : public_path('logo-limapoccoe.png') }}" alt="Logo" style="height: 80px;">
+            <td style="width:80px;">
+                <img class="logo" src="{{ $isPreview ? asset('logo-limapoccoe.png') : public_path('logo-limapoccoe.png') }}" alt="Logo">
             </td>
             <td class="center">
                 <div class="bold">PEMERINTAH DESA LIMAPOCCOE</div>
@@ -86,69 +95,66 @@
     <hr>
 
     <div class="center">
-        <h4 style="margin-bottom: 0;"><u>SURAT KETERANGAN TIDAK MAMPU</u></h4>
+        <h4 style="margin-bottom:0;"><u>SURAT KETERANGAN TIDAK MAMPU</u></h4>
         <div>Nomor: {{ $ajuan->nomor_surat_tersimpan ?? '___/SKTM/___/__/____' }}</div>
     </div>
 
     <p class="mt-3">Yang bertanda tangan di bawah ini:</p>
     <div class="indent">
-        <table style="margin-left: 20px;">
+        <table style="margin-left:20px;">
             <tr><td>Nama</td><td>: {{ $ajuan->tandaTangan->user->name ?? 'H ANDI ABU BAKRI' }}</td></tr>
             <tr><td>Jabatan</td><td>: Kepala Desa Limapoccoe</td></tr>
         </table>
     </div>
 
-    <p class="mt-2">Menerangkan bahwa:</p>
-    <div class="indent">
-        <table style="margin-left: 20px;">
-            <tr><td>Nama</td><td>: {{ $data['nama'] ?? $user->name ?? '-' }}</td></tr>
-            <tr><td>NIK</td><td>: {{ $data['nik'] ?? $user->nik ?? '-' }}</td></tr>
-            <tr>
-                <td>Tempat/Tanggal Lahir</td>
-                <td>:
-                    {{ $data['tempat_lahir'] ?? optional($profile)->tempat_lahir ?? '-' }},
-                    {{ \Carbon\Carbon::parse($data['tanggal_lahir'] ?? optional($profile)->tanggal_lahir ?? now())->format('d-m-Y') }}
-                </td>
-            </tr>
-            <tr><td>Jenis Kelamin</td><td>: {{ $data['jenis_kelamin'] ?? optional($profile)->jenis_kelamin ?? '-' }}</td></tr>
-            <tr><td>Pekerjaan</td><td>: {{ $data['pekerjaan'] ?? optional($profile)->pekerjaan ?? '-' }}</td></tr>
-            <tr><td>Alamat</td><td>: {{ $data['alamat'] ?? optional($profile)->alamat ?? '-' }}</td></tr>
-        </table>
-    </div>
+    {{-- BLOK DATA: dibuat 2 kolom saat print --}}
+    <div class="data-wrap mt-2">
+        <div class="data-block">
+            <p class="data-title">Menerangkan bahwa:</p>
+            <table style="margin-left:20px;">
+                <tr><td>Nama</td><td>: {{ $data['nama'] ?? $user->name ?? '-' }}</td></tr>
+                <tr><td>NIK</td><td>: {{ $data['nik'] ?? $user->nik ?? '-' }}</td></tr>
+                <tr>
+                    <td>Tempat/Tanggal Lahir</td>
+                    <td>: {{ $data['tempat_lahir'] ?? optional($profile)->tempat_lahir ?? '-' }},
+                        {{ \Carbon\Carbon::parse($data['tanggal_lahir'] ?? optional($profile)->tanggal_lahir ?? now())->format('d-m-Y') }}
+                    </td>
+                </tr>
+                <tr><td>Jenis Kelamin</td><td>: {{ $data['jenis_kelamin'] ?? optional($profile)->jenis_kelamin ?? '-' }}</td></tr>
+                <tr><td>Pekerjaan</td><td>: {{ $data['pekerjaan'] ?? optional($profile)->pekerjaan ?? '-' }}</td></tr>
+                <tr><td>Alamat</td><td>: {{ $data['alamat'] ?? optional($profile)->alamat ?? '-' }}</td></tr>
+            </table>
+        </div>
 
-    <p class="mt-2">Anak dari Pasangan:</p>
-    <div class="indent">
-        <table style="margin-left: 20px;">
-            <tr><td>Nama Ayah</td><td>: {{ $data['nama_ayah'] ?? '-' }}</td></tr>
-            <tr><td>Pekerjaan Ayah</td><td>: {{ $data['pekerjaan_ayah'] ?? '-' }}</td></tr>
-            <tr><td>Nama Ibu</td><td>: {{ $data['nama_ibu'] ?? '-' }}</td></tr>
-            <tr><td>Pekerjaan Ibu</td><td>: {{ $data['pekerjaan_ibu'] ?? '-' }}</td></tr>
-            <tr><td>Jumlah Tanggungan</td><td>: {{ $data['jumlah_tanggungan'] ?? '-' }}</td></tr>
-        </table>
+        <div class="data-block">
+            <p class="data-title">Anak dari Pasangan:</p>
+            <table style="margin-left:20px;">
+                <tr><td>Nama Ayah</td><td>: {{ $data['nama_ayah'] ?? '-' }}</td></tr>
+                <tr><td>Pekerjaan Ayah</td><td>: {{ $data['pekerjaan_ayah'] ?? '-' }}</td></tr>
+                <tr><td>Nama Ibu</td><td>: {{ $data['nama_ibu'] ?? '-' }}</td></tr>
+                <tr><td>Pekerjaan Ibu</td><td>: {{ $data['pekerjaan_ibu'] ?? '-' }}</td></tr>
+                <tr><td>Jumlah Tanggungan</td><td>: {{ $data['jumlah_tanggungan'] ?? '-' }}</td></tr>
+            </table>
+        </div>
     </div>
 
     <p class="mt-2 indent">
         Benar penduduk di atas adalah penduduk Dusun {{ $data['dusun'] ?? optional($profile)->dusun ?? '-' }} Desa Limapoccoe tergolong dari keluarga yang kurang mampu.
     </p>
+    <p class="indent">Demikian surat keterangan ini kami buat dengan sebenarnya untuk digunakan seperlunya.</p>
 
-    <p class="indent">
-        Demikian surat keterangan ini kami buat dengan sebenarnya untuk digunakan seperlunya.
-    </p>
-
-    {{-- Tanda Tangan (nempel kanan) --}}
+    {{-- TTD kanan --}}
     @php
         $ttdPath    = storage_path('app/private/tanda-tangan-digital.png');
         $ttdBase64  = file_exists($ttdPath) ? base64_encode(file_get_contents($ttdPath)) : null;
         $tanggalTtd = \Carbon\Carbon::parse($ajuan->updated_at ?? ($data['tanggal_surat'] ?? now()))->format('d/m/Y');
     @endphp
-
     <div class="sign-row">
         <div class="sig-wrap">
             <div class="sig-title">
                 Limapoccoe, {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d F Y') }}<br>
                 <span class="bold">KEPALA DESA LIMAPOCCOE</span>
             </div>
-
             @if ($ajuan->status === 'approved' && $ttdBase64)
                 <div class="sig-box">
                     <img class="sig-img" src="data:image/png;base64,{{ $ttdBase64 }}" alt="Tanda Tangan">
@@ -157,30 +163,29 @@
                 <div class="sig-name">{{ $ajuan->tandaTangan->user->name ?? 'H ANDI ABU BAKRI' }}</div>
             @else
                 <div class="sig-box"></div>
-                <div class="sig-name" style="color: grey;">Belum ditandatangani</div>
+                <div class="sig-name" style="color:grey;">Belum ditandatangani</div>
             @endif
         </div>
     </div>
-</div> {{-- /content --}}
 
-{{-- FOOTER: QR kiri + catatan kanan --}}
-@php
-    $showQrFromFile = !$isPreview && $ajuan->status === 'approved' && isset($qrCodePath) && file_exists($qrCodePath);
-@endphp
-<div class="page-footer">
-    <div class="footer-qr">
-        @if($isPreview && isset($qrCodeSvg))
-            {!! $qrCodeSvg !!}
-        @elseif($showQrFromFile)
-            <img src="file://{{ $qrCodePath }}" alt="QR Code">
+    {{-- Footer (ikut alur, nempel bawah) --}}
+    @php
+        $showQrFromFile = !$isPreview && $ajuan->status === 'approved' && isset($qrCodePath) && file_exists($qrCodePath);
+    @endphp
+    <div class="footer-row">
+        <div class="footer-qr">
+            @if($isPreview && isset($qrCodeSvg))
+                {!! $qrCodeSvg !!}
+            @elseif($showQrFromFile)
+                <img src="file://{{ $qrCodePath }}" alt="QR Code">
+            @endif
+        </div>
+        @if(!$isPreview || $ajuan->status === 'approved')
+            <div class="footer-note">
+                <em>Catatan:</em> Surat ini berlaku selama 1 bulan sejak tanggal terbit.
+            </div>
         @endif
     </div>
-    @if(!$isPreview || $ajuan->status === 'approved')
-        <div class="footer-note">
-            <em>Catatan:</em> Surat ini berlaku selama 1 bulan sejak tanggal terbit.
-        </div>
-    @endif
 </div>
-
 </body>
 </html>
