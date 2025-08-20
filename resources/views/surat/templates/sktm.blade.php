@@ -11,7 +11,7 @@
             font-family: 'Times New Roman', Times, serif;
             font-size: 11pt; line-height: 1.4;
         }
-        /* ruang aman agar konten tidak ketimpa footer fixed saat preview */
+        /* ruang aman untuk preview (lebih longgar di screen) */
         .content { padding-bottom: 36mm; }
 
         /* -------- Util -------- */
@@ -28,41 +28,40 @@
 
         /* -------- Kolom TTD mepet kanan -------- */
         .sign-row { display: flex; margin-top: 1.5rem; }
-        .sig-wrap {
-            margin-left: auto;         /* nempel kanan */
-            width: 300px;              /* lebar kolom TTD */
-            text-align: center;
-        }
+        .sig-wrap { margin-left: auto; width: 300px; text-align: center; }
         .sig-title { margin-bottom: 6px; }
-        .sig-box {
-            position: relative;
-            width: 270px; height: 180px; /* kunci ukuran gambar */
-            margin: 10px auto 0;
-            line-height: 0;
-        }
-        .sig-img {
-            position: absolute; inset: 0;
-            width: 100%; height: 100%;
-            object-fit: contain; display: block;
-        }
+        .sig-box { position: relative; width: 270px; height: 180px; margin: 10px auto 0; line-height: 0; }
+        .sig-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; }
         .sig-date {
             position: absolute; left: 0; right: 0; top: 50%;
-            transform: translateY(-50%);
-            text-align: center; font-size: 12px; font-weight: bold; color: #000;
-            opacity: .85; /* mix-blend-mode: multiply; jika engine mendukung */
+            transform: translateY(-50%); text-align: center;
+            font-size: 12px; font-weight: bold; color: #000; opacity: .85;
+            /* mix-blend-mode: multiply;  bisa diaktifkan jika engine mendukung */
         }
         .sig-name { margin-top: 6px; font-weight: bold; }
 
-        /* -------- FOOTER: QR kiri & catatan kanan dalam satu baris -------- */
+        /* -------- FOOTER: QR kiri & catatan kanan -------- */
         .page-footer {
             position: fixed;
-            left: 12mm; right: 12mm; bottom: 12mm; /* sejajar margin @page */
-            display: flex; justify-content: space-between; align-items: flex-end;
-            z-index: 10;
+            left: 12mm; right: 12mm; bottom: 12mm;
+            display: flex; justify-content: space-between; align-items: flex-end; z-index: 10;
         }
-        .footer-qr { width: 60px; height: 60px; flex: 0 0 auto; }
+        .footer-qr { width: 20mm; height: 20mm; flex: 0 0 auto; } /* ukuran aman untuk print */
         .footer-qr img, .footer-qr svg { width: 100%; height: 100%; object-fit: contain; display: block; }
         .footer-note { font-size: 10px; text-align: right; flex: 1 1 auto; margin-left: 12px; }
+
+        /* -------- Kompres khusus cetak agar muat 1 halaman -------- */
+        @media print {
+            body { font-size: 10.5pt; line-height: 1.35; }
+            .content { padding-bottom: 28mm; }      /* cukup untuk QR 20mm + margin */
+            .mt-3 { margin-top: 0.8rem; }
+            .mt-2 { margin-top: 0.4rem; }
+            .sign-row { margin-top: 1.2rem; }
+            .sig-box { height: 170px; }             /* sedikit lebih pendek saat print */
+            .sig-date { font-size: 11px; }
+            table tr td:first-child { width: 140px; }
+            hr { margin: 4px 0; }
+        }
     </style>
 </head>
 <body>
@@ -164,7 +163,7 @@
     </div>
 </div> {{-- /content --}}
 
-{{-- FOOTER: QR kiri + catatan kanan (fixed & sejajar) --}}
+{{-- FOOTER: QR kiri + catatan kanan --}}
 @php
     $showQrFromFile = !$isPreview && $ajuan->status === 'approved' && isset($qrCodePath) && file_exists($qrCodePath);
 @endphp
