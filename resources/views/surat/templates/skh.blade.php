@@ -120,25 +120,25 @@
     Demikian surat keterangan ini kami buat dengan sebenarnya untuk digunakan seperlunya.
 </p>
 
-{{-- QR Code & Tanda Tangan --}}
-@php
-    $showQrFromFile = !$isPreview && $ajuan->status === 'approved' && isset($qrCodePath) && file_exists($qrCodePath);
-@endphp
+ {{-- QR Code & Tanda Tangan --}}
+    @php
+        $showQrFromFile = !$isPreview && $ajuan->status === 'approved' && isset($qrCodePath) && file_exists($qrCodePath);
+    @endphp
 
-<table style="width: 100%; margin-top: 1.5rem;">
-    <tr>
-        {{-- QR Code --}}
-        <td style="width: 50%; vertical-align: top;">
-            @if($isPreview && isset($qrCodeSvg))
-                <div style="width: 30px; height: 30px;">
-                    {!! $qrCodeSvg !!}
-                </div>
-            @elseif($showQrFromFile)
-                <img src="file://{{ $qrCodePath }}" style="width: 50px; height: auto; bottom: 10mm; left: 10mm; position: absolute;" alt="QR Code">
-            @endif
-        </td>
+    <table style="width: 100%; margin-top: 1.5rem;">
+        <tr>
+            {{-- QR Code --}}
+            <td style="width: 50%; vertical-align: top;">
+                @if($isPreview && isset($qrCodeSvg))
+                    <div style="width: 30px; height: 30px;">
+                        {!! $qrCodeSvg !!}
+                    </div>
+                @elseif($showQrFromFile)
+                    <img src="file://{{ $qrCodePath }}" style="width: 50px; height: auto; bottom: 10mm; left: 10mm; position: absolute;" alt="QR Code">
+                @endif
+            </td>
 
-        {{-- Tanda Tangan --}}
+            {{-- Tanda Tangan --}}
             <td style="width: 50%; text-align: center;">
                 <div>Limapoccoe, {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d F Y') }}</div>
                 <div class="bold">KEPALA DESA LIMAPOCCOE</div>
@@ -179,14 +179,16 @@
                     @endif
                 </div>
             </td>
-    </tr>
-     {{-- Catatan --}}
+
+        </tr>
+    </table>
+
+    {{-- Catatan --}}
     @if(!$isPreview || $ajuan->status === 'approved')
         <div class="footer-note">
             <p><em>Catatan:</em> Surat ini berlaku selama 1 bulan sejak tanggal terbit.</p>
         </div>
     @endif
-</table>
 
 </body>
 </html>

@@ -102,7 +102,7 @@
         Demikian surat keterangan ini dibuat untuk melengkapi berkas {{ $data['keperluan'] ?? '-' }}.
     </p>
 
-    {{-- QR Code & Tanda Tangan --}}
+     {{-- QR Code & Tanda Tangan --}}
     @php
         $showQrFromFile = !$isPreview && $ajuan->status === 'approved' && isset($qrCodePath) && file_exists($qrCodePath);
     @endphp
@@ -120,7 +120,6 @@
                 @endif
             </td>
 
-            {{-- Tanda Tangan --}}
             {{-- Tanda Tangan --}}
             <td style="width: 50%; text-align: center;">
                 <div>Limapoccoe, {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d F Y') }}</div>
@@ -162,9 +161,11 @@
                     @endif
                 </div>
             </td>
+
         </tr>
     </table>
-     {{-- Catatan --}}
+
+    {{-- Catatan --}}
     @if(!$isPreview || $ajuan->status === 'approved')
         <div class="footer-note">
             <p><em>Catatan:</em> Surat ini berlaku selama 1 bulan sejak tanggal terbit.</p>

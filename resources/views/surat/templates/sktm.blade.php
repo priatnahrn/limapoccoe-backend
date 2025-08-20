@@ -4,32 +4,17 @@
     <meta charset="UTF-8">
     <title>Surat Keterangan Tidak Mampu</title>
     <style>
-        @if ($isPreview)
-            @page {
-                padding: 20mm; 
-            }
-
-            body {
-                padding: 20mm;
-            }
-            
-        @else
-            @page {
-                size: A4 portrait;
-                margin: 12mm;
-            }
-            body {
-                margin: 0;
-            }
-        @endif
-
+        @page {
+            size: A4 portrait;
+            margin: 12mm;
+        }
 
         body {
             font-family: 'Times New Roman', Times, serif;
             font-size: 11pt;
             line-height: 1.4;
-            /* margin: 0;
-            padding: 0; */
+            margin: 0;
+            padding: 0;
         }
 
         .center { text-align: center; }
@@ -135,7 +120,7 @@
         Demikian surat keterangan ini kami buat dengan sebenarnya untuk digunakan seperlunya.
     </p>
 
-    {{-- QR Code & Tanda Tangan --}}
+     {{-- QR Code & Tanda Tangan --}}
     @php
         $showQrFromFile = !$isPreview && $ajuan->status === 'approved' && isset($qrCodePath) && file_exists($qrCodePath);
     @endphp
@@ -153,7 +138,7 @@
                 @endif
             </td>
 
-           {{-- Tanda Tangan --}}
+            {{-- Tanda Tangan --}}
             <td style="width: 50%; text-align: center;">
                 <div>Limapoccoe, {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d F Y') }}</div>
                 <div class="bold">KEPALA DESA LIMAPOCCOE</div>
@@ -194,6 +179,7 @@
                     @endif
                 </div>
             </td>
+
         </tr>
     </table>
 

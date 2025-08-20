@@ -183,12 +183,14 @@
 
         </tr>
     </table>
-     {{-- Catatan --}}
+
+    {{-- Catatan --}}
     @if(!$isPreview || $ajuan->status === 'approved')
         <div class="footer-note">
             <p><em>Catatan:</em> Surat ini berlaku selama 1 bulan sejak tanggal terbit.</p>
         </div>
     @endif
+
 
 </body>
 </html>

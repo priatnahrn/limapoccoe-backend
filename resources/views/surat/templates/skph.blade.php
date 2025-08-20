@@ -120,44 +120,74 @@
 </p>
 
 {{-- QR Code & Tanda Tangan --}}
-@php
-    $showQrFromFile = !$isPreview && $ajuan->status === 'approved' && isset($qrCodePath) && file_exists($qrCodePath);
-@endphp
+    @php
+        $showQrFromFile = !$isPreview && $ajuan->status === 'approved' && isset($qrCodePath) && file_exists($qrCodePath);
+    @endphp
 
-<table style="width: 100%; margin-top: 1.5rem;">
-    <tr>
-        {{-- QR Code --}}
-        <td style="width: 50%; vertical-align: top;">
-            @if($isPreview && isset($qrCodeSvg))
-                <div style="width: 30px; height: 30px;">
-                    {!! $qrCodeSvg !!}
-                </div>
-            @elseif($showQrFromFile)
-                <img src="file://{{ $qrCodePath }}" style="width: 50px; height: auto; bottom: 10mm; left: 10mm; position: absolute;" alt="QR Code">
-            @endif
-        </td>
+    <table style="width: 100%; margin-top: 1.5rem;">
+        <tr>
+            {{-- QR Code --}}
+            <td style="width: 50%; vertical-align: top;">
+                @if($isPreview && isset($qrCodeSvg))
+                    <div style="width: 30px; height: 30px;">
+                        {!! $qrCodeSvg !!}
+                    </div>
+                @elseif($showQrFromFile)
+                    <img src="file://{{ $qrCodePath }}" style="width: 50px; height: auto; bottom: 10mm; left: 10mm; position: absolute;" alt="QR Code">
+                @endif
+            </td>
 
-        {{-- Tanda Tangan --}}
-        <td style="width: 50%; text-align: center;">
-            <div>Limapoccoe, {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d F Y') }}</div>
-            <div class="bold">KEPALA DESA LIMAPOCCOE</div>
-            <div style="margin-top: 10px;">
+            {{-- Tanda Tangan --}}
+            <td style="width: 50%; text-align: center;">
+                <div>Limapoccoe, {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d F Y') }}</div>
+                <div class="bold">KEPALA DESA LIMAPOCCOE</div>
+
+                {{-- siapkan source tanda tangan --}}
                 @php
-                    $ttdPath = storage_path('app/private/tandatangan.png');
+                    $ttdPath   = storage_path('app/private/tanda-tangan-digital.png');
                     $ttdBase64 = file_exists($ttdPath) ? base64_encode(file_get_contents($ttdPath)) : null;
+
+                    // tanggal yang mau ditulis di atas tanda tangan (silakan sesuaikan sumbernya)
+                    $tanggalTtd = \Carbon\Carbon::parse($ajuan->updated_at ?? now())->format('d/m/Y');
                 @endphp
 
-                @if ($ajuan->status === 'approved' && $ttdBase64)
-                    <img src="data:image/png;base64,{{ $ttdBase64 }}" style="height: 180px;" alt="Tanda Tangan"><br>
-                    <strong>{{ $ajuan->tandaTangan->user->name ?? 'H. ANDI ABU BAKRI' }}</strong>
-                @else
-                    <div style="height: 100px;"></div>
-                    <strong style="color: grey;">Belum ditandatangani</strong>
-                @endif
-            </div>
-        </td>
-    </tr>
-</table>
+                <div style="margin-top: 10px; position: relative; display: inline-block;">
+                    @if ($ajuan->status === 'approved' && $ttdBase64)
+                        <!-- Gambar tanda tangan -->
+                        <img src="data:image/png;base64,{{ $ttdBase64 }}" style="height: 180px;" alt="Tanda Tangan">
+
+                         <!-- Tanggal overlap di tengah gambar -->
+                        <div style="
+                            position: absolute;
+                            top: 50%;
+                            left: 50%;
+                            transform: translate(-50%, -50%);
+                            font-size: 12px;
+                            font-weight: bold;
+                            color: black;
+                            mix-blend-mode: multiply; /* biar kayak nyatu sama tinta */
+                        ">
+                            {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d/m/Y') }}
+                        </div>
+
+                        <br>
+                        <strong>{{ $ajuan->tandaTangan->user->name ?? 'H ANDI ABU BAKRI' }}</strong>
+                    @else
+                        <div style="height: 100px;"></div>
+                        <strong style="color: grey;">Belum ditandatangani</strong>
+                    @endif
+                </div>
+            </td>
+
+        </tr>
+    </table>
+
+    {{-- Catatan --}}
+    @if(!$isPreview || $ajuan->status === 'approved')
+        <div class="footer-note">
+            <p><em>Catatan:</em> Surat ini berlaku selama 1 bulan sejak tanggal terbit.</p>
+        </div>
+    @endif
 
 </body>
 </html>
