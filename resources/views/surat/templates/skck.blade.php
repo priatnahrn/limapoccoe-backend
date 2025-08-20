@@ -139,38 +139,34 @@
                 @endif
             </td>
 
-            {{-- Tanda Tangan --}}
-           {{-- Tanda Tangan --}}
-<td style="width: 50%; text-align: center;">
+            <td style="width: 50%; text-align: center;">
     <div>Limapoccoe, {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d F Y') }}</div>
     <div class="bold">KEPALA DESA LIMAPOCCOE</div>
 
-    @php
-        $ttdPath   = storage_path('app/private/tanda-tangan-digital.png');
-        $ttdBase64 = file_exists($ttdPath) ? base64_encode(file_get_contents($ttdPath)) : null;
-
-        // tanggal penandatanganan (bisa ganti field sesuai kebutuhanmu)
-        $tanggalTtd = \Carbon\Carbon::parse($ajuan->updated_at ?? now())->format('d/m/Y');
-    @endphp
-
     <div style="margin-top: 10px; position: relative; display: inline-block;">
-        @if ($ajuan->status === 'approved' && $ttdBase64)
-            <!-- Gambar tanda tangan -->
-            <div style="position: relative; display: inline-block;">
-                <img src="data:image/png;base64,{{ $ttdBase64 }}" style="height: 180px;" alt="Tanda Tangan">
+        @php
+            $ttdPath = storage_path('app/private/tandatangan.png');
+            $ttdBase64 = file_exists($ttdPath) ? base64_encode(file_get_contents($ttdPath)) : null;
+        @endphp
 
-                <!-- Tanggal tepat di bawah tanda tangan -->
-                <div style="
-                    position: absolute;
-                    top: 100%;          /* persis di bawah gambar */
-                    left: 50%;
-                    transform: translateX(-50%);
-                    margin-top: 2px;    /* jarak kecil biar nempel */
-                    font-size: 10px;
-                    line-height: 1;
-                ">
-                    {{ $tanggalTtd }}
-                </div>
+        @if ($ajuan->status === 'approved' && $ttdBase64)
+            <!-- Gambar TTD -->
+            <img src="data:image/png;base64,{{ $ttdBase64 }}" 
+                 style="height: 180px;" 
+                 alt="Tanda Tangan">
+
+            <!-- Tanggal di atas gambar -->
+            <div style="
+                position: absolute; 
+                top: 5px; 
+                left: 50%; 
+                transform: translateX(-50%); 
+                font-size: 11px; 
+                font-weight: bold;
+                background: rgba(255,255,255,0.6); /* biar tetap kebaca kalau nabrak ttd */
+                padding: 2px 5px;
+            ">
+                {{ \Carbon\Carbon::parse($data['tanggal_surat'] ?? now())->translatedFormat('d F Y') }}
             </div>
 
             <br>
