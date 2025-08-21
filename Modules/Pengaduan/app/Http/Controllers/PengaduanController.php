@@ -9,12 +9,14 @@ use Modules\Pengaduan\Models\Pengaduan;
 use Modules\Pengaduan\Transformers\PengaduanResource;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use App\Models\LogActivity;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Modules\Pengaduan\Http\Requests\PengaduanRequest;
 use Illuminate\Support\Facades\Storage;
+use Modules\Auth\Models\AuthUser;
 use Modules\Pengaduan\Http\Requests\ProcessedAduanRequest;
 
 class PengaduanController extends Controller
@@ -398,9 +400,10 @@ class PengaduanController extends Controller
             // ✅ SCP #10 – Lakukan update hanya pada field yang diizinkan
             $aduan->update(['status' => 'approved']);
 
-            $message = "Hai, {$aduan->user->name},\n\n"
-                . "Pengaduan Anda dengan judul *{$aduan->title}* telah disetujui oleh Kepala Desa.\n\n"
-                . "Terimakasih telah menggunakan layanan kami.";
+            $message = "👋 Hai *{$aduan->user->name}* (NIK: {$aduan->user->nik}),\n\n"
+                    . "Pengaduan Anda dengan judul *{$aduan->title}* telah *disetujui* oleh Kepala Desa.\n\n"
+                    . "🙏 Terimakasih telah menggunakan layanan kami.";
+
 
             // ✅ SCP #37 – Gunakan helper untuk kirim notifikasi WhatsApp
            try {
@@ -442,6 +445,124 @@ class PengaduanController extends Controller
         }
     }
 
+    public function kirimAduanKeStaff(Request $request, $aduan_id)
+{
+    try {
+        // ✅ Autentikasi & role: kepala-desa saja
+        $kepdes = JWTAuth::parseToken()->authenticate();
+        if (!$kepdes) return response()->json(['message' => 'User belum login.'], 401);
+        if (!$kepdes->hasRole('kepala-desa')) {
+            return response()->json(['message' => 'Akses ditolak. Hanya Kepala Desa yang dapat meneruskan aduan.'], 403);
+        }
+
+        // ✅ Validasi input (pakai enum jabatan existing)
+        $allowedJabatan = [
+            'Sekretaris Desa',
+            'Seksi Pemerintahan',
+            'Seksi Kesejahteraan',
+            'Seksi Pelayanan',
+            'Urusan Tata Usaha & Umum',
+            'Urusan Keuangan',
+            'Urusan Perencanaan',
+        ];
+
+        $validated = $request->validate([
+            'jabatan'   => ['required','array','min:1'],
+            'jabatan.*' => ['string', function($attr,$val,$fail) use($allowedJabatan){
+                if (!in_array($val, $allowedJabatan, true)) $fail("Jabatan '$val' tidak valid.");
+            }],
+            // ⬇️ pakai field response yang sama
+            'response'  => ['required','string','max:2000'],
+        ]);
+
+        // ✅ Ambil aduan
+        $aduan = Pengaduan::with('user')->find($aduan_id);
+        if (!$aduan) return response()->json(['message' => 'Aduan tidak ditemukan.'], 404);
+
+        // (opsional) batasi status yang boleh diteruskan
+        if (!in_array($aduan->status, ['processed'])) {
+            return response()->json(['message' => 'Status aduan tidak valid untuk diteruskan.'], 400);
+        }
+
+        // ✅ Update kolom respon (reuse data respon yang sama)
+        $aduan->update([
+            'response'      => $validated['response'],
+            'response_by'   => $kepdes->id,
+            'response_date' => now()->toDateString(), // karena kolomnya `date`
+            // ⚠️ status dibiarkan apa adanya; tidak diubah
+        ]);
+
+        // ✅ Cari staff target berdasarkan jabatan
+        $staffTargets = AuthUser::role('staff-desa')
+            ->whereHas('profileStaff', fn($q) => $q->whereIn('jabatan', $validated['jabatan']))
+            ->with('profileStaff')
+            ->get();
+
+        if ($staffTargets->isEmpty()) {
+            return response()->json(['message' => 'Tidak ada staff dengan jabatan yang dipilih.'], 404);
+        }
+
+        // ✅ Broadcast WA (best effort) pakai no_telepon (existing)
+        $sent = 0; $failed = [];
+        foreach ($staffTargets as $staff) {
+            try {
+                $phone = $staff->profileStaff->no_telepon ?? null;
+                if ($phone) {
+                    $msg = "Assalamualaikum, {$staff->name}.\n\n"
+                        ."Aduan baru perlu perhatian Anda.\n"
+                        ."Judul: *{$aduan->title}*\n"
+                        ."Kategori: {$aduan->category}\n"
+                        .($aduan->location ? "Lokasi: {$aduan->location}\n" : "")
+                        ."Status Saat Ini: {$aduan->status}\n\n"
+                        ."Pesan dari Kepala Desa:\n\"{$validated['response']}\"\n\n"
+                        ."Mohon ditindaklanjuti. Terima kasih.";
+                    FonnteHelper::sendWhatsAppMessage($phone, $msg);
+                    $sent++;
+                } else {
+                    $failed[] = ['id'=>$staff->id,'name'=>$staff->name,'reason'=>'no phone'];
+                }
+            } catch (\Throwable $ex) {
+                Log::warning('WA notify staff gagal', [
+                    'pengaduan_id' => $aduan->id,
+                    'staff_id'     => $staff->id,
+                    'error'        => $ex->getMessage(),
+                ]);
+                $failed[] = ['id'=>$staff->id,'name'=>$staff->name,'reason'=>'exception'];
+            }
+        }
+
+        // ✅ Audit ringkas di LogActivity (pakai yang existing)
+        LogActivity::create([
+            'id'            => Str::uuid(),
+            'user_id'       => $kepdes->id,
+            'activity_type' => 'forward_pengaduan_to_staff',
+            'description'   => "Kepdes {$kepdes->name} meneruskan aduan ID {$aduan->id} ke: ".implode(', ', $validated['jabatan'])
+                               ." | staff: {$staffTargets->count()} | terkirim: {$sent}",
+            'ip_address'    => $request->ip(),
+        ]);
+
+        return response()->json([
+            'message'       => 'Aduan berhasil diteruskan ke staff.',
+            'jabatan'       => $validated['jabatan'],
+            'total_target'  => $staffTargets->count(),
+            'sent'          => $sent,
+            'failed'        => $failed,
+            // ⬇️ tampilkan data respon yang sama (sesuai permintaan)
+            'response'      => [
+                'response'      => $aduan->response,
+                'response_by'   => $aduan->response_by,
+                'response_date' => $aduan->response_date, // format tanggal (YYYY-MM-DD)
+            ],
+        ], 200);
+
+    } catch (\Throwable $e) {
+        Log::error('Forward aduan ke staff gagal', [
+            'aduan_id' => $aduan_id ?? null,
+            'error'    => $e->getMessage(),
+        ]);
+        return response()->json(['message' => 'Terjadi kesalahan saat meneruskan aduan ke staff.'], 500);
+    }
+}
 
     
 }
