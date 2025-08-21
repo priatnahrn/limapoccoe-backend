@@ -12,9 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('profile_staff', function (Blueprint $table) {
-              $table->uuid('id')->primary();
+            $table->uuid('id')->primary();
             $table->foreignUuid('user_id')->constrained('auth_users')->onDelete('cascade');
-            $table->string('jabatan'); 
+            $table->enum('jabatan', ['Sekretaris Desa', 'Seksi Pemerintahan', 'Seksi Kesejahteraan', 'Seksi Pelayanan', 'Urusan Tata Usaha & Umum', 'Urusan Keuangan', 'Urusan Perencanaan'])->nullable(); 
             $table->string('nip')->nullable(); 
             $table->string('tempat_lahir')->nullable();
             $table->date('tanggal_lahir')->nullable();

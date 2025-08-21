@@ -9,5 +9,10 @@ Route::middleware(['auth:api'])->group(function () {
       Route::post('/lengkapi-profil', [ProfileController::class, 'lengkapiProfilMasyarakat']);
       Route::get('/masyarakat', [ProfileController::class, 'getProfileDataMasyarakat']);
       Route::put('/masyarakat', [ProfileController::class, 'updateProfileMasyarakat']);
+      Route::get('/staff', [ProfileController::class, 'getProfileDataStaff']);
+      Route::put('/staff', [ProfileController::class, 'updateProfileStaff']);
    });
+
+
+
 });
