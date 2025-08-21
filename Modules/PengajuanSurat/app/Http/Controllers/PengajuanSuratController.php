@@ -277,7 +277,10 @@ class PengajuanSuratController extends Controller
             }
 
             // ✅ [ASVS V9.1] Ambil semua pengajuan surat
+            $query->orderBy('updated_at', 'desc'); // [SCP #3] Urutkan berdasarkan tanggal terbaru
+    
             $pengajuanSurat = $query->get();
+
 
             // ✅ [ASVS V9.1] Response aman, tidak bocorkan info sensitif
             return response()->json([
