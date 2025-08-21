@@ -1247,6 +1247,7 @@ class PengajuanSuratController extends Controller
 
     public function signedStatusPengajuan($slug, $ajuanId)
     {
+        Carbon::setLocale('id');
         try {
             // ✅ [ASVS V2.1.1] – Wajib autentikasi token JWT
             $kepdes = JWTAuth::parseToken()->authenticate();
@@ -1321,8 +1322,8 @@ class PengajuanSuratController extends Controller
 
             // ✅ Kirim OTP ke WhatsApp (ASVS 10.2.1 / SCP #143)
             $message = "👋 Hai *{$ajuan->user['name']}* (NIK: {$ajuan->user['nik']}),\n\n"
-                        . "Surat dengan nomor *{$ajuan->nomor_surat_tersimpan}* telah berhasil *disetujui* oleh Kepala Desa pada {$signedAt->format('d F Y')}.\n\n"
-                        . "📌 Segera unduh dan cek website kami untuk mendapatkan dokumen surat:\n"
+                        . "Surat dengan nomor *{$ajuan->nomor_surat_tersimpan}* telah berhasil *disetujui* oleh Kepala Desa pada {$signedAt->translatedFormat('d F Y')}.\n\n"
+                        . "📌 Segera unduh dan cek website kami untuk mendapatkan dokumen surat di:\n"
                         . "🌐 https://limapoccoedigital.id\n\n"
                         . "Anda juga dapat *menscan QR Code* pada surat untuk memverifikasi keaslian dokumen.\n\n"
                         . "🙏 Terimakasih telah menggunakan layanan kami.";
