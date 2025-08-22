@@ -278,7 +278,7 @@ class PengajuanSuratController extends Controller
 
             // ✅ [ASVS V9.1] Ambil semua pengajuan surat
             $query->orderBy('updated_at', 'desc'); // [SCP #3] Urutkan berdasarkan tanggal terbaru
-    
+
             $pengajuanSurat = $query->get();
 
 
@@ -499,26 +499,19 @@ class PengajuanSuratController extends Controller
     }
 
 
-
-
-
     public function fillNumber(FillNumberRequest $request, $slug, $ajuanId)
     {
         try {
-            // ✅ [ASVS V2.1] Autentikasi pengguna
             $user = JWTAuth::parseToken()->authenticate();
 
-            // ✅ [ASVS V4.1 / SCP #77, #84] Kontrol akses berbasis peran
             if (!$user->hasRole('staff-desa')) {
                 return response()->json([
                     'error' => 'Akses ditolak. Anda tidak memiliki izin untuk mengisi nomor pengajuan surat ini.'
                 ], 403);
             }
 
-            // ✅ [ASVS V5.1] Validasi input eksplisit via FormRequest
             $validated = $request->validated();
 
-            // ✅ [SCP #86] Validasi ID pengajuan berdasarkan slug
             $pengajuanSurat = Ajuan::with(['user', 'surat'])
                 ->where('id', $ajuanId)
                 ->whereHas('surat', function ($query) use ($slug) {
@@ -530,7 +523,6 @@ class PengajuanSuratController extends Controller
                 return response()->json(['error' => 'Pengajuan surat tidak ditemukan.'], 404);
             }
 
-            // ✅ [SCP #94] Rate Limiting: Maks. 1x pengisian per menit per user per ajuan
             $rateKey = 'rl:fill_number:' . $user->id . ':' . $pengajuanSurat->id;
             if (RateLimiter::tooManyAttempts($rateKey, 1)) {
                 $wait = RateLimiter::availableIn($rateKey);
@@ -540,38 +532,50 @@ class PengajuanSuratController extends Controller
             }
             RateLimiter::hit($rateKey, 60);
 
-            // ✅ [ASVS V4.3 / SCP #93] Hindari hardcode, idealnya dari setting/config
             $surat = $pengajuanSurat->surat;
             $kodeSurat = $surat->kode_surat ?? 'XXX';
-            $kodeWilayah = config('app.kode_wilayah', '10.2003'); // fallback default
+            $kodeWilayah = config('app.kode_wilayah', '10.2003');
 
-            $nomorUrutManual = $validated['nomor_surat'];
+            $nomorUrutManual = (int) $validated['nomor_surat'];
             $bulanRomawi = $this->toRoman(now()->month);
             $tahun = now()->year;
 
+            // === CEK TIDAK BOLEH MUNDUR (per tahun berjalan) ===
+            $lastNumber = (int) (Ajuan::whereNotNull('nomor_surat')
+                ->whereYear('created_at', $tahun)
+                ->max('nomor_surat') ?? 0);
+
+            if ($nomorUrutManual <= $lastNumber) {
+                return response()->json([
+                    'error'  => 'Nomor tidak boleh mundur.',
+                    'detail' => [
+                        'nomor_terakhir'      => $lastNumber,
+                        'minimal_berikutnya'  => $lastNumber + 1,
+                        'tahun'               => $tahun,
+                    ]
+                ], 422);
+            }
+            // === END CEK ===
+
             $nomorSurat = $nomorUrutManual . '/' . $kodeSurat . '/' . $kodeWilayah . '/' . $bulanRomawi . '/' . $tahun;
 
-            // ✅ [ASVS V1.7] Simpan data secara sah atas nama user yang berwenang
             $pengajuanSurat->nomor_surat = $nomorUrutManual;
             $pengajuanSurat->nomor_surat_tersimpan = $nomorSurat;
             $pengajuanSurat->save();
 
-            // ✅ [ASVS V8.3 / SCP #127] Logging aman dan informatif
             LogActivity::create([
                 'id' => Str::uuid(),
                 'user_id' => $user->id,
                 'activity_type' => 'isi_nomor_surat',
-                'description' => 'Nomor surat dengan ID ' . $pengajuanSurat->id . ' telah diisi.',
+                'description' => 'Nomor surat dengan ID ' . $pengajuanSurat->id . ' telah diisi: ' . $nomorSurat,
                 'ip_address' => $request->ip()
             ]);
 
-            // ✅ [ASVS V9.1] Response aman dan tidak bocorkan informasi sensitif
             return response()->json([
                 'message' => 'Nomor surat berhasil diisi.',
                 'pengajuan_surat' => new AjuanResource($pengajuanSurat),
             ], 200);
         } catch (\Throwable $e) {
-            // ✅ [SCP #110, #108] Tangani error internal tanpa bocorkan detail ke user
             Log::error('Gagal mengisi nomor surat', [
                 'user_id' => $user->id ?? null,
                 'error' => $e->getMessage(),
@@ -582,6 +586,89 @@ class PengajuanSuratController extends Controller
             ], 500);
         }
     }
+
+
+
+    // public function fillNumber(FillNumberRequest $request, $slug, $ajuanId)
+    // {
+    //     try {
+    //         // ✅ [ASVS V2.1] Autentikasi pengguna
+    //         $user = JWTAuth::parseToken()->authenticate();
+
+    //         // ✅ [ASVS V4.1 / SCP #77, #84] Kontrol akses berbasis peran
+    //         if (!$user->hasRole('staff-desa')) {
+    //             return response()->json([
+    //                 'error' => 'Akses ditolak. Anda tidak memiliki izin untuk mengisi nomor pengajuan surat ini.'
+    //             ], 403);
+    //         }
+
+    //         // ✅ [ASVS V5.1] Validasi input eksplisit via FormRequest
+    //         $validated = $request->validated();
+
+    //         // ✅ [SCP #86] Validasi ID pengajuan berdasarkan slug
+    //         $pengajuanSurat = Ajuan::with(['user', 'surat'])
+    //             ->where('id', $ajuanId)
+    //             ->whereHas('surat', function ($query) use ($slug) {
+    //                 $query->where('slug', $slug);
+    //             })
+    //             ->first();
+
+    //         if (!$pengajuanSurat) {
+    //             return response()->json(['error' => 'Pengajuan surat tidak ditemukan.'], 404);
+    //         }
+
+    //         // ✅ [SCP #94] Rate Limiting: Maks. 1x pengisian per menit per user per ajuan
+    //         $rateKey = 'rl:fill_number:' . $user->id . ':' . $pengajuanSurat->id;
+    //         if (RateLimiter::tooManyAttempts($rateKey, 1)) {
+    //             $wait = RateLimiter::availableIn($rateKey);
+    //             return response()->json([
+    //                 'error' => 'Terlalu sering. Silakan coba lagi dalam ' . $wait . ' detik.'
+    //             ], 429);
+    //         }
+    //         RateLimiter::hit($rateKey, 60);
+
+    //         // ✅ [ASVS V4.3 / SCP #93] Hindari hardcode, idealnya dari setting/config
+    //         $surat = $pengajuanSurat->surat;
+    //         $kodeSurat = $surat->kode_surat ?? 'XXX';
+    //         $kodeWilayah = config('app.kode_wilayah', '10.2003'); // fallback default
+
+    //         $nomorUrutManual = $validated['nomor_surat'];
+    //         $bulanRomawi = $this->toRoman(now()->month);
+    //         $tahun = now()->year;
+
+    //         $nomorSurat = $nomorUrutManual . '/' . $kodeSurat . '/' . $kodeWilayah . '/' . $bulanRomawi . '/' . $tahun;
+
+    //         // ✅ [ASVS V1.7] Simpan data secara sah atas nama user yang berwenang
+    //         $pengajuanSurat->nomor_surat = $nomorUrutManual;
+    //         $pengajuanSurat->nomor_surat_tersimpan = $nomorSurat;
+    //         $pengajuanSurat->save();
+
+    //         // ✅ [ASVS V8.3 / SCP #127] Logging aman dan informatif
+    //         LogActivity::create([
+    //             'id' => Str::uuid(),
+    //             'user_id' => $user->id,
+    //             'activity_type' => 'isi_nomor_surat',
+    //             'description' => 'Nomor surat dengan ID ' . $pengajuanSurat->id . ' telah diisi.',
+    //             'ip_address' => $request->ip()
+    //         ]);
+
+    //         // ✅ [ASVS V9.1] Response aman dan tidak bocorkan informasi sensitif
+    //         return response()->json([
+    //             'message' => 'Nomor surat berhasil diisi.',
+    //             'pengajuan_surat' => new AjuanResource($pengajuanSurat),
+    //         ], 200);
+    //     } catch (\Throwable $e) {
+    //         // ✅ [SCP #110, #108] Tangani error internal tanpa bocorkan detail ke user
+    //         Log::error('Gagal mengisi nomor surat', [
+    //             'user_id' => $user->id ?? null,
+    //             'error' => $e->getMessage(),
+    //         ]);
+
+    //         return response()->json([
+    //             'error' => 'Terjadi kesalahan saat mengisi nomor surat.'
+    //         ], 500);
+    //     }
+    // }
 
     // ✅ [SCP #2] Fungsi untuk mengonversi angka ke angka Romawi
 
@@ -979,7 +1066,7 @@ class PengajuanSuratController extends Controller
             $pengajuanSurat->status = 'rejected';
             $pengajuanSurat->save();
 
-           // Kirim Notifikasi
+            // Kirim Notifikasi
             $message = "👋 Hai *{$pengajuanSurat->user['name']}* (NIK: {$pengajuanSurat->user['nik']}),\n\n"
                 . "Pengajuan surat *{$pengajuanSurat->surat['nama_surat']}* Anda *ditolak* oleh Staff Desa.\n\n"
                 . "📌 Alasan penolakan: *{$validated['alasan_penolakan']}*\n\n"
@@ -1325,11 +1412,11 @@ class PengajuanSuratController extends Controller
 
             // ✅ Kirim OTP ke WhatsApp (ASVS 10.2.1 / SCP #143)
             $message = "👋 Hai *{$ajuan->user['name']}* (NIK: {$ajuan->user['nik']}),\n\n"
-                        . "Surat dengan nomor *{$ajuan->nomor_surat_tersimpan}* telah berhasil *disetujui* oleh Kepala Desa pada {$signedAt->translatedFormat('d F Y')}.\n\n"
-                        . "📌 Segera unduh dan cek website kami untuk mendapatkan dokumen surat di:\n"
-                        . "🌐 https://limapoccoedigital.id\n\n"
-                        . "Anda juga dapat *menscan QR Code* pada surat untuk memverifikasi keaslian dokumen.\n\n"
-                        . "🙏 Terimakasih telah menggunakan layanan kami.";
+                . "Surat dengan nomor *{$ajuan->nomor_surat_tersimpan}* telah berhasil *disetujui* oleh Kepala Desa pada {$signedAt->translatedFormat('d F Y')}.\n\n"
+                . "📌 Segera unduh dan cek website kami untuk mendapatkan dokumen surat di:\n"
+                . "🌐 https://limapoccoedigital.id\n\n"
+                . "Anda juga dapat *menscan QR Code* pada surat untuk memverifikasi keaslian dokumen.\n\n"
+                . "🙏 Terimakasih telah menggunakan layanan kami.";
 
             $sent = FonnteHelper::sendWhatsAppMessage($ajuan->user->no_whatsapp ?? $ajuan->data_surat['no_whatsapp'], $message);
 
