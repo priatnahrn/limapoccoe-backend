@@ -22,7 +22,7 @@
 
                     <tr class="border-b">
                         <th class="p-3 bg-gray-50">Nama Pemohon</th>
-                        <td class="p-3">{{ optional($ajuan->nama_pemohon) ?? optional($ajuan->user)->name ?? 'Tidak diketahui' }}</td>
+                        <td class="p-3">{{ $data['nama'] ?? optional($ajuan->user)->name ?? 'Tidak diketahui' }}</td>
                     </tr>
                     <tr class="border-b">
                         <th class="p-3 bg-gray-50">Jenis Surat</th>
@@ -32,7 +32,7 @@
                         <th class="p-3 bg-gray-50">Tanggal Pengajuan</th>
                         <td class="p-3">
                             {{ optional($ajuan->created_at)
-                                ? $ajuan->created_at->timezone('Asia/Makassar')->translatedFormat('d F Y H:i:s')
+                                ? $ajuan->created_at->timezone('Asia/Singapore')->translatedFormat('d F Y H:i:s') . ' WIB' ?? \Carbon\Carbon::parse($ajuan->created_at)->timezone('Asia/Makassar')->translatedFormat('d F Y H:i:s')
                                 : '-' }}
                         </td>
                     </tr>
@@ -44,7 +44,7 @@
                         <th class="p-3 bg-gray-50">Waktu TTD</th>
                         <td class="p-3">
                             {{ optional($ajuan->tandaTangan)->signed_at
-                                ? \Carbon\Carbon::parse($ajuan->tandaTangan->signed_at)->timezone('Asia/Makassar')->translatedFormat('d F Y H:i:s')
+                                ? \Carbon\Carbon::parse($ajuan->tandaTangan->signed_at)->timezone('Asia/Singapore')->translatedFormat('d F Y H:i:s')
                                 : '-' }}
                         </td>
                     </tr>
