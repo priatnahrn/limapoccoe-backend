@@ -547,7 +547,7 @@ class PengajuanSuratController extends Controller
 
             if ($nomorUrutManual <= $lastNumber) {
                 return response()->json([
-                    'error'  => 'Nomor tidak boleh mundur.',
+                    'message' => 'Nomor surat tidak boleh mundur.',
                     'detail' => [
                         'nomor_terakhir'      => $lastNumber,
                         'minimal_berikutnya'  => $lastNumber + 1,
