@@ -45,7 +45,7 @@ class DataKeluargaRequest extends FormRequest
             'anggota.*.tempat_lahir' => ['nullable', 'string', 'max:50'],
             'anggota.*.tgl_lahir' => ['nullable', 'date'],
             'anggota.*.jenis_kelamin' => ['nullable', Rule::in(['Laki-laki', 'Perempuan'])],
-            'anggota.*.status_perkawinan' => ['nullable', Rule::in(['Belum Kawin', 'Kawin', 'Cerai Hidup', 'Cerai Mati'])],
+            'anggota.*.status_perkawinan' => ['nullable', Rule::in(['Belum Kawin', 'Kawin', 'Kawin Tercatat', 'Kawin Belum Tercatat', 'Cerai Hidup', 'Cerai Mati'])],
             'anggota.*.agama' => ['nullable', Rule::in(['Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Konghucu', 'Lainnya'])],
             'anggota.*.pendidikan' => ['nullable', Rule::in([
                 'Tidak/Belum Sekolah', 'Belum Tamat SD/Sederajat', 'Tamat SD/Sederajat',
