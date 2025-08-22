@@ -401,7 +401,7 @@ class PengaduanController extends Controller
             $aduan->update(['status' => 'approved']);
 
             $message = "👋 Hai *{$aduan->user->name}* (NIK: {$aduan->user->nik}),\n\n"
-                    . "Pengaduan Anda dengan judul *{$aduan->title}* telah *disetujui* oleh Kepala Desa.\n\n"
+                    . "Pengaduan Anda dengan judul *{$aduan->title}* telah *ditindaklanjuti* oleh Pemerintah Desa.\n\n"
                     . "🙏 Terimakasih telah menggunakan layanan kami.";
 
 
