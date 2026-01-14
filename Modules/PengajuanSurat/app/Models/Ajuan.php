@@ -31,6 +31,7 @@ class Ajuan extends Model
         'user_id',
         'surat_id',
         'nomor_surat',
+        'nomor_surat_tersimpan',
         'lampiran',
         'file',
         'data_surat',
