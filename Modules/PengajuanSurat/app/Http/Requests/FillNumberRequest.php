@@ -12,7 +12,7 @@ class FillNumberRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nomor_surat' => 'required|integer|min:1|unique:ajuans,nomor_surat',
+            'nomor_surat_tersimpan' => 'required|string|max:255|unique:ajuans,nomor_surat_tersimpan',
         ];
     }
 
@@ -30,10 +30,10 @@ class FillNumberRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'nomor_surat.required' => 'Nomor surat harus diisi.',
-            'nomor_surat.unique' => 'Nomor surat sudah digunakan.',
-            'nomor_surat.integer' => 'Nomor surat harus berupa angka.',
-            'nomor_surat.min' => 'Nomor surat harus lebih besar atau sama dengan 1.',
+            'nomor_surat_tersimpan.required' => 'Nomor surat harus diisi.',
+            'nomor_surat_tersimpan.string'   => 'Nomor surat harus berupa teks.',
+            'nomor_surat_tersimpan.unique'   => 'Nomor surat sudah digunakan.',
+            'nomor_surat_tersimpan.max'      => 'Nomor surat terlalu panjang.',
         ];
     }
 }
